@@ -10,6 +10,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  List<Color> gradientColors = [
+    Colors.deepPurpleAccent,
+    Colors.deepPurpleAccent,
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -197,6 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
           gridData: FlGridData(show: false),
           titlesData: FlTitlesData(show: false),
           borderData: FlBorderData(show: false),
+
           lineBarsData: [
             LineChartBarData(
               spots: [
@@ -210,8 +216,17 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
               isCurved: true,
               color: Colors.purple,
+
               dotData: FlDotData(show: false),
-              belowBarData: BarAreaData(show: false),
+              belowBarData: BarAreaData(
+                show: true,
+                gradient: LinearGradient(
+                  colors:
+                      gradientColors
+                          .map((color) => color.withValues(alpha: 0.3))
+                          .toList(),
+                ),
+              ),
             ),
           ],
         ),
