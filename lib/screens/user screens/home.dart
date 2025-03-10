@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:montra/user%20screens/home_screen.dart';
-import 'package:montra/user%20screens/transaction_screen.dart';
-import 'package:montra/user%20screens/budget_screen.dart';
-import 'package:montra/user%20screens/profile_screen.dart';
+import 'package:montra/screens/user%20screens/home_screen.dart';
+import 'package:montra/screens/user%20screens/transaction_screen.dart';
+import 'package:montra/screens/user%20screens/budget_screen.dart';
+import 'package:montra/screens/user%20screens/profile_screen.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});

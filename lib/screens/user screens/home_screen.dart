@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:montra/screens/notification/notification_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -46,7 +47,20 @@ class _HomeScreenState extends State<HomeScreen> {
                         Icon(Icons.keyboard_arrow_down, size: 20.r),
                       ],
                     ),
-                    Icon(Icons.notifications, size: 24.r, color: Colors.purple),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (builder) => NotificationScreen(),
+                          ),
+                        );
+                      },
+                      child: Icon(
+                        Icons.notifications,
+                        size: 24.r,
+                        color: Colors.purple,
+                      ),
+                    ),
                   ],
                 ),
                 SizedBox(height: 20.h),
