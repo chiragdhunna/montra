@@ -99,6 +99,129 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
     );
   }
 
+  void _showRepeatBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              padding: EdgeInsets.all(20.w),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildDropdownField(
+                    "Frequency",
+                    _repeatFrequency,
+                    _frequencies,
+                    (value) {
+                      setModalState(() {
+                        _repeatFrequency = value!;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 15),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildDropdownField(
+                          "Month",
+                          _repeatMonth,
+                          _months,
+                          (value) {
+                            setModalState(() {
+                              _repeatMonth = value!;
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _buildDropdownField("Day", _repeatDay, _days, (
+                          value,
+                        ) {
+                          setModalState(() {
+                            _repeatDay = value!;
+                          });
+                        }),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 15),
+                  _buildDropdownField(
+                    "End After",
+                    _repeatEndDate,
+                    ["29 Dec 2025"],
+                    (value) {
+                      setModalState(() {
+                        _repeatEndDate = value!;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _isRepeatConfigured = true;
+                        });
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.purple,
+                        padding: EdgeInsets.symmetric(vertical: 15.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                      ),
+                      child: const Text(
+                        "Next",
+                        style: TextStyle(color: Colors.white, fontSize: 16),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildDropdownField(
+    String label,
+    String value,
+    List<String> options,
+    Function(String?) onChanged,
+  ) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      items:
+          options.map((option) {
+            return DropdownMenuItem(value: option, child: Text(option));
+          }).toList(),
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        hintText: label,
+        filled: true,
+        fillColor: Colors.grey[100],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.r),
+          borderSide: BorderSide.none,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -186,31 +309,6 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
     );
   }
 
-  Widget _buildDropdownField(
-    String label,
-    String value,
-    List<String> options,
-    Function(String?) onChanged,
-  ) {
-    return DropdownButtonFormField<String>(
-      value: value,
-      items:
-          options.map((option) {
-            return DropdownMenuItem(value: option, child: Text(option));
-          }).toList(),
-      onChanged: onChanged,
-      decoration: InputDecoration(
-        hintText: label,
-        filled: true,
-        fillColor: Colors.grey[100],
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10.r),
-          borderSide: BorderSide.none,
-        ),
-      ),
-    );
-  }
-
   Widget _buildRepeatTransactionToggle() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,11 +319,16 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
           onChanged: (value) {
             setState(() {
               _isRepeat = value;
+              if (value) {
+                _showRepeatBottomSheet();
+              } else {
+                _isRepeatConfigured = false;
+              }
             });
           },
           activeColor: Colors.purple,
         ),
-        if (_isRepeat)
+        if (_isRepeatConfigured)
           Container(
             padding: EdgeInsets.all(10.w),
             decoration: BoxDecoration(
@@ -255,7 +358,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {}, // Implement edit functionality if needed
+                    onPressed: _showRepeatBottomSheet,
                     child: const Text(
                       "Edit",
                       style: TextStyle(color: Colors.purple, fontSize: 14),
