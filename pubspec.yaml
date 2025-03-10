@@ -43,6 +43,9 @@ dependencies:
   flutter_screenutil: ^5.9.3
   line_chart: ^1.1.11
   fl_chart: ^0.70.2
+  image_picker: ^1.1.2
+  video_player: ^2.9.3
+  mime: ^2.0.0
 
 dev_dependencies:
   flutter_test:

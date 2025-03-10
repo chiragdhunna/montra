@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:montra/screens/user%20screens/home_screen.dart';
+import 'package:montra/screens/user%20screens/income%20or%20expense/new_expense_screen.dart';
 import 'package:montra/screens/user%20screens/transaction_screen.dart';
 import 'package:montra/screens/user%20screens/budget_screen.dart';
 import 'package:montra/screens/user%20screens/profile_screen.dart';
@@ -47,58 +48,100 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       body: Stack(
         children: [
           _pages[_selectedIndex],
-          if (_isExpanded)
-            Positioned(
-              bottom: 30.h,
-              left: 0,
-              right: 0,
-              child: Container(
-                height: 160.h,
-                child: Center(
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Transfer button (top)
-                      Transform.translate(
-                        offset: Offset(0, -70.h),
-                        child: FloatingActionButton(
-                          heroTag: "transfer",
-                          onPressed: () {
+
+          // Transfer button
+          Positioned(
+            bottom: 90.h,
+            left: MediaQuery.of(context).size.width / 2 - 28.w,
+            child: AnimatedOpacity(
+              duration: Duration(milliseconds: 200),
+              opacity: _isExpanded ? 1.0 : 0.0,
+              child: AnimatedContainer(
+                duration: Duration(milliseconds: 300),
+                transform: Matrix4.translationValues(
+                  0,
+                  _isExpanded ? -70.h : 0,
+                  0,
+                ),
+                child: FloatingActionButton(
+                  heroTag: "transfer",
+                  onPressed:
+                      _isExpanded
+                          ? () {
+                            print("Transfer pressed");
                             // Navigate to Transfer Screen
-                          },
-                          shape: const CircleBorder(),
-                          child: Image.asset('assets/transaction_icon.png'),
-                        ),
-                      ),
-                      // Income button (left)
-                      Transform.translate(
-                        offset: Offset(-70.w, -20.h),
-                        child: FloatingActionButton(
-                          heroTag: "income",
-                          onPressed: () {
-                            // Navigate to Income Add Screen
-                          },
-                          shape: const CircleBorder(),
-                          child: Image.asset('assets/income.png'),
-                        ),
-                      ),
-                      // Expense button (right)
-                      Transform.translate(
-                        offset: Offset(70.w, -20.h),
-                        child: FloatingActionButton(
-                          heroTag: "expense",
-                          onPressed: () {
-                            // Navigate to Expense Add Screen
-                          },
-                          shape: const CircleBorder(),
-                          child: Image.asset('assets/expense.png'),
-                        ),
-                      ),
-                    ],
-                  ),
+                          }
+                          : null,
+                  shape: const CircleBorder(),
+                  child: Image.asset('assets/transaction_icon.png'),
                 ),
               ),
             ),
+          ),
+
+          // Income button
+          Positioned(
+            bottom: 90.h,
+            left: MediaQuery.of(context).size.width / 2 - 98.w,
+            child: AnimatedOpacity(
+              duration: Duration(milliseconds: 200),
+              opacity: _isExpanded ? 1.0 : 0.0,
+              child: AnimatedContainer(
+                duration: Duration(milliseconds: 300),
+                transform: Matrix4.translationValues(
+                  0,
+                  _isExpanded ? -20.h : 0,
+                  0,
+                ),
+                child: FloatingActionButton(
+                  heroTag: "income",
+                  onPressed:
+                      _isExpanded
+                          ? () {
+                            print("Income pressed");
+                            // Navigate to Income Add Screen
+                          }
+                          : null,
+                  shape: const CircleBorder(),
+                  child: Image.asset('assets/income.png'),
+                ),
+              ),
+            ),
+          ),
+
+          // Expense button
+          Positioned(
+            bottom: 90.h,
+            left: MediaQuery.of(context).size.width / 2 + 42.w,
+            child: AnimatedOpacity(
+              duration: Duration(milliseconds: 200),
+              opacity: _isExpanded ? 1.0 : 0.0,
+              child: AnimatedContainer(
+                duration: Duration(milliseconds: 300),
+                transform: Matrix4.translationValues(
+                  0,
+                  _isExpanded ? -20.h : 0,
+                  0,
+                ),
+                child: FloatingActionButton(
+                  heroTag: "expense",
+                  onPressed:
+                      _isExpanded
+                          ? () {
+                            print("Expense pressed");
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (builder) => NewExpenseScreen(),
+                              ),
+                            );
+                          }
+                          : null,
+                  shape: const CircleBorder(),
+                  child: Image.asset('assets/expense.png'),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
