@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:montra/screens/user%20screens/home_screen.dart';
 import 'package:montra/screens/user%20screens/income%20or%20expense/new_expense_screen.dart';
+import 'package:montra/screens/user%20screens/income%20or%20expense/new_income_screen.dart';
 import 'package:montra/screens/user%20screens/transaction_screen.dart';
 import 'package:montra/screens/user%20screens/budget_screen.dart';
 import 'package:montra/screens/user%20screens/profile_screen.dart';
@@ -100,6 +101,11 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                           ? () {
                             print("Income pressed");
                             // Navigate to Income Add Screen
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (builder) => NewIncomeScreen(),
+                              ),
+                            );
                           }
                           : null,
                   shape: const CircleBorder(),
