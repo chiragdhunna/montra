@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+import 'package:montra/screens/user%20screens/financial%20reports/financial_report_screen.dart';
+
 class FinancialReportStatusScreen extends StatefulWidget {
   const FinancialReportStatusScreen({super.key});
 
@@ -15,16 +17,17 @@ class _FinancialReportStatusScreenState
   Timer? _timer;
   List<double> _progressList = [0.0, 0.0, 0.0, 0.0];
 
-  final List<Widget> _screens = [
-    _buildSpendingScreen(),
-    _buildIncomeScreen(),
-    _buildBudgetScreen(),
-    _buildQuoteScreen(),
-  ];
+  late List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
+    _screens = [
+      _buildSpendingScreen(),
+      _buildIncomeScreen(),
+      _buildBudgetScreen(),
+      _buildQuoteScreen(),
+    ];
     _startAutoTransition();
   }
 
@@ -178,210 +181,219 @@ class _FinancialReportStatusScreenState
       ),
     );
   }
-}
 
-Widget _buildSpendingScreen() {
-  return Container(
-    key: const ValueKey('spending'),
-    color: Colors.red,
-    child: Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            "This Month",
-            style: TextStyle(fontSize: 18, color: Colors.white),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            "You Spend 💸",
-            style: TextStyle(
-              fontSize: 24,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
+  Widget _buildSpendingScreen() {
+    return Container(
+      key: const ValueKey('spending'),
+      color: Colors.red,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              "This Month",
+              style: TextStyle(fontSize: 18, color: Colors.white),
             ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            "\$332",
-            style: TextStyle(
-              fontSize: 40,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
+            const SizedBox(height: 20),
+            const Text(
+              "You Spend 💸",
+              style: TextStyle(
+                fontSize: 24,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
+            const SizedBox(height: 10),
+            const Text(
+              "\$332",
+              style: TextStyle(
+                fontSize: 40,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            child: Column(
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                children: [
+                  const Text(
+                    "and your biggest spending is from",
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 10),
+                  Chip(
+                    label: const Text("Shopping"),
+                    backgroundColor: Colors.orange.withOpacity(0.2),
+                  ),
+                  const SizedBox(height: 5),
+                  const Text(
+                    "\$120",
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIncomeScreen() {
+    return Container(
+      key: const ValueKey('income'),
+      color: Colors.green,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              "This Month",
+              style: TextStyle(fontSize: 18, color: Colors.white),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              "You Earned 💰",
+              style: TextStyle(
+                fontSize: 24,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              "\$6000",
+              style: TextStyle(
+                fontSize: 40,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                children: [
+                  const Text(
+                    "Your biggest income is from",
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 10),
+                  Chip(
+                    label: const Text("Salary"),
+                    backgroundColor: Colors.green.withOpacity(0.2),
+                  ),
+                  const SizedBox(height: 5),
+                  const Text(
+                    "\$5000",
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBudgetScreen() {
+    return Container(
+      key: const ValueKey('budget'),
+      color: Colors.purple,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              "This Month",
+              style: TextStyle(fontSize: 18, color: Colors.white),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              "2 of 12 Budgets exceed the limit",
+              style: TextStyle(
+                fontSize: 24,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
-                  "and your biggest spending is from",
-                  style: TextStyle(fontSize: 16),
-                ),
-                const SizedBox(height: 10),
                 Chip(
                   label: const Text("Shopping"),
                   backgroundColor: Colors.orange.withOpacity(0.2),
                 ),
-                const SizedBox(height: 5),
-                const Text(
-                  "\$120",
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-Widget _buildIncomeScreen() {
-  return Container(
-    key: const ValueKey('income'),
-    color: Colors.green,
-    child: Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            "This Month",
-            style: TextStyle(fontSize: 18, color: Colors.white),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            "You Earned 💰",
-            style: TextStyle(
-              fontSize: 24,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            "\$6000",
-            style: TextStyle(
-              fontSize: 40,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              children: [
-                const Text(
-                  "Your biggest income is from",
-                  style: TextStyle(fontSize: 16),
-                ),
-                const SizedBox(height: 10),
+                const SizedBox(width: 10),
                 Chip(
-                  label: const Text("Salary"),
-                  backgroundColor: Colors.green.withOpacity(0.2),
-                ),
-                const SizedBox(height: 5),
-                const Text(
-                  "\$5000",
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  label: const Text("Food"),
+                  backgroundColor: Colors.red.withOpacity(0.2),
                 ),
               ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
-Widget _buildBudgetScreen() {
-  return Container(
-    key: const ValueKey('budget'),
-    color: Colors.purple,
-    child: Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            "This Month",
-            style: TextStyle(fontSize: 18, color: Colors.white),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            "2 of 12 Budgets exceed the limit",
-            style: TextStyle(
-              fontSize: 24,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Chip(
-                label: const Text("Shopping"),
-                backgroundColor: Colors.orange.withOpacity(0.2),
+  Widget _buildQuoteScreen() {
+    return Container(
+      key: const ValueKey('quote'),
+      color: Colors.purple,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              "Financial freedom is freedom from fear.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 24,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(width: 10),
-              Chip(
-                label: const Text("Food"),
-                backgroundColor: Colors.red.withOpacity(0.2),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              "- Robert Kiyosaki",
+              style: TextStyle(fontSize: 16, color: Colors.white),
+            ),
+            const SizedBox(height: 30),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (builder) => FinancialReportScreen(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
               ),
-            ],
-          ),
-        ],
+              child: const Text(
+                "See the full detail",
+                style: TextStyle(color: Colors.purple, fontSize: 16),
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
-
-Widget _buildQuoteScreen() {
-  return Container(
-    key: const ValueKey('quote'),
-    color: Colors.purple,
-    child: Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            "Financial freedom is freedom from fear.",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 24,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            "- Robert Kiyosaki",
-            style: TextStyle(fontSize: 16, color: Colors.white),
-          ),
-          const SizedBox(height: 30),
-          ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            ),
-            child: const Text(
-              "See the full detail",
-              style: TextStyle(color: Colors.purple, fontSize: 16),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
+    );
+  }
 }
