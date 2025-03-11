@@ -60,25 +60,35 @@ class _FinancialReportStatusScreenState
   }
 
   void _nextScreen() {
-    _timer?.cancel(); // Cancel auto transition
-    setState(() {
-      // Move to next screen if possible
-      if (_currentIndex < _screens.length - 1) {
+    if (_currentIndex < _screens.length - 1) {
+      _timer?.cancel(); // Cancel auto transition
+
+      setState(() {
+        // Complete the current screen progress
+        _progressList[_currentIndex] = 1.0;
+
+        // Move to next screen
         _currentIndex++;
-      }
-    });
-    _startAutoTransition(); // Restart auto transition
+      });
+
+      _startAutoTransition(); // Restart auto transition
+    }
   }
 
   void _previousScreen() {
-    _timer?.cancel(); // Cancel auto transition
-    setState(() {
-      // Move to previous screen if possible
-      if (_currentIndex > 0) {
+    if (_currentIndex > 0) {
+      _timer?.cancel(); // Cancel auto transition
+
+      setState(() {
+        // Reset the current screen progress
+        _progressList[_currentIndex] = 0.0;
+
+        // Move to previous screen
         _currentIndex--;
-      }
-    });
-    _startAutoTransition(); // Restart auto transition
+      });
+
+      _startAutoTransition(); // Restart auto transition
+    }
   }
 
   @override
@@ -103,7 +113,10 @@ class _FinancialReportStatusScreenState
                 _nextScreen();
               }
             },
-            child: _screens[_currentIndex],
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: _screens[_currentIndex],
+            ),
           ),
 
           // Progress bars overlay at the top
@@ -112,12 +125,7 @@ class _FinancialReportStatusScreenState
             left: 0,
             right: 0,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(
-                16,
-                50,
-                16,
-                16,
-              ), // Adjust top padding for status bar
+              padding: const EdgeInsets.fromLTRB(16, 50, 16, 16),
               child: Row(
                 children:
                     List.generate(_progressList.length, (index) {
