@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:montra/screens/user%20screens/home_screen.dart';
 import 'package:montra/screens/user%20screens/income%20or%20expense/new_expense_screen.dart';
 import 'package:montra/screens/user%20screens/income%20or%20expense/new_income_screen.dart';
+import 'package:montra/screens/user%20screens/income%20or%20expense/new_transfer_screen.dart';
 import 'package:montra/screens/user%20screens/transaction_screen.dart';
 import 'package:montra/screens/user%20screens/budget_screen.dart';
 import 'package:montra/screens/user%20screens/profile_screen.dart';
@@ -54,9 +55,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
           Positioned(
             bottom: 90.h,
             left: MediaQuery.of(context).size.width / 2 - 28.w,
-            child: AnimatedOpacity(
-              duration: Duration(milliseconds: 200),
-              opacity: _isExpanded ? 1.0 : 0.0,
+            child: Visibility(
+              visible: _isExpanded,
               child: AnimatedContainer(
                 duration: Duration(milliseconds: 300),
                 transform: Matrix4.translationValues(
@@ -66,13 +66,15 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                 ),
                 child: FloatingActionButton(
                   heroTag: "transfer",
-                  onPressed:
-                      _isExpanded
-                          ? () {
-                            print("Transfer pressed");
-                            // Navigate to Transfer Screen
-                          }
-                          : null,
+                  onPressed: () {
+                    print("Transfer pressed");
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => NewTransferScreen(),
+                      ),
+                    );
+                  },
+                  backgroundColor: Colors.purple,
                   shape: const CircleBorder(),
                   child: Image.asset('assets/transaction_icon.png'),
                 ),
