@@ -44,12 +44,13 @@ class _FinancialReportStatusScreenState
 
         // If current screen's progress reaches 1.0
         if (_progressList[_currentIndex] >= 1.0) {
-          // Reset current screen's progress
+          // Set current screen's progress to exactly 1.0
           _progressList[_currentIndex] = 1.0;
 
           // Move to next screen
           if (_currentIndex < _screens.length - 1) {
             _currentIndex++;
+            // Don't automatically advance to the next screen if we're at the last screen
           } else {
             // If at last screen, stop the timer
             _timer?.cancel();
@@ -85,10 +86,30 @@ class _FinancialReportStatusScreenState
 
         // Move to previous screen
         _currentIndex--;
+
+        // Make sure we restart the progress for the previous screen
+        // if it's already completed
+        if (_progressList[_currentIndex] >= 1.0) {
+          _progressList[_currentIndex] = 0.0;
+        }
       });
 
-      _startAutoTransition(); // Restart auto transition
+      // Always restart auto transition for the previous screen
+      _startAutoTransition();
     }
+  }
+
+  // Add a method to reset all progress bars
+  void _resetAllProgress() {
+    setState(() {
+      // Reset all progress bars
+      for (int i = 0; i < _progressList.length; i++) {
+        _progressList[i] = 0.0;
+      }
+      // Set current index to 0 (first screen)
+      _currentIndex = 0;
+    });
+    _startAutoTransition();
   }
 
   @override
