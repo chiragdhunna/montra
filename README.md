@@ -25,8 +25,8 @@ The **Financial Manager App** is a **Flutter** application that helps users trac
 ## 🛠 Tech Stack
 
 - **Flutter** (Dart)
-- **State Management**: Provider / Riverpod
-- **Local Database**: Hive / SQLite
+- **State Management**: Bloc
+- **Local Database**: SQLite
 - **Networking**: HTTP, REST APIs
 - **Charts & Graphs**: fl_chart
 - **UI Components**: Flutter ScreenUtil, Google Fonts
@@ -85,10 +85,9 @@ flutter run
 
 ## 📌 Future Enhancements
 
-- **🔄 Sync Data with Cloud** (Firebase / Supabase)
-- **📌 AI-Powered Expense Categorization**
-- **💳 Bank Account & Card Integration**
-- **📆 Advanced Budgeting & Forecasting**
+- **🛢 MySQL / PostgreSQL Database Integration**
+- **🌍 Backend Powered by Node.js**
+- **🔄 Cloud Data Sync using Secure APIs**
 
 ## 🙌 Contribution
 
