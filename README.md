@@ -94,10 +94,6 @@ flutter run
 
 Feel free to contribute by **creating pull requests** or **reporting issues**.
 
-## 📜 License
-
-This project is **MIT Licensed**. See [LICENSE](LICENSE) for details.
-
 ---
 
-Made with ❤️ by [Your Name](https://github.com/your-username) 🚀
+Made with ❤️ by [Chirag Dhunna](https://github.com/chiragdhunna) 🚀
