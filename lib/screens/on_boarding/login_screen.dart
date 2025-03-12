@@ -1,5 +1,7 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:montra/screens/on_boarding/forgot_password_screen.dart';
+import 'package:montra/screens/on_boarding/sign_up_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -121,6 +123,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     TextSpan(
                       text: "Sign Up",
+                      recognizer:
+                          TapGestureRecognizer()
+                            ..onTap =
+                                () => Navigator.of(context).pushReplacement(
+                                  MaterialPageRoute(
+                                    builder: (builder) => SignUpScreen(),
+                                  ),
+                                ),
                       style: const TextStyle(
                         color: Colors.purple,
                         fontWeight: FontWeight.bold,

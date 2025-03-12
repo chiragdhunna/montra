@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:montra/screens/on_boarding/login_screen.dart';
 import 'package:montra/screens/on_boarding/sign_up_screen.dart';
 
 class OnBoardingScreen extends StatefulWidget {
@@ -122,7 +123,11 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                 ),
                 const SizedBox(height: 10),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (builder) => LoginScreen()),
+                    );
+                  },
                   child: const Text(
                     "Login",
                     style: TextStyle(color: Colors.purple, fontSize: 16),
