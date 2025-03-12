@@ -8,7 +8,7 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
-  List<Map<String, String>> _notifications = [
+  final List<Map<String, String>> _notifications = [
     {
       "title": "Shopping Budget has exceeded",
       "subtitle": "Your Shopping budget has exceeded the limit...",

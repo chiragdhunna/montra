@@ -121,7 +121,7 @@ class _AccountScreenState extends State<AccountScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          '\$${totalBalance}',
+                          '\$$totalBalance',
                           style: const TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,

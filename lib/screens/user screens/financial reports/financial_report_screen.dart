@@ -504,8 +504,7 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                (transaction["amount"] > 0 ? "+ " : "- ") +
-                    "\$${transaction["amount"].abs().toString()}",
+                "${transaction["amount"] > 0 ? "+ " : "- "}\$${transaction["amount"].abs().toString()}",
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

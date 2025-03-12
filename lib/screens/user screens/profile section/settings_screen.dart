@@ -15,10 +15,10 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   _launchURL() async {
-    final Uri _url = Uri.parse('https://github.com/chiragdhunna/montra');
+    final Uri url = Uri.parse('https://github.com/chiragdhunna/montra');
     try {
-      if (await canLaunchUrl(_url)) {
-        await launchUrl(_url, mode: LaunchMode.externalApplication);
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
       } else {
         // Show a more user-friendly error message
         ScaffoldMessenger.of(

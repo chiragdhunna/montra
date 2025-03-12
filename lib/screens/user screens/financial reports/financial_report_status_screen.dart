@@ -15,7 +15,7 @@ class _FinancialReportStatusScreenState
     extends State<FinancialReportStatusScreen> {
   int _currentIndex = 0;
   Timer? _timer;
-  List<double> _progressList = [0.0, 0.0, 0.0, 0.0];
+  final List<double> _progressList = [0.0, 0.0, 0.0, 0.0];
 
   late List<Widget> _screens;
 
