@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:montra/screens/user%20screens/profile%20section/account_screen.dart';
-import 'package:montra/screens/user%20screens/profile%20section/export_data_screen.dart';
+import 'package:montra/screens/user%20screens/profile%20section/export%20screens/export_data_screen.dart';
 import 'package:montra/screens/user%20screens/profile%20section/settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -94,7 +94,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
                   _buildDivider(),
-                  _buildListTile(Icons.logout, 'Logout', Colors.red, () {}),
+                  _buildListTile(Icons.logout, 'Logout', Colors.red, () {
+                    _showLogoutBottomSheet(context);
+                  }),
                 ],
               ),
             ),
@@ -130,6 +132,88 @@ class _ProfileScreenState extends State<ProfileScreen> {
       indent: 16,
       endIndent: 16,
       color: Colors.grey,
+    );
+  }
+
+  void _showLogoutBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.purple,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Logout?',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Are you sure you wanna logout?',
+                style: TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.purple.withOpacity(0.1),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      minimumSize: Size(120, 50),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text(
+                      'No',
+                      style: TextStyle(
+                        color: Colors.purple,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.purple,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      minimumSize: Size(120, 50),
+                    ),
+                    onPressed: () {
+                      // Handle logout logic here
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text(
+                      'Yes',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
