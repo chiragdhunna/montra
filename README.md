@@ -1,16 +1,103 @@
-# montra
+# 📊 Montra
 
-A new Flutter project.
+## 🚀 Overview
 
-## Getting Started
+The **Financial Manager App** is a **Flutter** application that helps users track their **expenses, income, transactions, budgets, and financial goals**. It provides an intuitive and modern UI for managing personal finances effectively.
 
-This project is a starting point for a Flutter application.
+## ✨ Features
 
-A few resources to get you started if this is your first Flutter project:
+- **💰 Expense & Income Tracking**: Keep track of your expenses and income with categorized transactions.
+- **📊 Interactive Graphs & Pie Charts**: Visualize your spending habits using graphs and pie charts.
+- **🔄 Recurring Transactions**: Set up automated transactions for subscriptions, salaries, etc.
+- **📁 Attachments**: Upload receipts and invoices for better expense management.
+- **📅 Budget Management**: Create, update, and track budgets to control your spending.
+- **🔔 Notifications & Alerts**: Get alerts when your budget exceeds limits or new transactions occur.
+- **🌎 Multi-Currency & Multi-Language Support**: Choose your preferred currency and language.
+- **🎨 Light & Dark Theme**: Customize the UI with different themes.
+- **🔐 Security Settings**: Enable PIN, fingerprint, or Face ID authentication for secure access.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## 📸 Screenshots
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+| Home Screen                          | Expense Tracking                       | Financial Report                       | Budgeting                              |
+| ------------------------------------ | -------------------------------------- | -------------------------------------- | -------------------------------------- |
+| ![alt text](./readme_data/image.png) | ![alt text](./readme_data/image-3.png) | ![alt text](./readme_data/image-1.png) | ![alt text](./readme_data/image-2.png) |
+
+## 🛠 Tech Stack
+
+- **Flutter** (Dart)
+- **State Management**: Provider / Riverpod
+- **Local Database**: Hive / SQLite
+- **Networking**: HTTP, REST APIs
+- **Charts & Graphs**: fl_chart
+- **UI Components**: Flutter ScreenUtil, Google Fonts
+
+## 🔧 Installation
+
+```sh
+# Clone the repository
+git clone https://github.com/chiragdhunna/montra
+
+# Navigate to the project directory
+cd financial-manager
+
+# Install dependencies
+flutter pub get
+
+# Run the app
+flutter run
+```
+
+## 📂 Project Structure
+
+```
+📦 montra
+├── 📂 lib
+│   ├── 📂 constants                    # Constants and global variables
+│   ├── 📂 screens
+│   │   ├── 📂 notification             # Notification settings screen
+│   │   ├── 📂 on_boarding              # Onboarding flow
+│   │   ├── 📂 splash                   # Splash screen
+│   │   ├── 📂 user_screens
+│   │   │   ├── 📂 budget_screens       # Budget-related screens
+│   │   │   ├── 📂 financial_reports    # Expense & income reports
+│   │   │   ├── 📂 income_or_expense    # Income & expense tracking
+│   │   │   ├── 📂 profile_section
+│   │   │   │   ├── 📂 account_screens  # Account management
+│   │   │   │   ├── 📂 export_screens   # Export data & backup
+│   │   │   │   ├── 📂 settings_screens # App settings (theme, currency, security)
+│   ├── 📂 widgets                      # Reusable UI components
+│   │   ├── transaction_card.dart        # Transaction list card
+│   │   ├── budget_card.dart             # Budget list card
+│   ├── 📂 models                       # Data models
+│   ├── 📂 services                     # API and database services
+│   ├── 📂 utils                        # Helper utilities
+│   ├── main.dart                       # Entry point of the application
+└── pubspec.yaml                        # Flutter dependencies & configurations
+
+```
+
+## 🚀 How to Use
+
+1. **Add Transactions**: Log your daily expenses and income.
+2. **Analyze Reports**: Use charts and graphs to monitor spending trends.
+3. **Set Budgets**: Control your finances by setting up budgets.
+4. **Customize Settings**: Change currency, theme, and security preferences.
+
+## 📌 Future Enhancements
+
+- **🔄 Sync Data with Cloud** (Firebase / Supabase)
+- **📌 AI-Powered Expense Categorization**
+- **💳 Bank Account & Card Integration**
+- **📆 Advanced Budgeting & Forecasting**
+
+## 🙌 Contribution
+
+Feel free to contribute by **creating pull requests** or **reporting issues**.
+
+## 📜 License
+
+This project is **MIT Licensed**. See [LICENSE](LICENSE) for details.
+
+---
+
+Made with ❤️ by [Your Name](https://github.com/your-username) 🚀
