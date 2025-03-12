@@ -38,7 +38,7 @@ The **Financial Manager App** is a **Flutter** application that helps users trac
 git clone https://github.com/chiragdhunna/montra
 
 # Navigate to the project directory
-cd financial-manager
+cd montra
 
 # Install dependencies
 flutter pub get
