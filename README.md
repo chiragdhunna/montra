@@ -18,9 +18,9 @@ The **Financial Manager App** is a **Flutter** application that helps users trac
 
 ## 📸 Screenshots
 
-| Home Screen                          | Expense Tracking                       | Financial Report                       | Budgeting                              |
-| ------------------------------------ | -------------------------------------- | -------------------------------------- | -------------------------------------- |
-| ![alt text](./readme_data/image.png) | ![alt text](./readme_data/image-3.png) | ![alt text](./readme_data/image-1.png) | ![alt text](./readme_data/image-2.png) |
+| Home Screen                             | Expense Tracking                               | Financial Report                                | Budgeting                               |
+| --------------------------------------- | ---------------------------------------------- | ----------------------------------------------- | --------------------------------------- |
+| ![Home Screen](./readme_data/image.png) | ![Expense Tracking](./readme_data/image-3.png) | ![Financial Report ](./readme_data/image-1.png) | ![Budgeting](./readme_data/image-2.png) |
 
 ## 🛠 Tech Stack
 
