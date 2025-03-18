@@ -54,6 +54,7 @@ dependencies:
   dio_smart_retry: ^7.0.1
   flutter_secure_storage: ^4.2.1
   pretty_dio_logger: ^1.4.0
+  retrofit: ^4.4.2
 
 dev_dependencies:
   flutter_test:
@@ -67,6 +68,9 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   build_runner: ^2.4.15
   json_serializable: ^6.9.4
+  import_sorter: ^4.6.0
+  very_good_analysis: ^7.0.0
+  retrofit_generator: ^9.1.9
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -109,3 +113,10 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+global_options:
+  freezed:
+    runs_before:
+      - json_serializable
+  json_serializable:
+    runs_before:
+      - retrofit_generator
