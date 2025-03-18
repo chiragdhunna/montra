@@ -8,8 +8,12 @@ part 'wallet_model.g.dart';
 
 @freezed
 abstract class WalletModel with _$WalletModel {
-  const factory WalletModel({required String walletName, required int amount}) =
-      _WalletModel;
+  const factory WalletModel({
+    required String name,
+    required int amount,
+    required String userId,
+    required String walletNumber,
+  }) = _WalletModel;
 
   factory WalletModel.fromJson(Map<String, Object?> json) =>
       _$WalletModelFromJson(json);

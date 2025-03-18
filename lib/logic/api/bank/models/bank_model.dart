@@ -8,8 +8,12 @@ part 'bank_model.g.dart';
 
 @freezed
 abstract class BankModel with _$BankModel {
-  const factory BankModel({required String bankName, required int amount}) =
-      _BankModel;
+  const factory BankModel({
+    required String name,
+    required int amount,
+    required String userId,
+    required String accountNumber,
+  }) = _BankModel;
 
   factory BankModel.fromJson(Map<String, Object?> json) =>
       _$BankModelFromJson(json);

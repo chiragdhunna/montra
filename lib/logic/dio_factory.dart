@@ -42,7 +42,7 @@ class DioFactory {
         onRequest: (options, handler) async {
           final authToken = await getAuthToken();
           if (authToken != null) {
-            options.headers['Authorization'] = 'Bearer $authToken';
+            options.headers['token'] = authToken;
           }
           return handler.next(options);
         },
