@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:montra/screens/on_boarding/on_boarding_screen.dart';
-import 'package:montra/screens/user%20screens/home.dart';
+import 'package:montra/screens/splash/splash_screen.dart';
 
 void main() {
   SystemChrome.setSystemUIOverlayStyle(
@@ -22,7 +21,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: ScreenUtilInit(child: OnBoardingScreen()),
+      home: ScreenUtilInit(child: SplashScreen()),
     );
   }
 }
