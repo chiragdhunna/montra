@@ -71,22 +71,22 @@ class AuthenticationBloc
     try {
       final authToken = await _authRepository.getAuthToken();
       final authUser = await _authRepository.getAuthUser();
-      var isOnline = false;
-      NetworkBloc().state.maybeWhen(
-        success: () {
-          isOnline = true;
-        },
-        failure: () {
-          isOnline = false;
-        },
-        orElse: () {},
-      );
+      // var isOnline = false;
+      // NetworkBloc().state.maybeWhen(
+      //   success: () {
+      //     isOnline = true;
+      //   },
+      //   failure: () {
+      //     isOnline = false;
+      //   },
+      //   orElse: () {},
+      // );
 
       if (authToken != null && authUser != null) {
         // final user = await _authRepository.userApi.getMe();
 
         emit(
-          AuthenticationState.authenticated(
+          AuthenticationState.userLoggedIn(
             user: authUser,
             authToken: authToken,
           ),

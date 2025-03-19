@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:montra/logic/blocs/login_bloc/login_bloc.dart';
 import 'package:montra/screens/on_boarding/login_screen.dart';
 import 'package:montra/screens/on_boarding/sign_up_verification_screen.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -15,6 +17,38 @@ class _SignUpScreenState extends State<SignUpScreen> {
   TextEditingController nameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+
+  bool get _allFieldsFilled =>
+      nameController.text.isNotEmpty &&
+      emailController.text.isNotEmpty &&
+      passwordController.text.isNotEmpty;
+
+  void _updateState() {
+    // This forces a rebuild when text changes
+    setState(() {});
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    nameController.addListener(_updateState);
+    emailController.addListener(_updateState);
+    passwordController.addListener(_updateState);
+
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    // Clean up controllers and listeners
+    nameController.removeListener(_updateState);
+    emailController.removeListener(_updateState);
+    passwordController.removeListener(_updateState);
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -144,9 +178,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     if (nameController.text.isNotEmpty &&
                         emailController.text.isNotEmpty &&
                         passwordController.text.isNotEmpty) {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (builder) => SignUpVerificationScreen(),
+                      // Navigator.of(context).push(
+                      //   MaterialPageRoute(
+                      //     builder: (builder) => SignUpVerificationScreen(),
+                      //   ),
+                      // );
+
+                      BlocProvider.of<LoginBloc>(context).add(
+                        LoginEvent.signUp(
+                          email: emailController.text,
+                          password: passwordController.text,
+                          name: nameController.text,
                         ),
                       );
                     } else {
@@ -159,7 +201,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _isChecked ? Colors.purple : Colors.grey,
+                    backgroundColor:
+                        (_allFieldsFilled && _isChecked)
+                            ? Colors.purple
+                            : Colors.grey,
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),

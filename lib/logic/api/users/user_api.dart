@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:montra/logic/api/users/models/login_user_model.dart';
 import 'package:montra/logic/api/users/models/login_user_response_model.dart';
+import 'package:montra/logic/api/users/models/user_model.dart';
 import 'package:retrofit/retrofit.dart';
 
 part 'user_api.g.dart';
@@ -123,8 +124,8 @@ part 'user_api.g.dart';
 abstract class UserApi {
   factory UserApi(Dio dio, {String? baseUrl}) = _UserApi;
 
-  // @POST('/api/v1/user/signup')
-  // Future<SignupResponse> signup(@Body() SignupRequest request);
+  @POST('users/signup')
+  Future<LoginUserResponseModel> signup(@Body() UserModel request);
 
   @POST('users/login')
   Future<LoginUserResponseModel> login(@Body() LoginUserModel request);

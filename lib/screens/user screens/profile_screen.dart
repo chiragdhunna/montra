@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:montra/logic/blocs/authentication_bloc/authentication_bloc.dart';
 import 'package:montra/screens/user%20screens/profile%20section/account_screen.dart';
 import 'package:montra/screens/user%20screens/profile%20section/export%20screens/export_data_screen.dart';
 import 'package:montra/screens/user%20screens/profile%20section/settings_screen.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -198,7 +200,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     onPressed: () {
                       // Handle logout logic here
-                      Navigator.of(context).pop();
+                      // Navigator.of(context).pop();
+                      BlocProvider.of<AuthenticationBloc>(
+                        context,
+                      ).add(const AuthenticationEvent.logout());
                     },
                     child: const Text(
                       'Yes',
