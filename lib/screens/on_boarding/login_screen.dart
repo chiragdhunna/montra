@@ -1,7 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:montra/logic/blocs/login_bloc/login_bloc.dart';
 import 'package:montra/screens/on_boarding/forgot_password_screen.dart';
 import 'package:montra/screens/on_boarding/sign_up_screen.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,6 +14,8 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
             const SizedBox(height: 40),
             TextField(
+              controller: _emailController,
               decoration: InputDecoration(
                 hintText: "Email",
                 filled: true,
@@ -55,6 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 15),
             TextField(
+              controller: _passwordController,
               obscureText: _obscurePassword,
               decoration: InputDecoration(
                 hintText: "Password",
@@ -100,7 +106,23 @@ class _LoginScreenState extends State<LoginScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  if (_emailController.text.isNotEmpty &&
+                      _passwordController.text.isNotEmpty) {
+                    BlocProvider.of<LoginBloc>(context).add(
+                      LoginEvent.startLogin(
+                        email: _emailController.text,
+                        password: _passwordController.text,
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Please fill in all fields"),
+                      ),
+                    );
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.purple,
                   padding: const EdgeInsets.symmetric(vertical: 15),
