@@ -24,3 +24,7 @@ class AuthenticationState with _$AuthenticationState {
     required String authToken,
   }) = _UserLoggedIn;
 }
+
+extension AuthenticationStateX on AuthenticationState {
+  bool get isAuthenticated => this is _Authenticated || this is _UserLoggedIn;
+}

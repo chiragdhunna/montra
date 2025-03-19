@@ -39,6 +39,11 @@ class AuthRepository {
     return authToken;
   }
 
+  Future<String?> setAuthToken(String authToken) async {
+    await _storage.write(key: authTokenkey, value: authToken);
+    return _storage.read(key: authTokenkey);
+  }
+
   Future<UserModel?> getAuthUser() async {
     final data = await _storage.read(key: authUserKey);
     if (data != null) {
@@ -57,5 +62,10 @@ class AuthRepository {
     }
 
     return null;
+  }
+
+  Future<UserModel?> setUser(UserModel user) async {
+    await _storage.write(key: authUserKey, value: jsonEncode(user.toJson()));
+    return getAuthUser();
   }
 }

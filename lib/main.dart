@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:montra/logic/blocs/authentication_bloc/authentication_bloc.dart';
 import 'package:montra/logic/blocs/login_bloc/login_bloc.dart';
+import 'package:montra/logic/blocs/network_bloc/network_bloc.dart';
 import 'package:montra/screens/splash/splash_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -18,6 +19,7 @@ void main() {
         BlocProvider<AuthenticationBloc>(
           create: (context) => AuthenticationBloc(),
         ),
+        BlocProvider<NetworkBloc>(create: (context) => NetworkBloc()),
       ],
       child: const MyApp(),
     ),
