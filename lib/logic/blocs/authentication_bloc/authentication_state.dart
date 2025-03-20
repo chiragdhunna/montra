@@ -6,10 +6,7 @@ class AuthenticationState with _$AuthenticationState {
 
   factory AuthenticationState.checking() = _Checking;
 
-  factory AuthenticationState.inProgress({
-    required String email,
-    required int attempt,
-  }) = _InProgess;
+  factory AuthenticationState.inProgress() = _InProgess;
 
   factory AuthenticationState.authenticated({
     required UserModel user,
@@ -18,6 +15,10 @@ class AuthenticationState with _$AuthenticationState {
 
   factory AuthenticationState.unAuthenticated() = _UnAuthenticated;
   factory AuthenticationState.loggedOut() = _LoggedOut;
+
+  factory AuthenticationState.userSignedUp() = _UserSignedUp;
+
+  factory AuthenticationState.userImageUploaded() = _UserImageUploaded;
 
   factory AuthenticationState.userLoggedIn({
     required UserModel user,

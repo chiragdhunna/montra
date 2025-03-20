@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:montra/logic/api/users/models/login_user_model.dart';
 import 'package:montra/logic/api/users/models/login_user_response_model.dart';
+import 'package:montra/logic/api/users/models/user_image_model.dart';
 import 'package:montra/logic/api/users/models/user_model.dart';
 import 'package:retrofit/retrofit.dart';
 
@@ -130,9 +133,8 @@ abstract class UserApi {
   @POST('users/login')
   Future<LoginUserResponseModel> login(@Body() LoginUserModel request);
 
-  // @MultiPart()
-  // @POST('/api/v1/user/imageupload')
-  // Future<String> uploadImage(@Part() File file);
+  @POST("users/imageupload")
+  Future<UserImageModel> uploadImage(@Body() FormData formData);
 
   // @GET('/api/v1/user/getimage')
   // // Use responseType parameter instead of Headers annotation

@@ -53,8 +53,9 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       final response = await userApi.signup(data);
       log.d('Response Data : $response');
       emit(LoginState.loginSuccess());
+
       authBloc.add(
-        AuthenticationEvent.userLogin(
+        AuthenticationEvent.userSignUp(
           authToken: response.token,
           user: response.user,
         ),

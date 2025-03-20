@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
+import 'package:montra/logic/blocs/authentication_bloc/authentication_bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 class UploadImageScreen extends StatefulWidget {
   const UploadImageScreen({super.key});
 
@@ -98,7 +101,14 @@ class _UploadImageScreenState extends State<UploadImageScreen> {
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(20.0),
         child: ElevatedButton(
-          onPressed: _image != null ? () {} : null,
+          onPressed:
+              _image != null
+                  ? () {
+                    BlocProvider.of<AuthenticationBloc>(
+                      context,
+                    ).add(AuthenticationEvent.uploadProfileImage(_image!));
+                  }
+                  : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.purple,
             foregroundColor: Colors.white,

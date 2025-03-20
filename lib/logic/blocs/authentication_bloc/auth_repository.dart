@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:logger/logger.dart';
@@ -14,7 +15,6 @@ class AuthRepository {
   final String _logTag = 'AuthRepository';
   final authTokenkey = 'authToken';
   final authUserKey = 'authUser';
-  final expertUserKey = 'expertUser';
 
   final _storage = const FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
@@ -68,4 +68,26 @@ class AuthRepository {
     await _storage.write(key: authUserKey, value: jsonEncode(user.toJson()));
     return getAuthUser();
   }
+
+  // Future<UserModel?> uploadProfileImage(File imageFile) async {
+  //   try {
+  //     // // Prepare form data for file upload
+  //     // FormData formData = FormData.fromMap({
+  //     //   "profile_image": await MultipartFile.fromFile(imageFile.path),
+  //     // });
+
+  //     // Send request to API
+  //     final response = await userApi.uploadImage(formData);
+
+  //     if (response != null) {
+  //       // Update user data in secure storage
+  //       await setUser(response);
+  //       return response;
+  //     }
+  //   } catch (e) {
+  //     log.e('Error uploading profile image: $e');
+  //   }
+
+  //   return null;
+  // }
 }

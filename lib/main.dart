@@ -5,6 +5,7 @@ import 'package:montra/logic/blocs/authentication_bloc/authentication_bloc.dart'
 import 'package:montra/logic/blocs/login_bloc/login_bloc.dart';
 import 'package:montra/logic/blocs/network_bloc/network_bloc.dart';
 import 'package:montra/screens/on_boarding/on_boarding_screen.dart';
+import 'package:montra/screens/on_boarding/upload_profile_screen.dart';
 import 'package:montra/screens/splash/splash_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:montra/screens/user%20screens/home.dart';
@@ -60,6 +61,18 @@ class MyApp extends StatelessWidget {
                   navigatorKey.currentState?.pushReplacement(
                     MaterialPageRoute(
                       builder: (context) => const OnBoardingScreen(),
+                    ),
+                  );
+                },
+                userImageUploaded: () {
+                  navigatorKey.currentState?.pushReplacement(
+                    MaterialPageRoute(builder: (context) => const Home()),
+                  );
+                },
+                userSignedUp: () {
+                  navigatorKey.currentState?.pushReplacement(
+                    MaterialPageRoute(
+                      builder: (context) => const UploadImageScreen(),
                     ),
                   );
                 },
