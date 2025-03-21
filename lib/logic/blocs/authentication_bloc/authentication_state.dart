@@ -18,7 +18,8 @@ class AuthenticationState with _$AuthenticationState {
 
   factory AuthenticationState.userSignedUp() = _UserSignedUp;
 
-  factory AuthenticationState.userImageUploaded() = _UserImageUploaded;
+  factory AuthenticationState.userImageUploaded({required UserModel user}) =
+      _UserImageUploaded;
 
   factory AuthenticationState.userLoggedIn({
     required UserModel user,

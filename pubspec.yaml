@@ -55,6 +55,7 @@ dependencies:
   pretty_dio_logger: ^1.4.0
   retrofit: ^4.4.2
   http_parser: ^4.1.2
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:

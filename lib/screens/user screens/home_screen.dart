@@ -1,10 +1,16 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:montra/logic/api/users/models/user_model.dart';
+import 'package:montra/logic/blocs/authentication_bloc/authentication_bloc.dart';
 import 'package:montra/screens/notification/notification_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, required this.user});
+
+  final UserModel user;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -15,6 +21,12 @@ class _HomeScreenState extends State<HomeScreen> {
     Colors.deepPurpleAccent,
     Colors.deepPurpleAccent,
   ];
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,9 +43,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    // Change this line in the Header Section
                     CircleAvatar(
                       radius: 20.r,
-                      backgroundImage: AssetImage("assets/profile.png"),
+                      backgroundImage:
+                          widget.user.imgUrl != null &&
+                                  widget.user.imgUrl!.isNotEmpty
+                              ? widget.user.imgUrl!.startsWith('/')
+                                  ? FileImage(File(widget.user.imgUrl!))
+                                      as ImageProvider
+                                  : AssetImage(widget.user.imgUrl!)
+                              : AssetImage("assets/default_avatar.png"),
                     ),
                     Row(
                       children: [

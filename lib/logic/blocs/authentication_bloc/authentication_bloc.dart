@@ -54,6 +54,8 @@ class AuthenticationBloc
 
   Future<void> _logout(_Logout event, Emitter<AuthenticationState> emit) async {
     try {
+      emit(AuthenticationState.inProgress());
+
       await _authRepository.logout();
       /* Login for updating the device token to the backend */
       emit(AuthenticationState.loggedOut());
@@ -68,15 +70,20 @@ class AuthenticationBloc
     Emitter<AuthenticationState> emit,
   ) async {
     try {
+      emit(AuthenticationState.inProgress());
       log.d('Auth token for user is : ${event.authToken}');
       await _authRepository.setAuthToken(event.authToken);
       await _authRepository.setUser(event.user);
+
+      await _authRepository.getProfileImage();
+
+      final user = await _authRepository.getAuthUser();
 
       // final user = await _authRepository.userApi.getMe();
 
       emit(
         AuthenticationState.userLoggedIn(
-          user: event.user,
+          user: user!,
           authToken: event.authToken,
         ),
       );
@@ -90,6 +97,8 @@ class AuthenticationBloc
     Emitter<AuthenticationState> emit,
   ) async {
     try {
+      emit(AuthenticationState.inProgress());
+
       final authToken = await _authRepository.getAuthToken();
       final authUser = await _authRepository.getAuthUser();
       // var isOnline = false;
@@ -111,7 +120,7 @@ class AuthenticationBloc
           return;
         } else {
           emit(
-            AuthenticationState.userLoggedIn(
+            AuthenticationState.authenticated(
               user: authUser,
               authToken: authToken,
             ),
@@ -157,8 +166,13 @@ class AuthenticationBloc
       // Call API
       final response = await userApi.uploadImage(formData);
       log.d("✅ Image Uploaded Successfully: ${response.imgUrl}");
+      log.w("✅ Image Uploaded Data: ${response.toJson()}");
 
-      emit(AuthenticationState.userImageUploaded());
+      await _authRepository.getProfileImage();
+
+      final user = await _authRepository.getAuthUser();
+
+      emit(AuthenticationState.userImageUploaded(user: user!));
     } catch (e) {
       log.e('Error uploading profile image: $e');
     }

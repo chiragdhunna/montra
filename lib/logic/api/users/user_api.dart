@@ -136,11 +136,9 @@ abstract class UserApi {
   @POST("users/imageupload")
   Future<UserImageModel> uploadImage(@Body() FormData formData);
 
-  // @GET('/api/v1/user/getimage')
-  // // Use responseType parameter instead of Headers annotation
-  // Future<List<int>> getImage({
-  //   @Query('responseType') String responseType = 'bytes',
-  // });
+  @GET('users/getimage')
+  @DioResponseType(ResponseType.bytes) // This tells Dio to expect binary data
+  Future<HttpResponse<List<int>>> getImage();
 
   // @POST('/api/v1/user/export')
   // Future<List<int>> exportData(@Body() ExportRequest request);

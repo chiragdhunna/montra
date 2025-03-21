@@ -6,6 +6,8 @@ import 'package:logger/logger.dart';
 import 'package:montra/logic/api/users/models/user_model.dart';
 import 'package:montra/logic/api/users/user_api.dart';
 import 'package:montra/logic/blocs/authentication_bloc/authentication_bloc.dart';
+import 'package:retrofit/retrofit.dart';
+import 'package:path_provider/path_provider.dart';
 
 Logger log = Logger(printer: PrettyPrinter());
 
@@ -69,25 +71,59 @@ class AuthRepository {
     return getAuthUser();
   }
 
-  // Future<UserModel?> uploadProfileImage(File imageFile) async {
+  // Future<HttpResponse<List<int>>> getProfileImage() async {
   //   try {
-  //     // // Prepare form data for file upload
-  //     // FormData formData = FormData.fromMap({
-  //     //   "profile_image": await MultipartFile.fromFile(imageFile.path),
-  //     // });
-
-  //     // Send request to API
-  //     final response = await userApi.uploadImage(formData);
+  //     final response = await userApi.getImage();
+  //     log.w('GetImage Response: $response');
 
   //     if (response != null) {
   //       // Update user data in secure storage
-  //       await setUser(response);
+  //       // await setUser(response);
+  //       // return response;
   //       return response;
   //     }
   //   } catch (e) {
   //     log.e('Error uploading profile image: $e');
   //   }
 
-  //   return null;
+  //   // return null;
   // }
+
+  Future<void> getProfileImage() async {
+    try {
+      final response = await userApi.getImage();
+      log.w('GetImage Response: $response');
+
+      if (response != null) {
+        // Update user data in secure storage
+
+        await saveProfileImage(response.data);
+      } else {
+        throw Exception('Error getting profile image');
+      }
+    } catch (e) {
+      log.e('Error uploading profile image: $e');
+      // You need to handle the error case by either:
+      throw e; // Re-throw the error, or
+      // Return a default HttpResponse object that represents an error
+    }
+  }
+
+  Future<void> saveProfileImage(List<int> imageBytes) async {
+    // 1. Save the image to local storage
+    final appDocDir = await getApplicationDocumentsDirectory();
+    final fileName =
+        'profile_image_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final filePath = '${appDocDir.path}/$fileName';
+
+    final file = File(filePath);
+    await file.writeAsBytes(imageBytes);
+
+    // 2. Store only the file path in secure storage (not the image itself)
+    // final secureStorage = FlutterSecureStorage();
+    // await secureStorage.write(key: 'profile_image_path', value: filePath);
+    final user = await getAuthUser();
+    final updatedUser = user!.copyWith(imgUrl: filePath);
+    await setUser(updatedUser);
+  }
 }

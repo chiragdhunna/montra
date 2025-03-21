@@ -56,7 +56,11 @@ class MyApp extends StatelessWidget {
               // TODO: implement listener
               state.maybeWhen(
                 orElse: () {},
-                authenticated: (user, authToken) {},
+                authenticated: (user, authToken) {
+                  navigatorKey.currentState?.pushReplacement(
+                    MaterialPageRoute(builder: (context) => Home(user: user)),
+                  );
+                },
                 unAuthenticated: () {
                   navigatorKey.currentState?.pushReplacement(
                     MaterialPageRoute(
@@ -64,9 +68,9 @@ class MyApp extends StatelessWidget {
                     ),
                   );
                 },
-                userImageUploaded: () {
+                userImageUploaded: (user) {
                   navigatorKey.currentState?.pushReplacement(
-                    MaterialPageRoute(builder: (context) => const Home()),
+                    MaterialPageRoute(builder: (context) => Home(user: user)),
                   );
                 },
                 userSignedUp: () {
@@ -78,7 +82,7 @@ class MyApp extends StatelessWidget {
                 },
                 userLoggedIn: (user, authToken) {
                   navigatorKey.currentState?.pushReplacement(
-                    MaterialPageRoute(builder: (context) => const Home()),
+                    MaterialPageRoute(builder: (context) => Home(user: user)),
                   );
                 },
               );
