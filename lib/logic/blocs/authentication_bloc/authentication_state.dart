@@ -6,6 +6,8 @@ class AuthenticationState with _$AuthenticationState {
 
   factory AuthenticationState.checking() = _Checking;
 
+  factory AuthenticationState.failure({required String error}) = _Failure;
+
   factory AuthenticationState.inProgress() = _InProgess;
 
   factory AuthenticationState.authenticated({

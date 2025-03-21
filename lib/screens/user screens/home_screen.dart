@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:montra/logic/api/users/models/user_model.dart';
-import 'package:montra/logic/blocs/authentication_bloc/authentication_bloc.dart';
 import 'package:montra/screens/notification/notification_screen.dart';
 
 class HomeScreen extends StatefulWidget {

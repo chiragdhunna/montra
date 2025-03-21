@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:montra/logic/blocs/login_bloc/login_bloc.dart';
 import 'package:montra/screens/on_boarding/login_screen.dart';
-import 'package:montra/screens/on_boarding/sign_up_verification_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:montra/screens/on_boarding/upload_profile_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});

@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:bloc/bloc.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:logger/logger.dart';
@@ -10,7 +9,6 @@ import 'package:mime/mime.dart';
 import 'package:montra/logic/api/users/models/user_model.dart';
 import 'package:montra/logic/api/users/user_api.dart';
 import 'package:montra/logic/blocs/authentication_bloc/auth_repository.dart';
-import 'package:montra/logic/blocs/network_bloc/network_bloc.dart';
 import 'package:montra/logic/dio_factory.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -45,11 +43,16 @@ class AuthenticationBloc
     _UserSignUp event,
     Emitter<AuthenticationState> emit,
   ) async {
-    emit(AuthenticationState.inProgress());
-    await _authRepository.setAuthToken(event.authToken);
-    await _authRepository.setUser(event.user);
+    try {
+      emit(AuthenticationState.inProgress());
+      await _authRepository.setAuthToken(event.authToken);
+      await _authRepository.setUser(event.user);
 
-    emit(AuthenticationState.userSignedUp());
+      emit(AuthenticationState.userSignedUp());
+    } catch (e) {
+      log.e('Error signing up user: $e');
+      emit(AuthenticationState.failure(error: e.toString()));
+    }
   }
 
   Future<void> _logout(_Logout event, Emitter<AuthenticationState> emit) async {
@@ -62,6 +65,7 @@ class AuthenticationBloc
       add(const AuthenticationEvent.checkExisting());
     } on Exception catch (error, stackTrace) {
       log.e(_logTag, error: 'Caught an exception  $error     $stackTrace');
+      emit(AuthenticationState.failure(error: error.toString()));
     }
   }
 
@@ -89,6 +93,7 @@ class AuthenticationBloc
       );
     } on Exception catch (error, stackTrace) {
       log.e(_logTag, error: 'Caught an exception  $error     $stackTrace');
+      emit(AuthenticationState.failure(error: error.toString()));
     }
   }
 
@@ -131,7 +136,7 @@ class AuthenticationBloc
       }
     } on Exception catch (error, stackTrace) {
       log.e(_logTag, error: 'Caught an exception  $error     $stackTrace');
-      emit(AuthenticationState.unAuthenticated());
+      emit(AuthenticationState.failure(error: error.toString()));
     }
   }
 
@@ -175,6 +180,7 @@ class AuthenticationBloc
       emit(AuthenticationState.userImageUploaded(user: user!));
     } catch (e) {
       log.e('Error uploading profile image: $e');
+      emit(AuthenticationState.failure(error: e.toString()));
     }
   }
 

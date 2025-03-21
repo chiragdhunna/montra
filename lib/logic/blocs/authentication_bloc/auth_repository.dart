@@ -5,8 +5,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:logger/logger.dart';
 import 'package:montra/logic/api/users/models/user_model.dart';
 import 'package:montra/logic/api/users/user_api.dart';
-import 'package:montra/logic/blocs/authentication_bloc/authentication_bloc.dart';
-import 'package:retrofit/retrofit.dart';
 import 'package:path_provider/path_provider.dart';
 
 Logger log = Logger(printer: PrettyPrinter());
@@ -27,7 +25,7 @@ class AuthRepository {
     try {
       // await userApi.logout(userDeviceToken);
     } catch (e) {
-      log..e('Error in Logout user : $e');
+      log.e('Error in Logout user : $e');
     }
 
     await _storage.delete(key: authTokenkey);
@@ -94,17 +92,13 @@ class AuthRepository {
       final response = await userApi.getImage();
       log.w('GetImage Response: $response');
 
-      if (response != null) {
-        // Update user data in secure storage
+      // Update user data in secure storage
 
-        await saveProfileImage(response.data);
-      } else {
-        throw Exception('Error getting profile image');
-      }
-    } catch (e) {
+      await saveProfileImage(response.data);
+        } catch (e) {
       log.e('Error uploading profile image: $e');
       // You need to handle the error case by either:
-      throw e; // Re-throw the error, or
+      rethrow; // Re-throw the error, or
       // Return a default HttpResponse object that represents an error
     }
   }

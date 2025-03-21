@@ -85,6 +85,11 @@ class MyApp extends StatelessWidget {
                     MaterialPageRoute(builder: (context) => Home(user: user)),
                   );
                 },
+                failure: (error) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(error)));
+                },
               );
             },
             child: ScreenUtilInit(
