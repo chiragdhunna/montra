@@ -6,6 +6,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:logger/logger.dart';
+import 'package:montra/logic/api/expense/models/expense_frequency_data_set_model.dart';
+import 'package:montra/logic/api/expense/models/expense_stats_frequency_model.dart';
+import 'package:montra/logic/api/expense/models/expense_stats_model.dart';
+import 'package:montra/logic/api/expense/models/expense_stats_summary_model.dart';
 import 'package:montra/logic/api/users/models/user_model.dart';
 import 'package:montra/logic/blocs/expense/expense_bloc.dart';
 import 'package:montra/logic/blocs/income_bloc/income_bloc.dart';
@@ -34,6 +38,16 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isIncomeLoading = true;
   int totalIncome = 0;
   int totalExpense = 0;
+  String selectedFilter = "Today";
+  ExpenseStatsModel expenseStats = ExpenseStatsModel(
+    summary: ExpenseStatsSummaryModel(today: 0, week: 0, month: 0, year: 0),
+    frequency: ExpenseStatsFrequencyModel(
+      today: [ExpenseFrequencyDataSetModel(label: "label", total: 0)],
+      week: [ExpenseFrequencyDataSetModel(label: "label", total: 0)],
+      month: [ExpenseFrequencyDataSetModel(label: "label", total: 0)],
+      year: [ExpenseFrequencyDataSetModel(label: "label", total: 0)],
+    ),
+  );
 
   @override
   void initState() {
@@ -90,11 +104,12 @@ class _HomeScreenState extends State<HomeScreen> {
   void expenseBlocChangeHandler(ExpenseState state) {
     state.maybeWhen(
       orElse: () {},
-      getExpenseSuccess: (expense) {
+      getExpenseSuccess: (expense, expenseData) {
         log.d('State is getExpenseSuccess');
         if (!mounted) return;
         setState(() {
           totalExpense = expense;
+          expenseStats = expenseData;
           _isIncomeLoading = false;
         });
       },
@@ -242,17 +257,37 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         SizedBox(height: 10.h),
-                        _buildLineChart(),
+                        _buildLineChart(
+                          selectedFilter == "Today"
+                              ? expenseStats.frequency.today
+                              : selectedFilter == "Month"
+                              ? expenseStats.frequency.month
+                              : selectedFilter == "Year"
+                              ? expenseStats.frequency.year
+                              : expenseStats.frequency.week,
+                        ),
                         SizedBox(height: 10.h),
 
                         // Time Filters
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            _buildFilterChip("Today", isSelected: true),
-                            _buildFilterChip("Week"),
-                            _buildFilterChip("Month"),
-                            _buildFilterChip("Year"),
+                            _buildFilterChip(
+                              "Today",
+                              isSelected: selectedFilter == "Today",
+                            ),
+                            _buildFilterChip(
+                              "Week",
+                              isSelected: selectedFilter == "Week",
+                            ),
+                            _buildFilterChip(
+                              "Month",
+                              isSelected: selectedFilter == "Month",
+                            ),
+                            _buildFilterChip(
+                              "Year",
+                              isSelected: selectedFilter == "Year",
+                            ),
                           ],
                         ),
                         SizedBox(height: 20.h),
@@ -353,7 +388,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildLineChart() {
+  Widget _buildLineChart(List<ExpenseFrequencyDataSetModel> data) {
+    List<FlSpot> spots = [];
+
+    for (int i = 0; i < data.length; i++) {
+      spots.add(FlSpot(i.toDouble(), data[i].total.toDouble()));
+    }
+
     return SizedBox(
       height: 150.h,
       child: LineChart(
@@ -364,15 +405,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
           lineBarsData: [
             LineChartBarData(
-              spots: [
-                const FlSpot(0, 1),
-                const FlSpot(1, 3),
-                const FlSpot(2, 2),
-                const FlSpot(3, 4),
-                const FlSpot(4, 3),
-                const FlSpot(5, 5),
-                const FlSpot(6, 4),
-              ],
+              // spots: [
+              //   const FlSpot(0, 1),
+              //   const FlSpot(1, 3),
+              //   const FlSpot(2, 2),
+              //   const FlSpot(3, 4),
+              //   const FlSpot(4, 3),
+              //   const FlSpot(5, 5),
+              //   const FlSpot(6, 4),
+              // ],
+              spots: spots,
               isCurved: true,
               color: Colors.purple,
 
@@ -394,17 +436,24 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildFilterChip(String text, {bool isSelected = false}) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 5.h),
-      decoration: BoxDecoration(
-        color: isSelected ? Colors.purple : Colors.grey[200],
-        borderRadius: BorderRadius.circular(20.r),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 14.sp,
-          color: isSelected ? Colors.white : Colors.black,
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedFilter = text;
+        });
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 5.h),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.purple : Colors.grey[200],
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 14.sp,
+            color: isSelected ? Colors.white : Colors.black,
+          ),
         ),
       ),
     );

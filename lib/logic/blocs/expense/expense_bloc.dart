@@ -3,6 +3,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logger/logger.dart';
 import 'package:montra/constants/income_source.dart';
 import 'package:montra/logic/api/expense/expense_api.dart';
+import 'package:montra/logic/api/expense/models/expense_stats_model.dart';
+import 'package:montra/logic/api/expense/models/expense_stats_summary_model.dart';
 import 'package:montra/logic/dio_factory.dart';
 
 part 'expense_event.dart';
@@ -30,7 +32,14 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
       emit(ExpenseState.inProgress());
       final response = await _expenseApi.getExpense();
       log.d('Get Income Response: $response');
-      emit(ExpenseState.getExpenseSuccess(expense: response.expense));
+      final statsData = await _expenseApi.getExpenseStats();
+      log.d('Get Income Response: $statsData');
+      emit(
+        ExpenseState.getExpenseSuccess(
+          expense: response.expense,
+          expenseStats: statsData,
+        ),
+      );
     } catch (e) {
       log.e('Error: $e');
       emit(ExpenseState.failure());
