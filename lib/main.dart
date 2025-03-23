@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:montra/logic/blocs/authentication_bloc/authentication_bloc.dart';
+import 'package:montra/logic/blocs/expense/expense_bloc.dart';
 import 'package:montra/logic/blocs/income_bloc/income_bloc.dart';
 import 'package:montra/logic/blocs/login_bloc/login_bloc.dart';
 import 'package:montra/logic/blocs/network_bloc/network_bloc.dart';
@@ -29,6 +30,7 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<IncomeBloc>(create: (context) => IncomeBloc()),
+        BlocProvider<ExpenseBloc>(create: (context) => ExpenseBloc()),
         BlocProvider<LoginBloc>(create: (context) => LoginBloc()),
         BlocProvider<AuthenticationBloc>(
           create: (context) {

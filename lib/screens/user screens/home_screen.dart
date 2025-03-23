@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:logger/logger.dart';
 import 'package:montra/logic/api/users/models/user_model.dart';
+import 'package:montra/logic/blocs/expense/expense_bloc.dart';
 import 'package:montra/logic/blocs/income_bloc/income_bloc.dart';
 import 'package:montra/screens/notification/notification_screen.dart';
 import 'package:montra/screens/user%20screens/transaction_screen.dart';
@@ -19,6 +21,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+Logger log = Logger(printer: PrettyPrinter());
+
 class _HomeScreenState extends State<HomeScreen> {
   List<Color> gradientColors = [
     Colors.deepPurpleAccent,
@@ -26,16 +30,22 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   late StreamSubscription<IncomeState> _incomeStreamSubscription;
+  late StreamSubscription<ExpenseState> _expenseStreamSubscription;
   bool _isIncomeLoading = true;
   int totalIncome = 0;
+  int totalExpense = 0;
 
   @override
   void initState() {
     // TODO: implement initState
     BlocProvider.of<IncomeBloc>(context).add(IncomeEvent.getIncome());
+    BlocProvider.of<ExpenseBloc>(context).add(ExpenseEvent.getExpense());
     _incomeStreamSubscription = BlocProvider.of<IncomeBloc>(
       context,
     ).stream.listen(incomeBlocChangeHandler);
+    _expenseStreamSubscription = BlocProvider.of<ExpenseBloc>(
+      context,
+    ).stream.listen(expenseBlocChangeHandler);
 
     incomeBlocChangeHandler(BlocProvider.of<IncomeBloc>(context).state);
 
@@ -47,6 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
       orElse: () {},
       getIncomeSuccess: (income) {
         log.d('State is getIncomeSuccess');
+        if (!mounted) return;
         setState(() {
           totalIncome = income;
           _isIncomeLoading = false;
@@ -54,23 +65,69 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       failure: () {
         log.d('State is failure');
+        if (!mounted) return;
         setState(() {
           _isIncomeLoading = false;
         });
       },
       inProgress: () {
         log.d('State is inProgress');
+        if (!mounted) return;
         setState(() {
           _isIncomeLoading = true;
         });
       },
       setIncomeSuccess: () {
         log.d('State is setIncomeSuccess');
+        if (!mounted) return;
         setState(() {
           _isIncomeLoading = false;
         });
       },
     );
+  }
+
+  void expenseBlocChangeHandler(ExpenseState state) {
+    state.maybeWhen(
+      orElse: () {},
+      getExpenseSuccess: (expense) {
+        log.d('State is getExpenseSuccess');
+        if (!mounted) return;
+        setState(() {
+          totalExpense = expense;
+          _isIncomeLoading = false;
+        });
+      },
+      failure: () {
+        log.d('State is failure');
+        if (!mounted) return;
+        setState(() {
+          _isIncomeLoading = false;
+        });
+      },
+      inProgress: () {
+        log.d('State is inProgress');
+        if (!mounted) return;
+        setState(() {
+          _isIncomeLoading = true;
+        });
+      },
+      setExpenseSuccess: () {
+        log.d('State is setExpenseSuccess');
+        if (!mounted) return;
+        setState(() {
+          _isIncomeLoading = false;
+        });
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    _incomeStreamSubscription.cancel();
+    _expenseStreamSubscription.cancel();
+    super.dispose();
   }
 
   @override
@@ -146,7 +203,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               SizedBox(height: 5.h),
                               Text(
-                                "\$9400",
+                                "\$$totalExpense",
                                 style: TextStyle(
                                   fontSize: 32.sp,
                                   fontWeight: FontWeight.bold,
@@ -168,7 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             _buildIncomeExpenseCard(
                               "Expenses",
-                              "\$1200",
+                              "\$$totalExpense",
                               Colors.red,
                             ),
                           ],

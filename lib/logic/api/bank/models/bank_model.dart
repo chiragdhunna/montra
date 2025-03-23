@@ -13,6 +13,7 @@ abstract class BankModel with _$BankModel {
     required int amount,
     required String userId,
     required String accountNumber,
+    required DateTime createdAt,
   }) = _BankModel;
 
   factory BankModel.fromJson(Map<String, Object?> json) =>
