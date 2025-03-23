@@ -1,10 +1,14 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:montra/logic/api/users/models/user_model.dart';
+import 'package:montra/logic/blocs/income_bloc/income_bloc.dart';
 import 'package:montra/screens/notification/notification_screen.dart';
+import 'package:montra/screens/user%20screens/transaction_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.user});
@@ -21,10 +25,52 @@ class _HomeScreenState extends State<HomeScreen> {
     Colors.deepPurpleAccent,
   ];
 
+  late StreamSubscription<IncomeState> _incomeStreamSubscription;
+  bool _isIncomeLoading = true;
+  int totalIncome = 0;
+
   @override
   void initState() {
     // TODO: implement initState
+    BlocProvider.of<IncomeBloc>(context).add(IncomeEvent.getIncome());
+    _incomeStreamSubscription = BlocProvider.of<IncomeBloc>(
+      context,
+    ).stream.listen(incomeBlocChangeHandler);
+
+    incomeBlocChangeHandler(BlocProvider.of<IncomeBloc>(context).state);
+
     super.initState();
+  }
+
+  void incomeBlocChangeHandler(IncomeState state) {
+    state.maybeWhen(
+      orElse: () {},
+      getIncomeSuccess: (income) {
+        log.d('State is getIncomeSuccess');
+        setState(() {
+          totalIncome = income;
+          _isIncomeLoading = false;
+        });
+      },
+      failure: () {
+        log.d('State is failure');
+        setState(() {
+          _isIncomeLoading = false;
+        });
+      },
+      inProgress: () {
+        log.d('State is inProgress');
+        setState(() {
+          _isIncomeLoading = true;
+        });
+      },
+      setIncomeSuccess: () {
+        log.d('State is setIncomeSuccess');
+        setState(() {
+          _isIncomeLoading = false;
+        });
+      },
+    );
   }
 
   @override
@@ -32,163 +78,186 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header Section
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Change this line in the Header Section
-                    CircleAvatar(
-                      radius: 20.r,
-                      backgroundImage:
-                          widget.user.imgUrl != null &&
-                                  widget.user.imgUrl!.isNotEmpty
-                              ? widget.user.imgUrl!.startsWith('/')
-                                  ? FileImage(File(widget.user.imgUrl!))
-                                      as ImageProvider
-                                  : AssetImage(widget.user.imgUrl!)
-                              : AssetImage("assets/default_avatar.png"),
-                    ),
-                    Row(
+        child:
+            _isIncomeLoading
+                ? Center(child: CircularProgressIndicator())
+                : SingleChildScrollView(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Header Section
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // Change this line in the Header Section
+                            CircleAvatar(
+                              radius: 20.r,
+                              backgroundImage:
+                                  widget.user.imgUrl != null &&
+                                          widget.user.imgUrl!.isNotEmpty
+                                      ? widget.user.imgUrl!.startsWith('/')
+                                          ? FileImage(File(widget.user.imgUrl!))
+                                              as ImageProvider
+                                          : AssetImage(widget.user.imgUrl!)
+                                      : AssetImage("assets/default_avatar.png"),
+                            ),
+                            Row(
+                              children: [
+                                Text(
+                                  "October",
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Icon(Icons.keyboard_arrow_down, size: 20.r),
+                              ],
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (builder) => NotificationScreen(),
+                                  ),
+                                );
+                              },
+                              child: Icon(
+                                Icons.notifications,
+                                size: 24.r,
+                                color: Colors.purple,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 20.h),
+
+                        // Account Balance
+                        Center(
+                          child: Column(
+                            children: [
+                              Text(
+                                "Account Balance",
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              SizedBox(height: 5.h),
+                              Text(
+                                "\$9400",
+                                style: TextStyle(
+                                  fontSize: 32.sp,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 20.h),
+
+                        // Income & Expenses Cards
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildIncomeExpenseCard(
+                              "Income",
+                              "\$$totalIncome",
+                              Colors.green,
+                            ),
+                            _buildIncomeExpenseCard(
+                              "Expenses",
+                              "\$1200",
+                              Colors.red,
+                            ),
+                          ],
+                        ),
+
+                        SizedBox(height: 20.h),
+
+                        // Spend Frequency Chart
                         Text(
-                          "October",
+                          "Spend Frequency",
                           style: TextStyle(
                             fontSize: 16.sp,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Icon(Icons.keyboard_arrow_down, size: 20.r),
+                        SizedBox(height: 10.h),
+                        _buildLineChart(),
+                        SizedBox(height: 10.h),
+
+                        // Time Filters
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildFilterChip("Today", isSelected: true),
+                            _buildFilterChip("Week"),
+                            _buildFilterChip("Month"),
+                            _buildFilterChip("Year"),
+                          ],
+                        ),
+                        SizedBox(height: 20.h),
+
+                        // Recent Transactions
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Recent Transaction",
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (builder) => TransactionScreen(),
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                "See All",
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.purple,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 10.h),
+
+                        // Transactions List
+                        _buildTransactionTile(
+                          "Shopping",
+                          "Buy some grocery",
+                          "-\$120",
+                          Colors.orange,
+                          "assets/shopping.png",
+                        ),
+                        _buildTransactionTile(
+                          "Subscription",
+                          "Disney+ Annual..",
+                          "-\$80",
+                          Colors.purple,
+                          "assets/subscription.png",
+                        ),
+                        _buildTransactionTile(
+                          "Food",
+                          "Buy a ramen",
+                          "-\$32",
+                          Colors.red,
+                          "assets/food.png",
+                        ),
                       ],
                     ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (builder) => NotificationScreen(),
-                          ),
-                        );
-                      },
-                      child: Icon(
-                        Icons.notifications,
-                        size: 24.r,
-                        color: Colors.purple,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 20.h),
-
-                // Account Balance
-                Center(
-                  child: Column(
-                    children: [
-                      Text(
-                        "Account Balance",
-                        style: TextStyle(fontSize: 14.sp, color: Colors.grey),
-                      ),
-                      SizedBox(height: 5.h),
-                      Text(
-                        "\$9400",
-                        style: TextStyle(
-                          fontSize: 32.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
                   ),
                 ),
-                SizedBox(height: 20.h),
-
-                // Income & Expenses Cards
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildIncomeExpenseCard("Income", "\$5000", Colors.green),
-                    _buildIncomeExpenseCard("Expenses", "\$1200", Colors.red),
-                  ],
-                ),
-
-                SizedBox(height: 20.h),
-
-                // Spend Frequency Chart
-                Text(
-                  "Spend Frequency",
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 10.h),
-                _buildLineChart(),
-                SizedBox(height: 10.h),
-
-                // Time Filters
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildFilterChip("Today", isSelected: true),
-                    _buildFilterChip("Week"),
-                    _buildFilterChip("Month"),
-                    _buildFilterChip("Year"),
-                  ],
-                ),
-                SizedBox(height: 20.h),
-
-                // Recent Transactions
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Recent Transaction",
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      "See All",
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.purple,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 10.h),
-
-                // Transactions List
-                _buildTransactionTile(
-                  "Shopping",
-                  "Buy some grocery",
-                  "-\$120",
-                  Colors.orange,
-                  "assets/shopping.png",
-                ),
-                _buildTransactionTile(
-                  "Subscription",
-                  "Disney+ Annual..",
-                  "-\$80",
-                  Colors.purple,
-                  "assets/subscription.png",
-                ),
-                _buildTransactionTile(
-                  "Food",
-                  "Buy a ramen",
-                  "-\$32",
-                  Colors.red,
-                  "assets/food.png",
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -196,7 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildIncomeExpenseCard(String title, String amount, Color color) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 15.h),
-      width: 150.w,
+      width: 154.w,
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(15.r),
