@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:montra/screens/user%20screens/profile%20section/settings%20screens/currency_screen.dart';
-import 'package:montra/screens/user%20screens/profile%20section/settings%20screens/language_screen.dart';
-import 'package:montra/screens/user%20screens/profile%20section/settings%20screens/notification_screen.dart';
-import 'package:montra/screens/user%20screens/profile%20section/settings%20screens/security_screen.dart';
-import 'package:montra/screens/user%20screens/profile%20section/settings%20screens/theme_screen.dart';
+import 'package:montra/screens/user_screens/profile_section/settings%20screens/currency_screen.dart';
+import 'package:montra/screens/user_screens/profile_section/settings%20screens/language_screen.dart';
+import 'package:montra/screens/user_screens/profile_section/settings%20screens/notification_screen.dart';
+import 'package:montra/screens/user_screens/profile_section/settings%20screens/security_screen.dart';
+import 'package:montra/screens/user_screens/profile_section/settings%20screens/theme_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends StatefulWidget {

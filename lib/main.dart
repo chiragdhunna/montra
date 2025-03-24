@@ -10,7 +10,7 @@ import 'package:montra/screens/on_boarding/on_boarding_screen.dart';
 import 'package:montra/screens/on_boarding/upload_profile_screen.dart';
 import 'package:montra/screens/splash/splash_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:montra/screens/user%20screens/home.dart';
+import 'package:montra/screens/user_screens/home.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 

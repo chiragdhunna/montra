@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:montra/screens/user%20screens/financial%20reports/financial_report_status_screen.dart';
+import 'package:montra/screens/user_screens/financial_reports/financial_report_status_screen.dart';
 
 class TransactionScreen extends StatefulWidget {
   const TransactionScreen({super.key});

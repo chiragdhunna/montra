@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:montra/screens/user%20screens/profile%20section/export%20screens/export_data_success_screen.dart';
+import 'package:montra/screens/user_screens/profile_section/export%20screens/export_data_success_screen.dart';
 
 class ExportDataScreen extends StatefulWidget {
   const ExportDataScreen({super.key});

@@ -14,7 +14,7 @@ import 'package:montra/logic/api/users/models/user_model.dart';
 import 'package:montra/logic/blocs/expense/expense_bloc.dart';
 import 'package:montra/logic/blocs/income_bloc/income_bloc.dart';
 import 'package:montra/screens/notification/notification_screen.dart';
-import 'package:montra/screens/user%20screens/transaction_screen.dart';
+import 'package:montra/screens/user_screens/transaction_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.user});

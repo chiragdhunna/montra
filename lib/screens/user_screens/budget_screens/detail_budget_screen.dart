@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:montra/screens/user%20screens/budget%20screens/edit_budget_screen.dart';
+import 'package:montra/screens/user_screens/budget_screens/edit_budget_screen.dart';
 
 class DetailBudgetScreen extends StatefulWidget {
   const DetailBudgetScreen({super.key});

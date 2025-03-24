@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
-import 'package:montra/screens/user%20screens/financial%20reports/financial_report_screen.dart';
+import 'package:montra/screens/user_screens/financial_reports/financial_report_screen.dart';
 
 class FinancialReportStatusScreen extends StatefulWidget {
   const FinancialReportStatusScreen({super.key});

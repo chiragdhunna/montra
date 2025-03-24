@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:montra/screens/user%20screens/profile%20section/account%20screens/account_management_screen.dart';
+import 'package:montra/screens/user_screens/profile_section/account%20screens/account_management_screen.dart';
 
 class DetailAccountScreen extends StatefulWidget {
   const DetailAccountScreen({super.key});
