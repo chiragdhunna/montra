@@ -74,7 +74,7 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
       emit(TransactionsState.inProgress());
       final expenses = await _expenseApi.getAllExpenses();
       final incomes = await _incomeApi.getAllIncomes();
-      final transfers = await _transferApi.getAllIncomes();
+      final transfers = await _transferApi.getAllTransfers();
 
       final transactions = TransactionsModels(
         transfer: transfers,
@@ -104,7 +104,8 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
       // Fetch all transactions
       final expenses = await _expenseApi.getAllExpenses();
       final incomes = await _incomeApi.getAllIncomes();
-      final transfers = await _transferApi.getAllIncomes(); // correct if needed
+      final transfers =
+          await _transferApi.getAllTransfers(); // correct if needed
 
       final all = <Map<String, dynamic>>[];
 

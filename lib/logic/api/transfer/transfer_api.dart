@@ -9,5 +9,5 @@ abstract class TransferApi {
   factory TransferApi(Dio dio, {String? baseUrl}) = _TransferApi;
 
   @GET("transfer/getAll")
-  Future<TransfersModel> getAllIncomes();
+  Future<TransfersModel> getAllTransfers();
 }

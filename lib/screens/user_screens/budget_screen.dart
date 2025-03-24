@@ -1,5 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:montra/logic/api/budget/models/budget_model.dart';
+import 'package:montra/logic/blocs/budget_bloc/budget_bloc.dart';
 import 'package:montra/screens/user_screens/budget_screens/create_budget_screen.dart';
 import 'package:montra/screens/user_screens/budget_screens/detail_budget_screen.dart';
 
@@ -12,75 +17,7 @@ class BudgetScreen extends StatefulWidget {
 
 class _BudgetScreenState extends State<BudgetScreen> {
   // Sample budget data structure
-  final Map<String, List<Map<String, dynamic>>> monthlyBudgets = {
-    'January': [],
-    'February': [],
-    'March': [],
-    'April': [
-      {
-        'category': 'Groceries',
-        'remaining': 200,
-        'total': 500,
-        'spent': 300,
-        'color': Colors.green,
-      },
-    ],
-    'May': [
-      {
-        'category': 'Shopping',
-        'remaining': 0,
-        'total': 1000,
-        'spent': 1200,
-        'color': Colors.orange,
-      },
-      {
-        'category': 'Transportation',
-        'remaining': 350,
-        'total': 700,
-        'spent': 350,
-        'color': Colors.blue,
-      },
-    ],
-    'June': [
-      {
-        'category': 'Entertainment',
-        'remaining': 150,
-        'total': 300,
-        'spent': 150,
-        'color': Colors.purple,
-      },
-    ],
-    'July': [],
-    'August': [
-      {
-        'category': 'Dining Out',
-        'remaining': 50,
-        'total': 200,
-        'spent': 150,
-        'color': Colors.red,
-      },
-    ],
-    'September': [],
-    'October': [],
-    'November': [
-      {
-        'category': 'Holiday Shopping',
-        'remaining': 500,
-        'total': 1000,
-        'spent': 500,
-        'color': Colors.teal,
-      },
-    ],
-    'December': [
-      {
-        'category': 'Gifts',
-        'remaining': 100,
-        'total': 500,
-        'spent': 400,
-        'color': Colors.deepPurple,
-      },
-    ],
-  };
+  Map<String, List<Map<String, dynamic>>> monthlyBudgets = {};
 
   final List<String> months = [
     'January',
@@ -97,16 +34,101 @@ class _BudgetScreenState extends State<BudgetScreen> {
     'December',
   ];
 
-  int currentMonthIndex = 4; // May (0-based index)
+  int currentMonthIndex = DateTime.now().month - 1;
+  late StreamSubscription<BudgetState> _budgetStreamSubscription;
+  bool _isLoading = false;
 
   void _changeMonth(bool isNext) {
     setState(() {
       if (isNext) {
         currentMonthIndex = (currentMonthIndex + 1) % 12;
+        BlocProvider.of<BudgetBloc>(
+          context,
+        ).add(BudgetEvent.getBudgetByMonth(month: currentMonthIndex + 1));
       } else {
         currentMonthIndex = (currentMonthIndex - 1 + 12) % 12;
+        BlocProvider.of<BudgetBloc>(
+          context,
+        ).add(BudgetEvent.getBudgetByMonth(month: currentMonthIndex + 1));
       }
     });
+  }
+
+  double _calculateRemainingBudget(BudgetModel budget) {
+    double spent = double.tryParse(budget.current.toString()) ?? 0.0;
+    return budget.totalBudget - spent;
+  }
+
+  Color _getCategoryColor(String category) {
+    final Map<String, Color> categoryColors = {
+      'Groceries': Colors.green,
+      'Shopping': Colors.orange,
+      'Transportation': Colors.blue,
+      'Entertainment': Colors.purple,
+      'Dining Out': Colors.red,
+      'Holiday Shopping': Colors.teal,
+      'Gifts': Colors.deepPurple,
+    };
+    return categoryColors[category] ?? Colors.grey;
+  }
+
+  void budgetBlocChangeHandler(BudgetState state) {
+    state.maybeWhen(
+      orElse: () {},
+      getBudgetByMonthSuccess: (budgetsModel) {
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+
+          // Convert List<BudgetModel> into a format suitable for monthlyBudgets
+          monthlyBudgets[months[currentMonthIndex]] =
+              budgetsModel.budgets.map((budget) {
+                return {
+                  'category': budget.name,
+                  'remaining': _calculateRemainingBudget(budget),
+                  'total': budget.totalBudget.toDouble(),
+                  'spent': double.parse(budget.current.toString()),
+                  'color': _getCategoryColor(budget.name),
+                };
+              }).toList();
+        });
+      },
+
+      failure: () {
+        log.d('State is failure');
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+        });
+      },
+      inProgress: () {
+        log.d('State is inProgress');
+        if (!mounted) return;
+        setState(() {
+          _isLoading = true;
+        });
+      },
+    );
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    BlocProvider.of<BudgetBloc>(
+      context,
+    ).add(BudgetEvent.getBudgetByMonth(month: currentMonthIndex + 1));
+    _budgetStreamSubscription = BlocProvider.of<BudgetBloc>(
+      context,
+    ).stream.listen(budgetBlocChangeHandler);
+    budgetBlocChangeHandler(BlocProvider.of<BudgetBloc>(context).state);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    _budgetStreamSubscription.cancel();
+    super.dispose();
   }
 
   @override

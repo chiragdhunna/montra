@@ -9,11 +9,11 @@ part 'budget_model.g.dart';
 @freezed
 abstract class BudgetModel with _$BudgetModel {
   const factory BudgetModel({
-    required String name,
-    required int totalBudget,
-    required String userId,
     required String budgetId,
-    required String current,
+    required int totalBudget,
+    required String name,
+    required String userId,
+    required int current,
     required DateTime createdAt,
   }) = _BudgetModel;
 

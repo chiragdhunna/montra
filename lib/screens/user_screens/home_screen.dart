@@ -172,14 +172,6 @@ class _HomeScreenState extends State<HomeScreen> {
     state.maybeWhen(
       orElse: () {},
       getAllTransactionSuccess: (transactions) {
-        // log.d('State is getExpenseSuccess');
-        // if (!mounted) return;
-        // setState(() {
-        //   totalExpense = expense;
-        //   expenseStats = expenseData;
-        //   _isIncomeLoading = false;
-        // });
-        // log.w('Transactions from getAllTransactionSuccess : $transactions');
         if (!mounted) return;
         setState(() {
           // Store the most recent transactions (e.g., the first 3)
