@@ -65,110 +65,123 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     return Scaffold(
       extendBodyBehindAppBar: true,
       extendBody: true,
-      body: Stack(
-        children: [
-          _pages[_selectedIndex],
+      body: GestureDetector(
+        onTap: () {
+          if (_isExpanded) {
+            setState(() {
+              _isExpanded = false;
+            });
+          }
+        },
+        behavior: HitTestBehavior.opaque,
+        child: Stack(
+          children: [
+            IgnorePointer(
+              ignoring: _isExpanded, // Block interaction only when expanded
+              child: _pages[_selectedIndex],
+            ),
 
-          // Transfer button
-          Positioned(
-            bottom: 90.h,
-            left: MediaQuery.of(context).size.width / 2 - 28.w,
-            child: Visibility(
-              visible: _isExpanded,
-              child: AnimatedContainer(
-                duration: Duration(milliseconds: 300),
-                transform: Matrix4.translationValues(
-                  0,
-                  _isExpanded ? -70.h : 0,
-                  0,
-                ),
-                child: FloatingActionButton(
-                  heroTag: "transfer",
-                  onPressed: () {
-                    print("Transfer pressed");
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => NewTransferScreen(),
-                      ),
-                    );
-                  },
-                  backgroundColor: Colors.purple,
-                  shape: const CircleBorder(),
-                  child: Image.asset('assets/transaction_icon.png'),
+            // Transfer button
+            Positioned(
+              bottom: 90.h,
+              left: MediaQuery.of(context).size.width / 2 - 28.w,
+              child: Visibility(
+                visible: _isExpanded,
+                child: AnimatedContainer(
+                  duration: Duration(milliseconds: 300),
+                  transform: Matrix4.translationValues(
+                    0,
+                    _isExpanded ? -70.h : 0,
+                    0,
+                  ),
+                  child: FloatingActionButton(
+                    heroTag: "transfer",
+                    onPressed: () {
+                      print("Transfer pressed");
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => NewTransferScreen(),
+                        ),
+                      );
+                    },
+                    backgroundColor: Colors.purple,
+                    shape: const CircleBorder(),
+                    child: Image.asset('assets/transaction_icon.png'),
+                  ),
                 ),
               ),
             ),
-          ),
 
-          // Income button
-          Positioned(
-            bottom: 90.h,
-            left: MediaQuery.of(context).size.width / 2 - 98.w,
-            child: AnimatedOpacity(
-              duration: Duration(milliseconds: 200),
-              opacity: _isExpanded ? 1.0 : 0.0,
-              child: AnimatedContainer(
-                duration: Duration(milliseconds: 300),
-                transform: Matrix4.translationValues(
-                  0,
-                  _isExpanded ? -20.h : 0,
-                  0,
-                ),
-                child: FloatingActionButton(
-                  heroTag: "income",
-                  onPressed:
-                      _isExpanded
-                          ? () {
-                            print("Income pressed");
-                            // Navigate to Income Add Screen
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (builder) => NewIncomeScreen(),
-                              ),
-                            );
-                          }
-                          : null,
-                  shape: const CircleBorder(),
-                  child: Image.asset('assets/income.png'),
+            // Income button
+            Positioned(
+              bottom: 90.h,
+              left: MediaQuery.of(context).size.width / 2 - 98.w,
+              child: AnimatedOpacity(
+                duration: Duration(milliseconds: 200),
+                opacity: _isExpanded ? 1.0 : 0.0,
+                child: AnimatedContainer(
+                  duration: Duration(milliseconds: 300),
+                  transform: Matrix4.translationValues(
+                    0,
+                    _isExpanded ? -20.h : 0,
+                    0,
+                  ),
+                  child: FloatingActionButton(
+                    heroTag: "income",
+                    onPressed:
+                        _isExpanded
+                            ? () {
+                              print("Income pressed");
+                              // Navigate to Income Add Screen
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (builder) => NewIncomeScreen(),
+                                ),
+                              );
+                            }
+                            : null,
+                    shape: const CircleBorder(),
+                    child: Image.asset('assets/income.png'),
+                  ),
                 ),
               ),
             ),
-          ),
 
-          // Expense button
-          Positioned(
-            bottom: 90.h,
-            left: MediaQuery.of(context).size.width / 2 + 42.w,
-            child: AnimatedOpacity(
-              duration: Duration(milliseconds: 200),
-              opacity: _isExpanded ? 1.0 : 0.0,
-              child: AnimatedContainer(
-                duration: Duration(milliseconds: 300),
-                transform: Matrix4.translationValues(
-                  0,
-                  _isExpanded ? -20.h : 0,
-                  0,
-                ),
-                child: FloatingActionButton(
-                  heroTag: "expense",
-                  onPressed:
-                      _isExpanded
-                          ? () {
-                            print("Expense pressed");
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (builder) => NewExpenseScreen(),
-                              ),
-                            );
-                          }
-                          : null,
-                  shape: const CircleBorder(),
-                  child: Image.asset('assets/expense.png'),
+            // Expense button
+            Positioned(
+              bottom: 90.h,
+              left: MediaQuery.of(context).size.width / 2 + 42.w,
+              child: AnimatedOpacity(
+                duration: Duration(milliseconds: 200),
+                opacity: _isExpanded ? 1.0 : 0.0,
+                child: AnimatedContainer(
+                  duration: Duration(milliseconds: 300),
+                  transform: Matrix4.translationValues(
+                    0,
+                    _isExpanded ? -20.h : 0,
+                    0,
+                  ),
+                  child: FloatingActionButton(
+                    heroTag: "expense",
+                    onPressed:
+                        _isExpanded
+                            ? () {
+                              print("Expense pressed");
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (builder) => NewExpenseScreen(),
+                                ),
+                              );
+                            }
+                            : null,
+                    shape: const CircleBorder(),
+                    child: Image.asset('assets/expense.png'),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
