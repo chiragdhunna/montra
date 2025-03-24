@@ -1,7 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:montra/constants/income_source.dart';
+import 'package:montra/logic/blocs/income_bloc/income_bloc.dart';
 
 class NewIncomeScreen extends StatefulWidget {
   const NewIncomeScreen({super.key});
@@ -12,23 +18,25 @@ class NewIncomeScreen extends StatefulWidget {
 
 class _NewIncomeScreenState extends State<NewIncomeScreen> {
   String? _selectedCategory;
-  String? _selectedWallet;
+  String? _selectedSource;
+  IncomeSource _selectedIcomeSource = IncomeSource.wallet;
   bool _isRepeat = false;
   bool _isRepeatConfigured = false;
   File? _selectedImage;
+  int amount = 0;
+  bool _isLoading = false;
+  TextEditingController amountController = TextEditingController();
+  TextEditingController descriptionController = TextEditingController();
+
+  late StreamSubscription<IncomeState> incomeStreamSubscription;
 
   String _repeatFrequency = "Yearly";
   String _repeatMonth = "Dec";
   String _repeatDay = "29";
   String _repeatEndDate = "29 Dec 2025";
 
-  final List<String> _categories = [
-    "Salary",
-    "Freelance",
-    "Investment",
-    "Bonus",
-  ];
-  final List<String> _wallets = ["Bank", "Cash", "Credit Card", "Paypal"];
+  final List<String> _sources = ["Salary", "Freelance", "Investment", "Bonus"];
+  final List<String> _wallets = ["Bank", "Cash", "Credit Card", "Wallet"];
   final List<String> _months = [
     "Jan",
     "Feb",
@@ -61,69 +69,134 @@ class _NewIncomeScreenState extends State<NewIncomeScreen> {
     });
   }
 
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.r),
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(20.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircleAvatar(
-                  radius: 30.r,
-                  backgroundColor: Colors.purple.withOpacity(0.1),
-                  child: Icon(
-                    Icons.check_circle,
-                    color: Colors.purple,
-                    size: 40.r,
-                  ),
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    incomeStreamSubscription.cancel();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    incomeStreamSubscription = BlocProvider.of<IncomeBloc>(
+      context,
+    ).stream.listen(incomeBlocChangeHandler);
+    incomeBlocChangeHandler(BlocProvider.of<IncomeBloc>(context).state);
+    super.initState();
+  }
+
+  Future<void> incomeBlocChangeHandler(IncomeState state) async {
+    state.maybeWhen(
+      orElse: () {},
+      inProgress: () {
+        setState(() {
+          _isLoading = true;
+        });
+      },
+      failure: () {
+        setState(() {
+          _isLoading = false;
+        });
+      },
+      createIncomeSuccess: () {
+        setState(() {
+          _isLoading = false;
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) {
+              return Dialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16.r),
                 ),
-                const SizedBox(height: 15),
-                const Text(
-                  "Transaction has been successfully added",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.purple,
-                      padding: EdgeInsets.symmetric(vertical: 12.h),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.r),
+                child: Padding(
+                  padding: EdgeInsets.all(20.w),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircleAvatar(
+                        radius: 30.r,
+                        backgroundColor: Colors.purple.withOpacity(0.1),
+                        child: Icon(
+                          Icons.check_circle,
+                          color: Colors.purple,
+                          size: 40.r,
+                        ),
                       ),
-                    ),
-                    child: const Text(
-                      "OK",
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
+                      const SizedBox(height: 15),
+                      const Text(
+                        "Transaction has been successfully added",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.pop(context);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.purple,
+                            padding: EdgeInsets.symmetric(vertical: 12.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.r),
+                            ),
+                          ),
+                          child: const Text(
+                            "OK",
+                            style: TextStyle(color: Colors.white, fontSize: 16),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
-        );
+              );
+            },
+          );
+        });
       },
     );
+  }
+
+  void _showSuccessDialog() {
+    log.w('Amount : ${amountController.text}');
+    log.w('Category : ${_selectedCategory}');
+    log.w('Description : ${descriptionController.text}');
+    log.w('_selectedIncomeSource : ${_selectedIcomeSource}');
+    if (amountController.text.isNotEmpty &&
+        descriptionController.text.isNotEmpty &&
+        _selectedImage != null) {
+      BlocProvider.of<IncomeBloc>(context).add(
+        IncomeEvent.createIncome(
+          amount: int.parse(amountController.text),
+          source: _selectedIcomeSource,
+          description: descriptionController.text,
+          attachment: _selectedImage,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Colors.red,
+          content: Text("Please fill all the fields"),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.green,
+      backgroundColor: _isLoading ? Colors.white : Colors.green,
       appBar: AppBar(
-        backgroundColor: Colors.green,
+        backgroundColor: _isLoading ? Colors.white : Colors.green,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -141,71 +214,125 @@ class _NewIncomeScreenState extends State<NewIncomeScreen> {
         ),
         centerTitle: true,
       ),
-      body: Column(
-        mainAxisSize: MainAxisSize.max,
-        children: [
-          SizedBox(height: 20.h),
-          Text(
-            "How much?",
-            style: TextStyle(fontSize: 18.sp, color: Colors.white),
-          ),
-          SizedBox(height: 10.h),
-          Text(
-            "\$0",
-            style: TextStyle(
-              fontSize: 40.sp,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          SizedBox(height: 20.h),
-          Expanded(
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(30.r),
-                  topRight: Radius.circular(30.r),
-                ),
-              ),
-              child: ListView(
+      body:
+          _isLoading
+              ? Center(child: CircularProgressIndicator())
+              : Column(
+                mainAxisSize: MainAxisSize.max,
                 children: [
-                  _buildDropdownField(
-                    "Category",
-                    _selectedCategory ?? "Category",
-                    _categories,
-                    (value) {
-                      setState(() {
-                        _selectedCategory = value;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 15),
-                  _buildTextField("Description"),
-                  const SizedBox(height: 15),
-                  _buildDropdownField(
-                    "Wallet",
-                    _selectedWallet ?? "Wallet",
-                    _wallets,
-                    (value) {
-                      setState(() {
-                        _selectedWallet = value;
-                      });
-                    },
+                  SizedBox(height: 20.h),
+                  Text(
+                    "How much?",
+                    style: TextStyle(fontSize: 18.sp, color: Colors.white),
                   ),
                   SizedBox(height: 10.h),
-                  _buildAttachmentSection(),
+                  Container(
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          "\$",
+                          style: TextStyle(
+                            fontSize: 40.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        IntrinsicWidth(
+                          child: TextField(
+                            controller: amountController,
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.start,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                amount = value.isEmpty ? 0 : int.parse(value);
+                              });
+                            },
+                            style: TextStyle(
+                              fontSize: 40.sp,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                            decoration: InputDecoration(
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.zero,
+                              isDense: true,
+                              hintText: "0",
+                              hintStyle: TextStyle(color: Colors.white70),
+                              constraints: BoxConstraints(minWidth: 10.w),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   SizedBox(height: 20.h),
-                  _buildRepeatTransactionToggle(),
-                  SizedBox(height: 20.h),
-                  _buildContinueButton(),
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 20.w,
+                        vertical: 20.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(30.r),
+                          topRight: Radius.circular(30.r),
+                        ),
+                      ),
+                      child: ListView(
+                        children: [
+                          _buildDropdownField(
+                            "Category",
+                            _selectedCategory ?? "Category",
+                            _sources,
+                            (value) {
+                              setState(() {
+                                _selectedCategory = value;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 15),
+                          _buildTextField("Description", descriptionController),
+                          const SizedBox(height: 15),
+                          _buildDropdownField(
+                            "Wallet",
+                            _selectedSource ?? "Wallet",
+                            _wallets,
+                            (value) {
+                              setState(() {
+                                _selectedSource = value;
+                                if (_selectedSource == "Wallet") {
+                                  _selectedIcomeSource = IncomeSource.wallet;
+                                } else if (_selectedSource == "Bank") {
+                                  _selectedIcomeSource = IncomeSource.bank;
+                                } else if (_selectedSource == "Cash") {
+                                  _selectedIcomeSource = IncomeSource.cash;
+                                } else {
+                                  _selectedIcomeSource =
+                                      IncomeSource.creditCard;
+                                }
+                              });
+                            },
+                          ),
+                          SizedBox(height: 10.h),
+                          _buildAttachmentSection(),
+                          SizedBox(height: 20.h),
+                          _buildRepeatTransactionToggle(),
+                          SizedBox(height: 20.h),
+                          _buildContinueButton(),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -237,10 +364,12 @@ class _NewIncomeScreenState extends State<NewIncomeScreen> {
     );
   }
 
-  Widget _buildTextField(String hint) {
+  Widget _buildTextField(String hint, TextEditingController controller) {
     return TextField(
+      controller: controller,
       decoration: InputDecoration(
         hintText: hint,
+
         filled: true,
         fillColor: Colors.grey[100],
         border: OutlineInputBorder(

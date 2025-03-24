@@ -39,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late StreamSubscription<IncomeState> _incomeStreamSubscription;
   late StreamSubscription<ExpenseState> _expenseStreamSubscription;
   late StreamSubscription<TransactionsState> _transactionsStreamSubscription;
-  bool _isIncomeLoading = true;
+  bool _isLoading = true;
   int totalIncome = 0;
   int totalExpense = 0;
   String selectedFilter = "Today";
@@ -99,70 +99,78 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void incomeBlocChangeHandler(IncomeState state) {
     state.maybeWhen(
-      orElse: () {},
+      orElse: () {
+        log.d('State is or else');
+      },
       getIncomeSuccess: (income) {
         log.d('State is getIncomeSuccess');
         if (!mounted) return;
         setState(() {
           totalIncome = income;
-          _isIncomeLoading = false;
+          _isLoading = false;
         });
       },
       failure: () {
         log.d('State is failure');
         if (!mounted) return;
         setState(() {
-          _isIncomeLoading = false;
+          _isLoading = false;
         });
       },
       inProgress: () {
         log.d('State is inProgress');
         if (!mounted) return;
         setState(() {
-          _isIncomeLoading = true;
+          _isLoading = true;
         });
       },
       setIncomeSuccess: () {
         log.d('State is setIncomeSuccess');
         if (!mounted) return;
         setState(() {
-          _isIncomeLoading = false;
+          _isLoading = false;
         });
+      },
+      createIncomeSuccess: () {
+        _isLoading = false;
+        BlocProvider.of<IncomeBloc>(context).add(IncomeEvent.getIncome());
       },
     );
   }
 
   void expenseBlocChangeHandler(ExpenseState state) {
     state.maybeWhen(
-      orElse: () {},
+      orElse: () {
+        log.d('State is or else');
+      },
       getExpenseSuccess: (expense, expenseData) {
         log.d('State is getExpenseSuccess');
         if (!mounted) return;
         setState(() {
           totalExpense = expense;
           expenseStats = expenseData;
-          _isIncomeLoading = false;
+          _isLoading = false;
         });
       },
       failure: () {
         log.d('State is failure');
         if (!mounted) return;
         setState(() {
-          _isIncomeLoading = false;
+          _isLoading = false;
         });
       },
       inProgress: () {
         log.d('State is inProgress');
         if (!mounted) return;
         setState(() {
-          _isIncomeLoading = true;
+          _isLoading = true;
         });
       },
       setExpenseSuccess: () {
         log.d('State is setExpenseSuccess');
         if (!mounted) return;
         setState(() {
-          _isIncomeLoading = false;
+          _isLoading = false;
         });
       },
     );
@@ -170,7 +178,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void transactionsBlocChangeHandler(TransactionsState state) {
     state.maybeWhen(
-      orElse: () {},
+      orElse: () {
+        log.d('State is or else');
+      },
       getAllTransactionSuccess: (transactions) {
         if (!mounted) return;
         setState(() {
@@ -180,7 +190,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   .take(3)
                   .map((item) => item as Map<String, dynamic>)
                   .toList();
-          _isIncomeLoading = false;
+          _isLoading = false;
           log.w('Transactions from recentTransactions : $recentTransactions');
         });
       },
@@ -188,14 +198,14 @@ class _HomeScreenState extends State<HomeScreen> {
         log.d('State is failure');
         if (!mounted) return;
         setState(() {
-          _isIncomeLoading = false;
+          _isLoading = false;
         });
       },
       inProgress: () {
         log.d('State is inProgress');
         if (!mounted) return;
         setState(() {
-          _isIncomeLoading = true;
+          _isLoading = true;
         });
       },
     );
@@ -216,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child:
-            _isIncomeLoading
+            _isLoading
                 ? Center(child: CircularProgressIndicator())
                 : SingleChildScrollView(
                   child: Padding(

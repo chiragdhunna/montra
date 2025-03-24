@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:montra/logic/api/income/models/create_income_model.dart';
 import 'package:montra/logic/api/income/models/incomes_model.dart';
 import 'package:montra/logic/api/income/models/total_income_model.dart';
 import 'package:retrofit/retrofit.dart';
@@ -14,4 +15,7 @@ abstract class IncomeApi {
 
   @GET("income/all")
   Future<IncomesModel> getAllIncomes();
+
+  @POST("income/add")
+  Future<void> createIncome(@Body() FormData income);
 }
