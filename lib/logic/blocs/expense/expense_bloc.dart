@@ -4,7 +4,6 @@ import 'package:logger/logger.dart';
 import 'package:montra/constants/income_source.dart';
 import 'package:montra/logic/api/expense/expense_api.dart';
 import 'package:montra/logic/api/expense/models/expense_stats_model.dart';
-import 'package:montra/logic/api/expense/models/expense_stats_summary_model.dart';
 import 'package:montra/logic/dio_factory.dart';
 
 part 'expense_event.dart';

@@ -1,14 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:montra/logic/api/expense/models/expense_stats_model.dart';
-import 'package:montra/logic/api/expense/models/expense_stats_summary_model.dart';
 import 'package:montra/logic/api/expense/models/total_expense_model.dart';
-import 'package:montra/logic/api/income/models/income_model.dart';
-import 'package:montra/logic/api/income/models/total_income_model.dart';
-import 'package:montra/logic/api/users/models/login_user_model.dart';
-import 'package:montra/logic/api/users/models/login_user_response_model.dart';
 import 'package:montra/logic/api/users/models/user_image_model.dart';
-import 'package:montra/logic/api/users/models/user_model.dart';
 import 'package:retrofit/retrofit.dart';
 
 part 'expense_api.g.dart';

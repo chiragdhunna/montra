@@ -1,13 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:montra/logic/api/bank/models/total_bank_balance_model.dart';
-import 'package:montra/logic/api/expense/models/total_expense_model.dart';
-import 'package:montra/logic/api/income/models/income_model.dart';
-import 'package:montra/logic/api/income/models/total_income_model.dart';
-import 'package:montra/logic/api/users/models/login_user_model.dart';
-import 'package:montra/logic/api/users/models/login_user_response_model.dart';
 import 'package:montra/logic/api/users/models/user_image_model.dart';
-import 'package:montra/logic/api/users/models/user_model.dart';
 import 'package:retrofit/retrofit.dart';
 
 part 'bank_api.g.dart';

@@ -1,5 +1,4 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:montra/constants/income_source.dart';
 import 'package:montra/logic/api/expense/models/expense_stats_frequency_model.dart';
 import 'package:montra/logic/api/expense/models/expense_stats_summary_model.dart';
 
