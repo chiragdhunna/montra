@@ -9,11 +9,11 @@ part 'transfer_model.g.dart';
 @freezed
 abstract class TransferModel with _$TransferModel {
   const factory TransferModel({
+    required String transferId,
     required int amount,
     required String sender,
     required String receiver,
     required String userId,
-    required String transferId,
     required bool isExpense,
     required DateTime createdAt,
   }) = _TransferModel;

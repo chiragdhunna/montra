@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:montra/logic/blocs/transactions_bloc/transactions_bloc.dart';
 import 'package:montra/screens/user_screens/financial_reports/financial_report_status_screen.dart';
 
 class TransactionScreen extends StatefulWidget {
@@ -12,54 +16,88 @@ class TransactionScreen extends StatefulWidget {
 class _TransactionScreenState extends State<TransactionScreen> {
   String _selectedFilter = "Month";
   int _appliedFiltersCount = 1; // Default count for the filter badge
+  Map<String, List<Map<String, dynamic>>> groupedTransactions = {};
+  List<Map<String, dynamic>> recentTransactions = [];
+  late StreamSubscription<TransactionsState> _transactionsStreamSubscription;
+  bool _isIncomeLoading = true;
 
-  final List<Map<String, dynamic>> _transactions = [
-    {
-      "category": "Shopping",
-      "icon": Icons.shopping_bag,
-      "color": Colors.orange,
-      "description": "Buy some grocery",
-      "amount": -120,
-      "time": "10:00 AM",
-      "date": "Today",
-    },
-    {
-      "category": "Subscription",
-      "icon": Icons.subscriptions,
-      "color": Colors.purple,
-      "description": "Disney+ Annual..",
-      "amount": -80,
-      "time": "03:30 PM",
-      "date": "Today",
-    },
-    {
-      "category": "Food",
-      "icon": Icons.restaurant,
-      "color": Colors.red,
-      "description": "Buy a ramen",
-      "amount": -32,
-      "time": "07:30 PM",
-      "date": "Today",
-    },
-    {
-      "category": "Salary",
-      "icon": Icons.attach_money,
-      "color": Colors.green,
-      "description": "Salary for July",
-      "amount": 5000,
-      "time": "04:30 PM",
-      "date": "Yesterday",
-    },
-    {
-      "category": "Transportation",
-      "icon": Icons.directions_car,
-      "color": Colors.blue,
-      "description": "Charging Tesla",
-      "amount": -18,
-      "time": "08:30 PM",
-      "date": "Yesterday",
-    },
-  ];
+  void transactionsBlocChangeHandler(TransactionsState state) {
+    state.maybeWhen(
+      orElse: () {},
+      getAllTransactionSuccess: (transactions) {
+        // log.d('State is getExpenseSuccess');
+        // if (!mounted) return;
+        // setState(() {
+        //   totalExpense = expense;
+        //   expenseStats = expenseData;
+        //   _isIncomeLoading = false;
+        // });
+        // log.w('Transactions from getAllTransactionSuccess : $transactions');
+        if (!mounted) return;
+        setState(() {
+          // Store the most recent transactions (e.g., the first 3)
+          recentTransactions =
+              transactions.map((item) => item as Map<String, dynamic>).toList();
+          _isIncomeLoading = false;
+          log.w('Transactions from recentTransactions : $recentTransactions');
+        });
+      },
+      failure: () {
+        log.d('State is failure');
+        if (!mounted) return;
+        setState(() {
+          _isIncomeLoading = false;
+        });
+      },
+      inProgress: () {
+        log.d('State is inProgress');
+        if (!mounted) return;
+        setState(() {
+          _isIncomeLoading = true;
+        });
+      },
+    );
+  }
+
+  final Map<String, String> sourceDisplayNames = {
+    "cash": "Cash",
+    "bank": "Bank",
+    "creditCard": "Credit Card",
+    "upi": "UPI",
+    "wallet": "Wallet",
+    // Add more if needed
+  };
+
+  String _capitalize(String text) {
+    if (text.isEmpty) return '';
+    return text[0].toUpperCase() + text.substring(1);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Fetch all transactions from BLoC
+    BlocProvider.of<TransactionsBloc>(
+      context,
+    ).add(TransactionsEvent.getAllTransactions());
+
+    // Listen to BLoC state changes
+    _transactionsStreamSubscription = BlocProvider.of<TransactionsBloc>(
+      context,
+    ).stream.listen(transactionsBlocChangeHandler);
+
+    // Handle current state immediately (in case data already exists)
+    transactionsBlocChangeHandler(
+      BlocProvider.of<TransactionsBloc>(context).state,
+    );
+  }
+
+  @override
+  void dispose() {
+    _transactionsStreamSubscription.cancel();
+    super.dispose();
+  }
 
   void _showFilterBottomSheet() {
     showModalBottomSheet(
@@ -327,43 +365,124 @@ class _TransactionScreenState extends State<TransactionScreen> {
 
   Widget _buildTransactionList() {
     Map<String, List<Map<String, dynamic>>> groupedTransactions = {};
-    for (var transaction in _transactions) {
-      if (!groupedTransactions.containsKey(transaction["date"])) {
-        groupedTransactions[transaction["date"]] = [];
+    DateTime now = DateTime.now();
+
+    for (var transaction in recentTransactions) {
+      final createdAt = DateTime.parse(
+        transaction['data'].createdAt.toString(),
+      );
+      String dateKey;
+
+      final difference =
+          now
+              .difference(
+                DateTime(createdAt.year, createdAt.month, createdAt.day),
+              )
+              .inDays;
+
+      if (difference == 0) {
+        dateKey = "Today";
+      } else if (difference == 1) {
+        dateKey = "Yesterday";
+      } else {
+        dateKey =
+            "${createdAt.day.toString().padLeft(2, '0')}/${createdAt.month.toString().padLeft(2, '0')}/${createdAt.year}";
       }
-      groupedTransactions[transaction["date"]]!.add(transaction);
+
+      groupedTransactions.putIfAbsent(dateKey, () => []).add(transaction);
     }
 
     return ListView(
       children:
-          groupedTransactions.keys.map((date) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  date,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 8.h),
-                Column(
-                  children:
-                      groupedTransactions[date]!
-                          .map(
-                            (transaction) => _buildTransactionItem(transaction),
-                          )
-                          .toList(),
-                ),
-                SizedBox(height: 15.h),
-              ],
-            );
-          }).toList(),
+          (groupedTransactions.entries.toList()..sort((a, b) {
+                if (a.key == "Today") return -1;
+                if (b.key == "Today") return 1;
+                if (a.key == "Yesterday") return -1;
+                if (b.key == "Yesterday") return 1;
+
+                final aParts = a.key.split('/');
+                final bParts = b.key.split('/');
+
+                final aDate = DateTime(
+                  int.parse(aParts[2]),
+                  int.parse(aParts[1]),
+                  int.parse(aParts[0]),
+                );
+                final bDate = DateTime(
+                  int.parse(bParts[2]),
+                  int.parse(bParts[1]),
+                  int.parse(bParts[0]),
+                );
+
+                return bDate.compareTo(aDate);
+              }))
+              .map((entry) {
+                final date = entry.key;
+                final transactions = entry.value;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 10.h),
+                    Text(
+                      date,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    Column(
+                      children:
+                          transactions
+                              .map(
+                                (transaction) =>
+                                    _buildTransactionItem(transaction),
+                              )
+                              .toList(),
+                    ),
+                    SizedBox(height: 15.h),
+                  ],
+                );
+              })
+              .toList(),
     );
   }
 
   Widget _buildTransactionItem(Map<String, dynamic> transaction) {
+    String title = "";
+    String subtitle = "";
+    int amount = 0;
+    Color color = Colors.grey;
+    IconData icon = Icons.swap_horiz;
+
+    final type = transaction['type'];
+    final data = transaction['data'];
+
+    if (type == 'expense') {
+      final rawSource = data.source.toString().split('.').last;
+      title = sourceDisplayNames[rawSource] ?? _capitalize(rawSource);
+
+      subtitle = data.description ?? "No description";
+      amount = -data.amount;
+      color = Colors.red;
+      icon = Icons.money_off;
+    } else if (type == 'income') {
+      final rawSource = data.source.toString().split('.').last;
+      title = sourceDisplayNames[rawSource] ?? _capitalize(rawSource);
+
+      subtitle = data.description ?? "No description";
+      amount = data.amount;
+      color = Colors.green;
+      icon = Icons.attach_money;
+    } else if (type == 'transfer') {
+      title = "Transfer";
+      subtitle = "From ${data.sender} to ${data.receiver}";
+      amount = data.isExpense ? -data.amount : data.amount;
+      color = Colors.blue;
+      icon = Icons.compare_arrows;
+    }
+
     return Container(
       margin: EdgeInsets.symmetric(vertical: 5.h),
       padding: EdgeInsets.all(12.w),
@@ -375,8 +494,8 @@ class _TransactionScreenState extends State<TransactionScreen> {
         children: [
           CircleAvatar(
             radius: 24.r,
-            backgroundColor: transaction["color"].withOpacity(0.2),
-            child: Icon(transaction["icon"], color: transaction["color"]),
+            backgroundColor: color.withOpacity(0.2),
+            child: Icon(icon, color: color),
           ),
           SizedBox(width: 12.w),
           Expanded(
@@ -384,26 +503,25 @@ class _TransactionScreenState extends State<TransactionScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  transaction["category"],
+                  title,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
-                  transaction["description"],
+                  subtitle,
                   style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
               ],
             ),
           ),
           Text(
-            (transaction["amount"] > 0 ? "+ " : "- ") +
-                transaction["amount"].abs().toString(),
+            (amount > 0 ? "+ " : "- ") + amount.abs().toString(),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: transaction["amount"] > 0 ? Colors.green : Colors.red,
+              color: amount > 0 ? Colors.green : Colors.red,
             ),
           ),
         ],

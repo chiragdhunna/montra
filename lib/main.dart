@@ -6,6 +6,7 @@ import 'package:montra/logic/blocs/expense/expense_bloc.dart';
 import 'package:montra/logic/blocs/income_bloc/income_bloc.dart';
 import 'package:montra/logic/blocs/login_bloc/login_bloc.dart';
 import 'package:montra/logic/blocs/network_bloc/network_bloc.dart';
+import 'package:montra/logic/blocs/transactions_bloc/transactions_bloc.dart';
 import 'package:montra/screens/on_boarding/on_boarding_screen.dart';
 import 'package:montra/screens/on_boarding/upload_profile_screen.dart';
 import 'package:montra/screens/splash/splash_screen.dart';
@@ -31,6 +32,7 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider<IncomeBloc>(create: (context) => IncomeBloc()),
         BlocProvider<ExpenseBloc>(create: (context) => ExpenseBloc()),
+        BlocProvider<TransactionsBloc>(create: (context) => TransactionsBloc()),
         BlocProvider<LoginBloc>(create: (context) => LoginBloc()),
         BlocProvider<AuthenticationBloc>(
           create: (context) {

@@ -10,13 +10,12 @@ part 'expense_model.g.dart';
 @freezed
 abstract class ExpenseModel with _$ExpenseModel {
   const factory ExpenseModel({
-    required String name,
-    required String userId,
     required String expenseId,
     required int amount,
+    required String userId,
     required ExpenseType source,
     String? attachment,
-    String? description,
+    required String description,
     required DateTime createdAt,
   }) = _ExpenseModel;
 

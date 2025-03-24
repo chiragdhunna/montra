@@ -13,6 +13,7 @@ import 'package:montra/logic/api/expense/models/expense_stats_summary_model.dart
 import 'package:montra/logic/api/users/models/user_model.dart';
 import 'package:montra/logic/blocs/expense/expense_bloc.dart';
 import 'package:montra/logic/blocs/income_bloc/income_bloc.dart';
+import 'package:montra/logic/blocs/transactions_bloc/transactions_bloc.dart';
 import 'package:montra/screens/notification/notification_screen.dart';
 import 'package:montra/screens/user_screens/transaction_screen.dart';
 
@@ -33,8 +34,11 @@ class _HomeScreenState extends State<HomeScreen> {
     Colors.deepPurpleAccent,
   ];
 
+  List<Map<String, dynamic>> recentTransactions = [];
+
   late StreamSubscription<IncomeState> _incomeStreamSubscription;
   late StreamSubscription<ExpenseState> _expenseStreamSubscription;
+  late StreamSubscription<TransactionsState> _transactionsStreamSubscription;
   bool _isIncomeLoading = true;
   int totalIncome = 0;
   int totalExpense = 0;
@@ -71,14 +75,24 @@ class _HomeScreenState extends State<HomeScreen> {
     selectedMonth = months[DateTime.now().month - 1];
     BlocProvider.of<IncomeBloc>(context).add(IncomeEvent.getIncome());
     BlocProvider.of<ExpenseBloc>(context).add(ExpenseEvent.getExpense());
+    BlocProvider.of<TransactionsBloc>(
+      context,
+    ).add(TransactionsEvent.getAllTransactions());
     _incomeStreamSubscription = BlocProvider.of<IncomeBloc>(
       context,
     ).stream.listen(incomeBlocChangeHandler);
     _expenseStreamSubscription = BlocProvider.of<ExpenseBloc>(
       context,
     ).stream.listen(expenseBlocChangeHandler);
+    _transactionsStreamSubscription = BlocProvider.of<TransactionsBloc>(
+      context,
+    ).stream.listen(transactionsBlocChangeHandler);
 
     incomeBlocChangeHandler(BlocProvider.of<IncomeBloc>(context).state);
+    expenseBlocChangeHandler(BlocProvider.of<ExpenseBloc>(context).state);
+    transactionsBlocChangeHandler(
+      BlocProvider.of<TransactionsBloc>(context).state,
+    );
 
     super.initState();
   }
@@ -154,11 +168,53 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void transactionsBlocChangeHandler(TransactionsState state) {
+    state.maybeWhen(
+      orElse: () {},
+      getAllTransactionSuccess: (transactions) {
+        // log.d('State is getExpenseSuccess');
+        // if (!mounted) return;
+        // setState(() {
+        //   totalExpense = expense;
+        //   expenseStats = expenseData;
+        //   _isIncomeLoading = false;
+        // });
+        // log.w('Transactions from getAllTransactionSuccess : $transactions');
+        if (!mounted) return;
+        setState(() {
+          // Store the most recent transactions (e.g., the first 3)
+          recentTransactions =
+              transactions
+                  .take(3)
+                  .map((item) => item as Map<String, dynamic>)
+                  .toList();
+          _isIncomeLoading = false;
+          log.w('Transactions from recentTransactions : $recentTransactions');
+        });
+      },
+      failure: () {
+        log.d('State is failure');
+        if (!mounted) return;
+        setState(() {
+          _isIncomeLoading = false;
+        });
+      },
+      inProgress: () {
+        log.d('State is inProgress');
+        if (!mounted) return;
+        setState(() {
+          _isIncomeLoading = true;
+        });
+      },
+    );
+  }
+
   @override
   void dispose() {
     // TODO: implement dispose
     _incomeStreamSubscription.cancel();
     _expenseStreamSubscription.cancel();
+    _transactionsStreamSubscription.cancel();
     super.dispose();
   }
 
@@ -431,27 +487,95 @@ class _HomeScreenState extends State<HomeScreen> {
                         SizedBox(height: 10.h),
 
                         // Transactions List
-                        _buildTransactionTile(
-                          "Shopping",
-                          "Buy some grocery",
-                          "-\$120",
-                          Colors.orange,
-                          "assets/shopping.png",
-                        ),
-                        _buildTransactionTile(
-                          "Subscription",
-                          "Disney+ Annual..",
-                          "-\$80",
-                          Colors.purple,
-                          "assets/subscription.png",
-                        ),
-                        _buildTransactionTile(
-                          "Food",
-                          "Buy a ramen",
-                          "-\$32",
-                          Colors.red,
-                          "assets/food.png",
-                        ),
+                        // _buildTransactionTile(
+                        //   "Shopping",
+                        //   "Buy some grocery",
+                        //   "-\$120",
+                        //   Colors.orange,
+                        //   "assets/shopping.png",
+                        // ),
+                        // _buildTransactionTile(
+                        //   "Subscription",
+                        //   "Disney+ Annual..",
+                        //   "-\$80",
+                        //   Colors.purple,
+                        //   "assets/subscription.png",
+                        // ),
+                        // _buildTransactionTile(
+                        //   "Food",
+                        //   "Buy a ramen",
+                        //   "-\$32",
+                        //   Colors.red,
+                        //   "assets/food.png",
+                        // ),
+                        recentTransactions.isEmpty
+                            ? Center(
+                              child: Text(
+                                "No recent transactions",
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            )
+                            : Column(
+                              children:
+                                  recentTransactions.map((transaction) {
+                                    String title = "";
+                                    String subtitle = "";
+                                    String amount = "";
+                                    Color iconColor = Colors.grey;
+                                    String imagePath = "assets/default.png";
+
+                                    // Determine transaction type and set properties accordingly
+                                    if (transaction['type'] == 'expense') {
+                                      final expense = transaction['data'];
+                                      title =
+                                          expense.source
+                                              .toString()
+                                              .split('.')
+                                              .last;
+                                      subtitle = expense.description;
+                                      amount = "-\$${expense.amount}";
+                                      iconColor = Colors.red;
+                                      imagePath =
+                                          "assets/expense.png"; // Use appropriate image
+                                    } else if (transaction['type'] ==
+                                        'income') {
+                                      final income = transaction['data'];
+                                      title =
+                                          income.source
+                                              .toString()
+                                              .split('.')
+                                              .last;
+                                      subtitle = income.description ?? "Income";
+                                      amount = "+\$${income.amount}";
+                                      iconColor = Colors.green;
+                                      imagePath =
+                                          "assets/income.png"; // Use appropriate image
+                                    } else {
+                                      final transfer = transaction['data'];
+                                      title = "Transfer";
+                                      subtitle =
+                                          "From ${transfer.sender} to ${transfer.receiver}";
+                                      amount =
+                                          transfer.isExpense
+                                              ? "-\$${transfer.amount}"
+                                              : "+\$${transfer.amount}";
+                                      iconColor = Colors.blue;
+                                      imagePath =
+                                          "assets/transfer.png"; // Use appropriate image
+                                    }
+
+                                    return _buildTransactionTile(
+                                      title,
+                                      subtitle,
+                                      amount,
+                                      iconColor,
+                                      imagePath,
+                                    );
+                                  }).toList(),
+                            ),
                       ],
                     ),
                   ),
