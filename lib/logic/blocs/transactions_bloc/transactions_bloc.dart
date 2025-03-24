@@ -19,6 +19,7 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
       // TODO: implement event handler
     });
     on<_GetAllTransactions>(_getAllTransactions);
+    on<_FilterTransactions>(_filterTransactions);
   }
 
   final _expenseApi = ExpenseApi(DioFactory().create());
@@ -26,7 +27,9 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
   final _transferApi = TransferApi(DioFactory().create());
 
   // Add this method to your TransactionsBloc class
-  List<dynamic> getSortedTransactions(TransactionsModels transactionsModel) {
+  List<Map<String, dynamic>> getSortedTransactions(
+    TransactionsModels transactionsModel,
+  ) {
     // Create lists to hold all transaction types with their metadata
     List<Map<String, dynamic>> allTransactions = [];
 
@@ -88,6 +91,65 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
     } catch (e) {
       log.e('Error getting all transactions : $e');
       emit(TransactionsState.failure());
+    }
+  }
+
+  Future<void> _filterTransactions(
+    _FilterTransactions event,
+    Emitter<TransactionsState> emit,
+  ) async {
+    try {
+      emit(const TransactionsState.inProgress());
+
+      final expenses = await _expenseApi.getAllExpenses();
+      final incomes = await _incomeApi.getAllIncomes();
+      final transfers = await _transferApi.getAllIncomes();
+
+      final transactions = TransactionsModels(
+        transfer: transfers,
+        incomes: incomes,
+        expenses: expenses,
+      );
+
+      List<Map<String, dynamic>> all = getSortedTransactions(transactions);
+
+      // Apply type filter
+      if (event.type.toLowerCase() != 'all') {
+        all =
+            all.where((tx) => tx['type'] == event.type.toLowerCase()).toList();
+      }
+
+      // Apply category filter
+      if (event.categories != null && event.categories!.isNotEmpty) {
+        all =
+            all.where((tx) {
+              final data = tx['data'];
+              return event.categories!.contains(
+                data.category.toString().toLowerCase(),
+              );
+            }).toList();
+      }
+
+      // Apply sort
+      switch (event.sortBy?.toLowerCase()) {
+        case 'highest':
+          all.sort((a, b) => b['data'].amount.compareTo(a['data'].amount));
+          break;
+        case 'lowest':
+          all.sort((a, b) => a['data'].amount.compareTo(b['data'].amount));
+          break;
+        case 'oldest':
+          all.sort((a, b) => a['createdAt'].compareTo(b['createdAt']));
+          break;
+        case 'newest':
+        default:
+          all.sort((a, b) => b['createdAt'].compareTo(a['createdAt']));
+      }
+
+      emit(TransactionsState.getAllTransactionSuccess(transactions: all));
+    } catch (e) {
+      log.e('Filter error: $e');
+      emit(const TransactionsState.failure());
     }
   }
 }

@@ -19,26 +19,22 @@ class _TransactionScreenState extends State<TransactionScreen> {
   Map<String, List<Map<String, dynamic>>> groupedTransactions = {};
   List<Map<String, dynamic>> recentTransactions = [];
   late StreamSubscription<TransactionsState> _transactionsStreamSubscription;
-  bool _isIncomeLoading = true;
+  bool _isLoading = true;
+  String _selectedTransactionType =
+      "All"; // For Filter By: All / Income / Expense / Transfer
+  String _selectedSortType = "Newest"; // For Sort By
+  List<String> _selectedCategories = []; // For category filter
 
   void transactionsBlocChangeHandler(TransactionsState state) {
     state.maybeWhen(
       orElse: () {},
       getAllTransactionSuccess: (transactions) {
-        // log.d('State is getExpenseSuccess');
-        // if (!mounted) return;
-        // setState(() {
-        //   totalExpense = expense;
-        //   expenseStats = expenseData;
-        //   _isIncomeLoading = false;
-        // });
-        // log.w('Transactions from getAllTransactionSuccess : $transactions');
         if (!mounted) return;
         setState(() {
           // Store the most recent transactions (e.g., the first 3)
           recentTransactions =
               transactions.map((item) => item as Map<String, dynamic>).toList();
-          _isIncomeLoading = false;
+          _isLoading = false;
           log.w('Transactions from recentTransactions : $recentTransactions');
         });
       },
@@ -46,14 +42,14 @@ class _TransactionScreenState extends State<TransactionScreen> {
         log.d('State is failure');
         if (!mounted) return;
         setState(() {
-          _isIncomeLoading = false;
+          _isLoading = false;
         });
       },
       inProgress: () {
         log.d('State is inProgress');
         if (!mounted) return;
         setState(() {
-          _isIncomeLoading = true;
+          _isLoading = true;
         });
       },
     );
@@ -108,8 +104,9 @@ class _TransactionScreenState extends State<TransactionScreen> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            String selectedTransactionType = "Expense";
-            String selectedSortType = "Newest";
+            String selectedTransactionType = _selectedTransactionType;
+            String selectedSortType = _selectedSortType;
+
             int selectedCategoryCount = 0;
 
             return Padding(
@@ -125,7 +122,10 @@ class _TransactionScreenState extends State<TransactionScreen> {
                       selectedTransactionType,
                     ),
                     _buildSortBySection(setModalState, selectedSortType),
-                    _buildCategorySection(setModalState, selectedCategoryCount),
+                    _buildCategorySection(
+                      setModalState,
+                      _selectedCategories.length,
+                    ),
                     SizedBox(height: 15.h),
                     _buildApplyButton(),
                   ],
@@ -156,6 +156,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
                 return _filterOption(sort, isSelected, () {
                   setModalState(() {
                     selectedSort = sort;
+                    _selectedSortType = sort;
                   });
                 });
               }).toList(),
@@ -181,6 +182,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
                 return _filterOption(type, isSelected, () {
                   setModalState(() {
                     selectedType = type;
+                    _selectedTransactionType = type;
                   });
                 });
               }).toList(),
@@ -279,6 +281,19 @@ class _TransactionScreenState extends State<TransactionScreen> {
       width: double.infinity,
       child: ElevatedButton(
         onPressed: () {
+          // Trigger BLoC filter event
+          BlocProvider.of<TransactionsBloc>(context).add(
+            TransactionsEvent.filterTransactions(
+              type: _selectedTransactionType.toLowerCase(),
+              sortBy: _selectedSortType.toLowerCase(),
+              categories: _selectedCategories,
+            ),
+          );
+
+          setState(() {
+            _appliedFiltersCount = 1; // or calculate from actual filters
+          });
+
           Navigator.pop(context);
         },
         style: ElevatedButton.styleFrom(
@@ -298,21 +313,23 @@ class _TransactionScreenState extends State<TransactionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildFilterSection(),
-            SizedBox(height: 10.h),
-            _buildFinancialReportButton(),
-            SizedBox(height: 10.h),
-            Expanded(child: _buildTransactionList()),
-          ],
-        ),
-      ),
-    );
+    return _isLoading
+        ? Center(child: CircularProgressIndicator())
+        : Scaffold(
+          body: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildFilterSection(),
+                SizedBox(height: 10.h),
+                _buildFinancialReportButton(),
+                SizedBox(height: 10.h),
+                Expanded(child: _buildTransactionList()),
+              ],
+            ),
+          ),
+        );
   }
 
   Widget _buildFilterSection() {
