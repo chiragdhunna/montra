@@ -59,6 +59,20 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
   String selectedMonth = "";
 
+  final Map<String, String> sourceDisplayNames = {
+    "cash": "Cash",
+    "bank": "Bank",
+    "creditCard": "Credit Card",
+    "upi": "UPI",
+    "wallet": "Wallet",
+    // Add more if needed
+  };
+
+  String _capitalize(String text) {
+    if (text.isEmpty) return '';
+    return text[0].toUpperCase() + text.substring(1);
+  }
+
   ExpenseStatsModel expenseStats = ExpenseStatsModel(
     summary: ExpenseStatsSummaryModel(today: 0, week: 0, month: 0, year: 0),
     frequency: ExpenseStatsFrequencyModel(
@@ -533,27 +547,37 @@ class _HomeScreenState extends State<HomeScreen> {
                                     Color iconColor = Colors.grey;
                                     String imagePath = "assets/default.png";
 
+                                    final type = transaction['type'];
+                                    final data = transaction['data'];
+
                                     // Determine transaction type and set properties accordingly
-                                    if (transaction['type'] == 'expense') {
-                                      final expense = transaction['data'];
-                                      title =
-                                          expense.source
+                                    if (type == 'expense') {
+                                      final rawSource =
+                                          data.source
                                               .toString()
                                               .split('.')
                                               .last;
+                                      title =
+                                          sourceDisplayNames[rawSource] ??
+                                          _capitalize(rawSource);
+                                      final expense = transaction['data'];
+
                                       subtitle = expense.description;
                                       amount = "-\$${expense.amount}";
                                       iconColor = Colors.red;
                                       imagePath =
                                           "assets/expense.png"; // Use appropriate image
-                                    } else if (transaction['type'] ==
-                                        'income') {
-                                      final income = transaction['data'];
-                                      title =
-                                          income.source
+                                    } else if (type == 'income') {
+                                      final rawSource =
+                                          data.source
                                               .toString()
                                               .split('.')
                                               .last;
+                                      title =
+                                          sourceDisplayNames[rawSource] ??
+                                          _capitalize(rawSource);
+                                      final income = transaction['data'];
+
                                       subtitle = income.description ?? "Income";
                                       amount = "+\$${income.amount}";
                                       iconColor = Colors.green;
