@@ -171,10 +171,6 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
   }
 
   void _showSuccessDialog() {
-    log.w('Amount : ${amountController.text}');
-    log.w('Category : ${_selectedCategory}');
-    log.w('Description : ${descriptionController.text}');
-    log.w('_selectedExpenseType : ${_selectedExpenseSource}');
     if (amountController.text.isNotEmpty &&
         descriptionController.text.isNotEmpty &&
         _selectedImage != null) {

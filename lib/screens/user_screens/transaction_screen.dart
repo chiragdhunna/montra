@@ -48,7 +48,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
           recentTransactions =
               transactions.map((item) => item as Map<String, dynamic>).toList();
           _isLoading = false;
-          log.w('Transactions from recentTransactions : $recentTransactions');
+          log.d('Transactions from recentTransactions : $recentTransactions');
         });
       },
       failure: () {

@@ -69,33 +69,15 @@ class AuthRepository {
     return getAuthUser();
   }
 
-  // Future<HttpResponse<List<int>>> getProfileImage() async {
-  //   try {
-  //     final response = await userApi.getImage();
-  //     log.w('GetImage Response: $response');
-
-  //     if (response != null) {
-  //       // Update user data in secure storage
-  //       // await setUser(response);
-  //       // return response;
-  //       return response;
-  //     }
-  //   } catch (e) {
-  //     log.e('Error uploading profile image: $e');
-  //   }
-
-  //   // return null;
-  // }
-
   Future<void> getProfileImage() async {
     try {
       final response = await userApi.getImage();
-      log.w('GetImage Response: $response');
+      log.d('GetImage Response: $response');
 
       // Update user data in secure storage
 
       await saveProfileImage(response.data);
-        } catch (e) {
+    } catch (e) {
       log.e('Error uploading profile image: $e');
       // You need to handle the error case by either:
       rethrow; // Re-throw the error, or

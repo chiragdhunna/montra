@@ -171,7 +171,7 @@ class AuthenticationBloc
       // Call API
       final response = await userApi.uploadImage(formData);
       log.d("✅ Image Uploaded Successfully: ${response.imgUrl}");
-      log.w("✅ Image Uploaded Data: ${response.toJson()}");
+      log.d("✅ Image Uploaded Data: ${response.toJson()}");
 
       await _authRepository.getProfileImage();
 

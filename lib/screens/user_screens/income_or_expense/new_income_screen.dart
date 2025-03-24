@@ -166,10 +166,6 @@ class _NewIncomeScreenState extends State<NewIncomeScreen> {
   }
 
   void _showSuccessDialog() {
-    log.w('Amount : ${amountController.text}');
-    log.w('Category : ${_selectedCategory}');
-    log.w('Description : ${descriptionController.text}');
-    log.w('_selectedIncomeSource : ${_selectedIcomeSource}');
     if (amountController.text.isNotEmpty &&
         descriptionController.text.isNotEmpty &&
         _selectedImage != null) {
