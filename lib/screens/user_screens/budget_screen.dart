@@ -139,35 +139,38 @@ class _BudgetScreenState extends State<BudgetScreen> {
     bool hasBudgetData = currentMonthBudgets.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: Colors.purple,
+      backgroundColor: _isLoading ? Colors.white : Colors.purple,
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildMonthSection(),
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30.r),
-                    topRight: Radius.circular(30.r),
-                  ),
-                ),
-                child: Column(
+        child:
+            _isLoading
+                ? Center(child: CircularProgressIndicator())
+                : Column(
                   children: [
+                    _buildMonthSection(),
                     Expanded(
-                      child:
-                          hasBudgetData
-                              ? _buildBudgetDataUI(currentMonthBudgets)
-                              : _buildNoBudgetUI(),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(30.r),
+                            topRight: Radius.circular(30.r),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child:
+                                  hasBudgetData
+                                      ? _buildBudgetDataUI(currentMonthBudgets)
+                                      : _buildNoBudgetUI(),
+                            ),
+                            _buildCreateBudgetButton(),
+                          ],
+                        ),
+                      ),
                     ),
-                    _buildCreateBudgetButton(),
                   ],
                 ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

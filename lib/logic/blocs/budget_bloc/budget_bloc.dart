@@ -27,6 +27,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     Emitter<BudgetState> emit,
   ) async {
     try {
+      emit(BudgetState.inProgress());
       final month = BudgetMonthModel(month: event.month.toString());
       final response = await _budgetApi.getbymonth(month);
       log.d('Budget for current Month : $response');

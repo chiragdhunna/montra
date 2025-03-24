@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'dart:io';
-import 'package:image_picker/image_picker.dart';
+import 'package:montra/logic/blocs/transfer_bloc/transfer_bloc.dart';
 
 class NewTransferScreen extends StatefulWidget {
   const NewTransferScreen({super.key});
@@ -11,135 +14,152 @@ class NewTransferScreen extends StatefulWidget {
 }
 
 class _NewTransferScreenState extends State<NewTransferScreen> {
-  String? _selectedFromWallet;
-  String? _selectedToWallet;
-  File? _selectedImage;
+  String? _selectedIsExpense;
+  int amount = 0;
+  bool _isLoading = false;
 
-  final List<String> _wallets = ["Bank", "Cash", "Credit Card", "Paypal"];
+  TextEditingController fromController = TextEditingController();
+  TextEditingController toController = TextEditingController();
+  TextEditingController descriptionController = TextEditingController();
 
-  Future<void> _pickImage(ImageSource source) async {
-    final pickedFile = await ImagePicker().pickImage(source: source);
-    if (pickedFile != null) {
-      setState(() {
-        _selectedImage = File(pickedFile.path);
-      });
-    }
+  void swapController() {
+    TextEditingController temp = TextEditingController();
+    temp = fromController;
+    fromController = toController;
+    toController = temp;
+    setState(() {});
   }
 
-  void _removeAttachment() {
-    setState(() {
-      _selectedImage = null;
-    });
-  }
+  TextEditingController amountController = TextEditingController();
 
-  void _showAttachmentOptions() {
-    showModalBottomSheet(
-      context: context,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
-      builder: (context) {
-        return Container(
-          padding: EdgeInsets.all(20.w),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildAttachmentOption(Icons.camera_alt, "Camera", () {
-                    Navigator.pop(context);
-                    _pickImage(ImageSource.camera);
-                  }),
-                  _buildAttachmentOption(Icons.image, "Image", () {
-                    Navigator.pop(context);
-                    _pickImage(ImageSource.gallery);
-                  }),
-                  _buildAttachmentOption(
-                    Icons.insert_drive_file,
-                    "Document",
-                    () {
-                      Navigator.pop(context);
-                      // Implement document picker functionality
-                    },
-                  ),
-                ],
-              ),
-              SizedBox(height: 10.h),
-            ],
-          ),
-        );
-      },
-    );
-  }
+  final List<String> _isExpenseOptions = ["Yes", "No"];
 
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.r),
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(20.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircleAvatar(
-                  radius: 30.r,
-                  backgroundColor: Colors.purple.withOpacity(0.1),
-                  child: Icon(
-                    Icons.check_circle,
-                    color: Colors.purple,
-                    size: 40.r,
-                  ),
+  late StreamSubscription<TransferState> transferBlocSubscription;
+
+  Future<void> onChangeTransferHandler(TransferState state) async {
+    state.maybeWhen(
+      orElse: () {},
+      createTransferSuccess: () {
+        setState(() {
+          _isLoading = false;
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) {
+              return Dialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16.r),
                 ),
-                const SizedBox(height: 15),
-                const Text(
-                  "Transaction has been successfully added",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.purple,
-                      padding: EdgeInsets.symmetric(vertical: 12.h),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.r),
+                child: Padding(
+                  padding: EdgeInsets.all(20.w),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircleAvatar(
+                        radius: 30.r,
+                        backgroundColor: Colors.purple.withOpacity(0.1),
+                        child: Icon(
+                          Icons.check_circle,
+                          color: Colors.purple,
+                          size: 40.r,
+                        ),
                       ),
-                    ),
-                    child: const Text(
-                      "OK",
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
+                      const SizedBox(height: 15),
+                      const Text(
+                        "Transaction has been successfully added",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.pop(context);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.purple,
+                            padding: EdgeInsets.symmetric(vertical: 12.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.r),
+                            ),
+                          ),
+                          child: const Text(
+                            "OK",
+                            style: TextStyle(color: Colors.white, fontSize: 16),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
-        );
+              );
+            },
+          );
+        });
+      },
+      inProgress: () {
+        setState(() {
+          _isLoading = true;
+        });
+      },
+      failure: (error) {
+        setState(() {
+          _isLoading = false;
+        });
       },
     );
   }
 
   @override
+  void initState() {
+    // TODO: implement initState
+    transferBlocSubscription = BlocProvider.of<TransferBloc>(
+      context,
+    ).stream.listen(onChangeTransferHandler);
+    onChangeTransferHandler(BlocProvider.of<TransferBloc>(context).state);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    transferBlocSubscription.cancel();
+    super.dispose();
+  }
+
+  void _showSuccessDialog() {
+    if (amountController.text.isNotEmpty &&
+        fromController.text.isNotEmpty &&
+        toController.text.isNotEmpty) {
+      BlocProvider.of<TransferBloc>(context).add(
+        TransferEvent.createTransfer(
+          amount: int.parse(amountController.text),
+          from: fromController.text,
+          to: toController.text,
+          isExpense: _selectedIsExpense == "Yes" ? true : false,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Colors.red,
+          content: Text("Please fill all the fields"),
+        ),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue,
+      backgroundColor: _isLoading ? Colors.white : Colors.blue,
       appBar: AppBar(
-        backgroundColor: Colors.blue,
+        backgroundColor: _isLoading ? Colors.white : Colors.blue,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -157,81 +177,130 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
         ),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          const SizedBox(height: 20),
-          const Text(
-            "How much?",
-            style: TextStyle(fontSize: 18, color: Colors.white),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            "\$0",
-            style: TextStyle(
-              fontSize: 40,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Expanded(
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(30.r),
-                  topRight: Radius.circular(30.r),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      body:
+          _isLoading
+              ? Center(child: CircularProgressIndicator())
+              : Column(
                 children: [
-                  _buildWalletSelection(),
-                  const SizedBox(height: 15),
-                  _buildTextField("Description"),
-                  const SizedBox(height: 15),
-                  _buildAttachmentSection(),
-                  const Spacer(),
-                  _buildContinueButton(),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "How much?",
+                    style: TextStyle(fontSize: 18, color: Colors.white),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          "\$",
+                          style: TextStyle(
+                            fontSize: 40.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        IntrinsicWidth(
+                          child: TextField(
+                            controller: amountController,
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.start,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                amount = value.isEmpty ? 0 : int.parse(value);
+                              });
+                            },
+                            style: TextStyle(
+                              fontSize: 40.sp,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                            decoration: InputDecoration(
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.zero,
+                              isDense: true,
+                              hintText: "0",
+                              hintStyle: TextStyle(color: Colors.white70),
+                              constraints: BoxConstraints(minWidth: 10.w),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 20.w,
+                        vertical: 20.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(30.r),
+                          topRight: Radius.circular(30.r),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: ListView(
+                              children: [
+                                _buildWalletSelection(),
+                                SizedBox(height: 15),
+                                _buildTextField(
+                                  "Description",
+                                  descriptionController,
+                                ),
+                                SizedBox(height: 15),
+                                _buildDropdownField(
+                                  "Is Expense?",
+                                  _selectedIsExpense,
+                                  _isExpenseOptions,
+                                  (val) {
+                                    setState(() {
+                                      _selectedIsExpense = val;
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Fixed bottom button
+                          _buildContinueButton(),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
   Widget _buildWalletSelection() {
     return Row(
       children: [
-        Expanded(
-          child: _buildDropdownField("From", _selectedFromWallet, _wallets, (
-            value,
-          ) {
-            setState(() {
-              _selectedFromWallet = value;
-            });
-          }),
-        ),
+        Expanded(child: _buildTextField("From", fromController)),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 8.w),
           child: CircleAvatar(
             radius: 20.r,
             backgroundColor: Colors.purple.withOpacity(0.1),
-            child: Icon(Icons.swap_horiz, color: Colors.purple, size: 20.r),
+            child: IconButton(
+              onPressed: swapController,
+              icon: Icon(Icons.swap_horiz, color: Colors.purple, size: 20.r),
+            ),
           ),
         ),
-        Expanded(
-          child: _buildDropdownField("To", _selectedToWallet, _wallets, (
-            value,
-          ) {
-            setState(() {
-              _selectedToWallet = value;
-            });
-          }),
-        ),
+        Expanded(child: _buildTextField("To", toController)),
       ],
     );
   }
@@ -261,8 +330,9 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
     );
   }
 
-  Widget _buildTextField(String hint) {
+  Widget _buildTextField(String hint, TextEditingController controller) {
     return TextField(
+      controller: controller,
       decoration: InputDecoration(
         hintText: hint,
         filled: true,
@@ -273,58 +343,6 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
         ),
       ),
     );
-  }
-
-  Widget _buildAttachmentSection() {
-    return _selectedImage == null
-        ? GestureDetector(
-          onTap: _showAttachmentOptions,
-          child: Container(
-            padding: EdgeInsets.all(12.h),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300, width: 1),
-              borderRadius: BorderRadius.circular(12.r),
-              color: Colors.grey[100],
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.attach_file, color: Colors.grey),
-                const SizedBox(width: 10),
-                Text(
-                  "Add attachment",
-                  style: TextStyle(fontSize: 14.sp, color: Colors.grey),
-                ),
-              ],
-            ),
-          ),
-        )
-        : Stack(
-          children: [
-            Container(
-              width: 100.w,
-              height: 100.h,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10.r),
-                image: DecorationImage(
-                  image: FileImage(_selectedImage!),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            Positioned(
-              right: 5,
-              top: 5,
-              child: GestureDetector(
-                onTap: _removeAttachment,
-                child: CircleAvatar(
-                  radius: 12.r,
-                  backgroundColor: Colors.black.withOpacity(0.6),
-                  child: const Icon(Icons.close, color: Colors.white, size: 14),
-                ),
-              ),
-            ),
-          ],
-        );
   }
 
   Widget _buildContinueButton() {
