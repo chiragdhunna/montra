@@ -421,7 +421,30 @@ class _TransactionScreenState extends State<TransactionScreen> {
     Map<String, List<Map<String, dynamic>>> groupedTransactions = {};
     DateTime now = DateTime.now();
 
-    for (var transaction in recentTransactions) {
+    DateTime startDate;
+
+    if (_selectedFilter == "Week") {
+      startDate = now.subtract(const Duration(days: 7));
+    } else if (_selectedFilter == "Month") {
+      startDate = DateTime(now.year, now.month - 1, now.day);
+    } else if (_selectedFilter == "Year") {
+      startDate = DateTime(now.year - 1, now.month, now.day);
+    } else {
+      startDate = DateTime(2000); // fallback
+    }
+
+    // Filter based on selected time duration
+    List<Map<String, dynamic>> filteredTransactions =
+        recentTransactions.where((transaction) {
+          final createdAt = DateTime.parse(
+            transaction['data'].createdAt.toString(),
+          );
+          return createdAt.isAfter(startDate) ||
+              createdAt.isAtSameMomentAs(startDate);
+        }).toList();
+
+    // Group filtered transactions by date
+    for (var transaction in filteredTransactions) {
       final createdAt = DateTime.parse(
         transaction['data'].createdAt.toString(),
       );
