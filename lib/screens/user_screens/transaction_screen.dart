@@ -25,6 +25,19 @@ class _TransactionScreenState extends State<TransactionScreen> {
   String _selectedSortType = "Newest"; // For Sort By
   List<String> _selectedCategories = []; // For category filter
 
+  final List<String> _availableCategories = [
+    "Food",
+    "Travel",
+    "Shopping",
+    "Salary",
+    "Subscription",
+    "Transportation",
+    "Entertainment",
+    "Health",
+    "Bills",
+    // Add more as needed
+  ];
+
   void transactionsBlocChangeHandler(TransactionsState state) {
     state.maybeWhen(
       orElse: () {},
@@ -202,9 +215,15 @@ class _TransactionScreenState extends State<TransactionScreen> {
         TextButton(
           onPressed: () {
             setModalState(() {
-              _appliedFiltersCount = 0;
+              setState(() {
+                _selectedTransactionType = "All";
+                _selectedSortType = "Newest";
+                _selectedCategories.clear();
+                _appliedFiltersCount = 0;
+              });
             });
           },
+
           child: const Text("Reset", style: TextStyle(color: Colors.purple)),
         ),
       ],
@@ -245,32 +264,50 @@ class _TransactionScreenState extends State<TransactionScreen> {
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
         SizedBox(height: 10.h),
-        GestureDetector(
-          onTap: () {
-            setModalState(() {
-              _appliedFiltersCount++;
-            });
-          },
-          child: Container(
-            padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(10.r),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  "Choose Category",
-                  style: TextStyle(fontSize: 14, color: Colors.black),
-                ),
-                Text(
-                  "$selectedCount Selected",
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-              ],
-            ),
-          ),
+        Wrap(
+          spacing: 10.w,
+          runSpacing: 10.h,
+          children:
+              _availableCategories.map((category) {
+                final isSelected = _selectedCategories.contains(category);
+                return GestureDetector(
+                  onTap: () {
+                    setModalState(() {
+                      setState(() {
+                        if (isSelected) {
+                          _selectedCategories.remove(category);
+                        } else {
+                          _selectedCategories.add(category);
+                        }
+                      });
+                    });
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      vertical: 8.h,
+                      horizontal: 16.w,
+                    ),
+                    decoration: BoxDecoration(
+                      color:
+                          isSelected
+                              ? Colors.purple.withOpacity(0.1)
+                              : Colors.transparent,
+                      borderRadius: BorderRadius.circular(20.r),
+                      border: Border.all(
+                        color:
+                            isSelected ? Colors.purple : Colors.grey.shade300,
+                      ),
+                    ),
+                    child: Text(
+                      category,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isSelected ? Colors.purple : Colors.black,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
         ),
       ],
     );

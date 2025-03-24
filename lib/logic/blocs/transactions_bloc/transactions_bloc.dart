@@ -101,54 +101,72 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
     try {
       emit(const TransactionsState.inProgress());
 
+      // Fetch all transactions
       final expenses = await _expenseApi.getAllExpenses();
       final incomes = await _incomeApi.getAllIncomes();
-      final transfers = await _transferApi.getAllIncomes();
+      final transfers = await _transferApi.getAllIncomes(); // correct if needed
 
-      final transactions = TransactionsModels(
-        transfer: transfers,
-        incomes: incomes,
-        expenses: expenses,
-      );
+      final all = <Map<String, dynamic>>[];
 
-      List<Map<String, dynamic>> all = getSortedTransactions(transactions);
-
-      // Apply type filter
-      if (event.type.toLowerCase() != 'all') {
-        all =
-            all.where((tx) => tx['type'] == event.type.toLowerCase()).toList();
+      // Merge and label data
+      for (final e in expenses.expenses) {
+        all.add({'data': e, 'type': 'expense', 'createdAt': e.createdAt});
+      }
+      for (final i in incomes.incomes) {
+        all.add({'data': i, 'type': 'income', 'createdAt': i.createdAt});
+      }
+      for (final t in transfers.transfers) {
+        all.add({'data': t, 'type': 'transfer', 'createdAt': t.createdAt});
       }
 
-      // Apply category filter
+      // Apply filters
+      List<Map<String, dynamic>> filtered = all;
+
+      // Type filter
+      if (event.type.toLowerCase() != "all") {
+        filtered = filtered.where((t) => t['type'] == event.type).toList();
+      }
+
+      // Category filter
       if (event.categories != null && event.categories!.isNotEmpty) {
-        all =
-            all.where((tx) {
-              final data = tx['data'];
-              return event.categories!.contains(
-                data.category.toString().toLowerCase(),
+        filtered =
+            filtered.where((t) {
+              final type = t['type'];
+              if (type == 'transfer') return false;
+
+              final description = (t['data'].description ?? "").toLowerCase();
+              return event.categories!.any(
+                (cat) => description.contains(cat.toLowerCase()),
               );
             }).toList();
       }
 
-      // Apply sort
-      switch (event.sortBy?.toLowerCase()) {
-        case 'highest':
-          all.sort((a, b) => b['data'].amount.compareTo(a['data'].amount));
-          break;
-        case 'lowest':
-          all.sort((a, b) => a['data'].amount.compareTo(b['data'].amount));
-          break;
-        case 'oldest':
-          all.sort((a, b) => a['createdAt'].compareTo(b['createdAt']));
-          break;
-        case 'newest':
-        default:
-          all.sort((a, b) => b['createdAt'].compareTo(a['createdAt']));
+      // Sorting
+      if (event.sortBy == "newest") {
+        filtered.sort(
+          (a, b) => DateTime.parse(
+            b['createdAt'].toString(),
+          ).compareTo(DateTime.parse(a['createdAt'].toString())),
+        );
+      } else if (event.sortBy == "oldest") {
+        filtered.sort(
+          (a, b) => DateTime.parse(
+            a['createdAt'].toString(),
+          ).compareTo(DateTime.parse(b['createdAt'].toString())),
+        );
+      } else if (event.sortBy == "highest") {
+        filtered.sort(
+          (a, b) => (b['data'].amount ?? 0).compareTo(a['data'].amount ?? 0),
+        );
+      } else if (event.sortBy == "lowest") {
+        filtered.sort(
+          (a, b) => (a['data'].amount ?? 0).compareTo(b['data'].amount ?? 0),
+        );
       }
 
-      emit(TransactionsState.getAllTransactionSuccess(transactions: all));
-    } catch (e) {
-      log.e('Filter error: $e');
+      emit(TransactionsState.getAllTransactionSuccess(transactions: filtered));
+    } catch (e, stack) {
+      log.e('Filter error: $e\n$stack');
       emit(const TransactionsState.failure());
     }
   }
