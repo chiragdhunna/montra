@@ -173,6 +173,10 @@ class _HomeScreenState extends State<HomeScreen> {
           _isLoading = false;
         });
       },
+      createExpenseSuccess: () {
+        _isLoading = false;
+        BlocProvider.of<ExpenseBloc>(context).add(ExpenseEvent.getExpense());
+      },
     );
   }
 

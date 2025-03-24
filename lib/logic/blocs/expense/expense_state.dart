@@ -10,4 +10,5 @@ class ExpenseState with _$ExpenseState {
   const factory ExpenseState.setExpenseSuccess() = _SetExpenseSuccess;
   const factory ExpenseState.failure() = _Failure;
   const factory ExpenseState.inProgress() = _InProgress;
+  const factory ExpenseState.createExpenseSuccess() = _CreateExpenseSuccess;
 }

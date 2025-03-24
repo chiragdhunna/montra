@@ -18,4 +18,7 @@ abstract class ExpenseApi {
 
   @GET("expense/stats")
   Future<ExpenseStatsModel> getExpenseStats();
+
+  @POST("expense/add")
+  Future<void> createExpense(@Body() FormData expense);
 }
