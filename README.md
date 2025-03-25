@@ -4,17 +4,160 @@
 
 The **Financial Manager App** is a **Flutter** application that helps users track their **expenses, income, transactions, budgets, and financial goals**. It provides an intuitive and modern UI for managing personal finances effectively.
 
-## ✨ Features
+## Key Features
 
-- **💰 Expense & Income Tracking**: Keep track of your expenses and income with categorized transactions.
-- **📊 Interactive Graphs & Pie Charts**: Visualize your spending habits using graphs and pie charts.
-- **🔄 Recurring Transactions**: Set up automated transactions for subscriptions, salaries, etc.
-- **📁 Attachments**: Upload receipts and invoices for better expense management.
-- **📅 Budget Management**: Create, update, and track budgets to control your spending.
-- **🔔 Notifications & Alerts**: Get alerts when your budget exceeds limits or new transactions occur.
-- **🌎 Multi-Currency & Multi-Language Support**: Choose your preferred currency and language.
-- **🎨 Light & Dark Theme**: Customize the UI with different themes.
-- **🔐 Security Settings**: Enable PIN, fingerprint, or Face ID authentication for secure access.
+### Core Functionality
+
+- 💰 **Transaction Management**
+
+  - Income & expense tracking
+  - Receipt attachments
+  - Transaction categories
+  - Recurring transactions
+
+- 🏦 **Account Management**
+
+  - Multiple account types
+  - Inter-account transfers
+  - Balance tracking
+  - Bank integration
+
+- 📊 **Analytics & Reports**
+  - Visual spending analysis
+  - Custom date range reports
+  - Category-wise breakdown
+  - Export functionality
+
+### Technical Features
+
+- 🔐 Secure local storage with SQLite
+- 🌐 REST API integration
+- 🎨 Responsive UI with ScreenUtil
+- 🔄 State management with BLoC pattern
+- ⚡ Code generation with Freezed
+
+## Technical Architecture
+
+### State Management
+
+```dart
+// Example BLoC Pattern Implementation
+@freezed
+class IncomeState with _$IncomeState {
+  const factory IncomeState.initial() = _Initial;
+  const factory IncomeState.loading() = _Loading;
+  const factory IncomeState.success(List<Transaction> transactions) = _Success;
+  const factory IncomeState.error(String message) = _Error;
+}
+```
+
+### Model Layer (Freezed)
+
+```dart
+@freezed
+class Transaction with _$Transaction {
+  const factory Transaction({
+    required String id,
+    required double amount,
+    required TransactionType type,
+    required DateTime createdAt,
+    String? description,
+    String? attachment,
+  }) = _Transaction;
+
+  factory Transaction.fromJson(Map<String, dynamic> json) =>
+      _$TransactionFromJson(json);
+}
+```
+
+### Local Database (SQLite)
+
+```dart
+// Database Schema
+final String createTransactionTable = '''
+  CREATE TABLE transactions (
+    id TEXT PRIMARY KEY,
+    amount REAL NOT NULL,
+    type TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    description TEXT,
+    attachment_path TEXT
+  )
+''';
+```
+
+## Project Setup
+
+### Prerequisites
+
+- Flutter SDK (3.0.0 or higher)
+- Dart SDK (3.0.0 or higher)
+- VS Code or Android Studio
+- Git
+
+### Installation Steps
+
+1. **Clone & Setup**
+
+```bash
+# Clone repository
+git clone https://github.com/yourusername/montra.git
+
+# Navigate to project
+cd montra
+
+# Install dependencies
+flutter pub get
+
+# Generate code
+dart run build_runner build --delete-conflicting-outputs
+```
+
+2. **Configure Environment**
+
+```dart
+// filepath: lib/config/env.dart
+const API_BASE_URL = 'YOUR_API_URL';
+const DB_NAME = 'montra.db';
+```
+
+3. **Run Application**
+
+```bash
+# Debug mode
+flutter run
+
+# Release mode
+flutter run --release
+```
+
+## Development Guide
+
+### Adding New Features
+
+1. **Create Model**
+
+```dart
+// filepath: lib/models/feature_model.dart
+@freezed
+class FeatureModel with _$FeatureModel {
+  const factory FeatureModel({
+    required String id,
+    required String name,
+  }) = _FeatureModel;
+}
+```
+
+2. **Implement BLoC**
+
+```dart
+// filepath: lib/blocs/feature_bloc.dart
+class FeatureBloc extends Bloc<FeatureEvent, FeatureState> {
+  FeatureBloc() : super(const FeatureState.initial()) {
+    on<FeatureRequested>(_onFeatureRequested);
+  }
+}
+```
 
 ## 📸 Screenshots
 
@@ -30,6 +173,39 @@ The **Financial Manager App** is a **Flutter** application that helps users trac
 - **Networking**: HTTP, REST APIs
 - **Charts & Graphs**: fl_chart
 - **UI Components**: Flutter ScreenUtil, Google Fonts
+
+## API Integration
+
+### REST API Endpoints
+
+- `POST /api/v1/transactions` - Create transaction
+- `GET /api/v1/transactions` - Fetch transactions
+- `PUT /api/v1/transactions/:id` - Update transaction
+- `DELETE /api/v1/transactions/:id` - Delete transaction
+
+### Example API Call
+
+```dart
+// filepath: lib/services/api_service.dart
+class ApiService {
+  Future<List<Transaction>> getTransactions() async {
+    final response = await dio.get('/api/v1/transactions');
+    return (response.data as List)
+        .map((json) => Transaction.fromJson(json))
+        .toList();
+  }
+}
+```
+
+## Database Schema
+
+### Tables
+
+- transactions
+- accounts
+- categories
+- budget_plans
+- attachments
 
 ## 🔧 Installation
 
@@ -82,12 +258,6 @@ flutter run
 2. **Analyze Reports**: Use charts and graphs to monitor spending trends.
 3. **Set Budgets**: Control your finances by setting up budgets.
 4. **Customize Settings**: Change currency, theme, and security preferences.
-
-## 📌 Future Enhancements
-
-- **🛢 MySQL / PostgreSQL Database Integration**
-- **🌍 Backend Powered by Node.js**
-- **🔄 Cloud Data Sync using Secure APIs**
 
 ## 🙌 Contribution
 
