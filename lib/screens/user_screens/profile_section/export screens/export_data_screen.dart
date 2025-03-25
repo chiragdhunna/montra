@@ -64,9 +64,9 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
       getExportDataSuccess: (filePath) {
         setState(() {
           _isLoading = false;
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text("Exported to: $filePath")));
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (builder) => ExportDataSuccessScreen()),
+          );
         });
       },
       failure: (error) {
@@ -97,114 +97,128 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
         foregroundColor: Colors.black,
         elevation: 0,
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'What data do your want to export?',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              _buildDropdownField(
-                value: selectedDataType,
-                items: dataTypes,
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      selectedDataType = value;
-                    });
-                  }
-                },
-              ),
-              const SizedBox(height: 24),
-
-              const Text(
-                'When date range?',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              _buildDropdownField(
-                value: selectedDateRange,
-                items: dateRanges,
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      selectedDateRange = value;
-                    });
-                  }
-                },
-              ),
-              const SizedBox(height: 24),
-
-              const Text(
-                'What format do you want to export?',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              _buildDropdownField(
-                value: selectedFormat,
-                items: formats,
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      selectedFormat = value;
-                    });
-                  }
-                },
-              ),
-
-              const Spacer(),
-
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Handle export action
-                    // Navigator.of(context).push(
-                    //   MaterialPageRoute(
-                    //     builder: (builder) => ExportDataSuccessScreen(),
-                    //   ),
-                    // );
-                    BlocProvider.of<ExportDataBloc>(context).add(
-                      ExportDataEvent.getExportData(
-                        dataType: selectedDataType.toLowerCase(),
-                        dateRange: _mapDateRangeToKey(selectedDateRange),
-                        format: selectedFormat.toLowerCase(),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF7E57FF),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.download, color: Colors.white),
-                      SizedBox(width: 8),
-                      Text(
-                        'Export',
+      body:
+          _isLoading
+              ? Center(child: CircularProgressIndicator())
+              : SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'What data do your want to export?',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
+                      const SizedBox(height: 8),
+                      _buildDropdownField(
+                        value: selectedDataType,
+                        items: dataTypes,
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              selectedDataType = value;
+                            });
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 24),
+
+                      const Text(
+                        'When date range?',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildDropdownField(
+                        value: selectedDateRange,
+                        items: dateRanges,
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              selectedDateRange = value;
+                            });
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 24),
+
+                      const Text(
+                        'What format do you want to export?',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildDropdownField(
+                        value: selectedFormat,
+                        items: formats,
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              selectedFormat = value;
+                            });
+                          }
+                        },
+                      ),
+
+                      const Spacer(),
+
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            // Handle export action
+                            // Navigator.of(context).push(
+                            //   MaterialPageRoute(
+                            //     builder: (builder) => ExportDataSuccessScreen(),
+                            //   ),
+                            // );
+                            BlocProvider.of<ExportDataBloc>(context).add(
+                              ExportDataEvent.getExportData(
+                                dataType: selectedDataType.toLowerCase(),
+                                dateRange: _mapDateRangeToKey(
+                                  selectedDateRange,
+                                ),
+                                format: selectedFormat.toLowerCase(),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF7E57FF),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Icon(Icons.download, color: Colors.white),
+                              SizedBox(width: 8),
+                              Text(
+                                'Export',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        ),
-      ),
     );
   }
 

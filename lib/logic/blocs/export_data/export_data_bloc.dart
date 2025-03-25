@@ -22,9 +22,11 @@ class ExportDataBloc extends Bloc<ExportDataEvent, ExportDataState> {
       // TODO: implement event handler
     });
     on<_GetExportData>(_getExportData);
+    on<_ShowFile>(_showFile);
   }
 
   final _userApi = UserApi(DioFactory().create());
+  String exportFilePath = "";
 
   Future<void> _getExportData(
     _GetExportData event,
@@ -72,7 +74,18 @@ class ExportDataBloc extends Bloc<ExportDataEvent, ExportDataState> {
       // 6. Optionally open the file
       await OpenFile.open(filePath);
 
-      // emit(ExportDataState.getExportDataSuccess(filePath: filePath));
+      exportFilePath = filePath;
+
+      emit(ExportDataState.getExportDataSuccess(filePath: filePath));
+    } catch (e) {
+      log.e('Download Error: $e');
+      emit(ExportDataState.failure(error: e.toString()));
+    }
+  }
+
+  Future<void> _showFile(_ShowFile event, Emitter<ExportDataState> emit) async {
+    try {
+      await OpenFile.open(exportFilePath);
     } catch (e) {
       log.e('Download Error: $e');
       emit(ExportDataState.failure(error: e.toString()));

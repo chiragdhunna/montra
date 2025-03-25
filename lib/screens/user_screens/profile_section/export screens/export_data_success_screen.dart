@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:montra/logic/blocs/export_data/export_data_bloc.dart';
+import 'package:montra/screens/user_screens/home_screen.dart';
+import 'package:montra/screens/user_screens/profile_screen.dart';
+
 class ExportDataSuccessScreen extends StatefulWidget {
   const ExportDataSuccessScreen({super.key});
 
@@ -10,6 +15,13 @@ class ExportDataSuccessScreen extends StatefulWidget {
 }
 
 class _ExportDataSuccessScreenState extends State<ExportDataSuccessScreen> {
+  @override
+  void initState() {
+    // TODO: implement initState
+    BlocProvider.of<ExportDataBloc>(context).add(ExportDataEvent.showFile());
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -64,6 +76,7 @@ class _ExportDataSuccessScreenState extends State<ExportDataSuccessScreen> {
               child: ElevatedButton(
                 onPressed: () {
                   // Navigate back to home
+                  Navigator.of(context).pop();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.purple.shade500,
