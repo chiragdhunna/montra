@@ -23,7 +23,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
   String _selectedTransactionType =
       "All"; // For Filter By: All / Income / Expense / Transfer
   String _selectedSortType = "Newest"; // For Sort By
-  List<String> _selectedCategories = []; // For category filter
+  final List<String> _selectedCategories = []; // For category filter
 
   final List<String> _availableCategories = [
     "Food",

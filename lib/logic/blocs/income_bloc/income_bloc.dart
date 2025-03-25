@@ -8,7 +8,6 @@ import 'package:logger/logger.dart';
 import 'package:mime/mime.dart';
 import 'package:montra/constants/income_source.dart';
 import 'package:montra/logic/api/income/income_api.dart';
-import 'package:montra/logic/api/income/models/create_income_model.dart';
 import 'package:montra/logic/dio_factory.dart';
 
 part 'income_event.dart';

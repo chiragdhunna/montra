@@ -3,8 +3,6 @@ import 'dart:math' as math;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:montra/logic/blocs/export_data/export_data_bloc.dart';
-import 'package:montra/screens/user_screens/home_screen.dart';
-import 'package:montra/screens/user_screens/profile_screen.dart';
 
 class ExportDataSuccessScreen extends StatefulWidget {
   const ExportDataSuccessScreen({super.key});

@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:montra/logic/api/income/models/create_income_model.dart';
 import 'package:montra/logic/api/income/models/incomes_model.dart';
 import 'package:montra/logic/api/income/models/total_income_model.dart';
 import 'package:retrofit/retrofit.dart';

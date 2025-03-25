@@ -8,9 +8,7 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 import 'package:montra/constants/expense_type.dart';
-import 'package:montra/constants/income_source.dart';
 import 'package:montra/logic/blocs/expense/expense_bloc.dart';
-import 'package:montra/logic/blocs/income_bloc/income_bloc.dart';
 
 Logger log = Logger(printer: PrettyPrinter());
 

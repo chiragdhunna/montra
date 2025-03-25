@@ -17,7 +17,7 @@ class DetailBudgetScreen extends StatefulWidget with SU {
   final Color color;
 
   const DetailBudgetScreen({
-    Key? key,
+    super.key,
     required this.budgetId,
     required this.category,
     required this.current,
@@ -25,7 +25,7 @@ class DetailBudgetScreen extends StatefulWidget with SU {
     required this.totalBudget,
     required this.remaining,
     required this.color,
-  }) : super(key: key);
+  });
 
   @override
   State<DetailBudgetScreen> createState() => _DetailBudgetScreenState();

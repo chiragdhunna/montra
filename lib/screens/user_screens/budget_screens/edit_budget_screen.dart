@@ -15,14 +15,14 @@ class EditBudgetScreen extends StatefulWidget with SU {
   final Color? color;
 
   const EditBudgetScreen({
-    Key? key,
+    super.key,
     required this.budgetId,
     required this.category,
     required this.current,
     required this.name,
     required this.totalBudget,
     required this.color,
-  }) : super(key: key);
+  });
 
   @override
   State<EditBudgetScreen> createState() => _EditBudgetScreenState();
