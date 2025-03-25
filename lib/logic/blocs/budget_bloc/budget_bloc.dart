@@ -5,6 +5,7 @@ import 'package:montra/logic/api/budget/budget_api.dart';
 import 'package:montra/logic/api/budget/models/budget_month_model.dart';
 import 'package:montra/logic/api/budget/models/budgets_model.dart';
 import 'package:montra/logic/api/budget/models/create_budget_model.dart';
+import 'package:montra/logic/api/budget/models/update_budget_model.dart';
 import 'package:montra/logic/dio_factory.dart';
 
 part 'budget_event.dart';
@@ -20,6 +21,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     });
     on<_GetBudgetByMonth>(_getBudgetByMonthSuccess);
     on<_CreateBudget>(_createBudget);
+    on<_UpdateBudget>(_updateBudget);
   }
 
   final _budgetApi = BudgetApi(DioFactory().create());
@@ -52,6 +54,26 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
       );
       await _budgetApi.createBudget(createBudget);
       emit(BudgetState.createBudgetSuccess());
+    } catch (e) {
+      log.e('Error : $e');
+      emit(BudgetState.failure());
+    }
+  }
+
+  Future<void> _updateBudget(
+    _UpdateBudget event,
+    Emitter<BudgetState> emit,
+  ) async {
+    try {
+      emit(BudgetState.inProgress());
+      final updateBudget = UpdateBudgetModel(
+        name: event.budgetName,
+        totalBudget: event.totalBudget,
+        budgetId: event.budgetId,
+        current: event.current,
+      );
+      await _budgetApi.updateBudget(updateBudget);
+      emit(BudgetState.updateBudgetSuccess());
     } catch (e) {
       log.e('Error : $e');
       emit(BudgetState.failure());

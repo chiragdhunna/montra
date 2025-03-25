@@ -1,8 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:montra/screens/user_screens/budget_screens/edit_budget_screen.dart';
 
 class DetailBudgetScreen extends StatefulWidget {
-  const DetailBudgetScreen({super.key});
+  final String budgetId;
+  final String category;
+  final double current;
+  final String name;
+  final double totalBudget;
+  final double remaining;
+  final Color color;
+
+  const DetailBudgetScreen({
+    Key? key,
+    required this.budgetId,
+    required this.category,
+    required this.current,
+    required this.name,
+    required this.totalBudget,
+    required this.remaining,
+    required this.color,
+  }) : super(key: key);
 
   @override
   State<DetailBudgetScreen> createState() => _DetailBudgetScreenState();
@@ -11,6 +29,9 @@ class DetailBudgetScreen extends StatefulWidget {
 class _DetailBudgetScreenState extends State<DetailBudgetScreen> {
   @override
   Widget build(BuildContext context) {
+    // Determine if budget is exceeded
+    bool isExceeded = widget.current > widget.totalBudget;
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -34,6 +55,7 @@ class _DetailBudgetScreenState extends State<DetailBudgetScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Category Chip
             Container(
               padding: const EdgeInsets.symmetric(
                 vertical: 8.0,
@@ -52,41 +74,41 @@ class _DetailBudgetScreenState extends State<DetailBudgetScreen> {
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(Icons.shopping_bag, color: Colors.orange),
-                  SizedBox(width: 8.0),
-                  Text('Shopping'),
+                children: [
+                  Icon(Icons.shopping_bag, color: widget.color),
+                  const SizedBox(width: 8.0),
+                  Text(widget.category),
                 ],
               ),
             ),
             const SizedBox(height: 24.0),
             const Text('Remaining', style: TextStyle(fontSize: 18.0)),
             const SizedBox(height: 8.0),
-            const Text(
-              '\$0',
-              style: TextStyle(fontSize: 48.0, fontWeight: FontWeight.bold),
+            Text(
+              '\$${widget.remaining.toStringAsFixed(2)}',
+              style: const TextStyle(
+                fontSize: 48.0,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 16.0),
-            Container(
-              height: 4.0,
-              width: double.infinity,
-              color: Colors.orange,
-            ),
+            Container(height: 4.0, width: double.infinity, color: widget.color),
             const SizedBox(height: 16.0),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                vertical: 8.0,
-                horizontal: 16.0,
+            if (isExceeded)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 8.0,
+                  horizontal: 16.0,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(20.0),
+                ),
+                child: const Text(
+                  '⚠️ You\'ve exceeded the limit',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
-              decoration: BoxDecoration(
-                color: Colors.red,
-                borderRadius: BorderRadius.circular(20.0),
-              ),
-              child: const Text(
-                '⚠️ You\'ve exceed the limit',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
             const Spacer(),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -98,8 +120,21 @@ class _DetailBudgetScreenState extends State<DetailBudgetScreen> {
               ),
               onPressed: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (builder) => EditBudgetScreen()),
+                  MaterialPageRoute(
+                    builder:
+                        (builder) => EditBudgetScreen(
+                          budgetId: widget.budgetId,
+                          category: widget.category,
+                          current: widget.current,
+                          name: widget.name,
+                          totalBudget: widget.totalBudget,
+                          color: widget.color,
+                        ),
+                  ),
                 );
+                // Navigator.of(context).push(
+                //   MaterialPageRoute(builder: (builder) => EditBudgetScreen()),
+                // );
               },
               child: const Text('Edit', style: TextStyle(color: Colors.white)),
             ),
@@ -159,7 +194,7 @@ class _DetailBudgetScreenState extends State<DetailBudgetScreen> {
                       ),
                     ),
                     onPressed: () {
-                      // Handle delete confirmation
+                      // TODO: Implement budget deletion logic
                       Navigator.pop(context);
                     },
                     child: const Text(

@@ -3,6 +3,7 @@ import 'package:montra/logic/api/bank/models/total_bank_balance_model.dart';
 import 'package:montra/logic/api/budget/models/budget_month_model.dart';
 import 'package:montra/logic/api/budget/models/budgets_model.dart';
 import 'package:montra/logic/api/budget/models/create_budget_model.dart';
+import 'package:montra/logic/api/budget/models/update_budget_model.dart';
 import 'package:retrofit/retrofit.dart';
 
 part 'budget_api.g.dart';
@@ -13,6 +14,9 @@ abstract class BudgetApi {
 
   @POST('budget/create')
   Future<void> createBudget(@Body() CreateBudgetModel budget);
+
+  @POST('budget/update')
+  Future<void> updateBudget(@Body() UpdateBudgetModel budget);
 
   @GET('budget/balance')
   Future<TotalBankBalanceModel> getBalance();

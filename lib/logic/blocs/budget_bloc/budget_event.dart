@@ -9,4 +9,10 @@ class BudgetEvent with _$BudgetEvent {
     required int amount,
     required String budgetName,
   }) = _CreateBudget;
+  const factory BudgetEvent.updateBudget({
+    required int totalBudget,
+    required String budgetName,
+    required String budgetId,
+    required int current,
+  }) = _UpdateBudget;
 }

@@ -75,6 +75,11 @@ class _BudgetScreenState extends State<BudgetScreen> {
   void budgetBlocChangeHandler(BudgetState state) {
     state.maybeWhen(
       orElse: () {},
+      updateBudgetSuccess: () {
+        BlocProvider.of<BudgetBloc>(
+          context,
+        ).add(BudgetEvent.getBudgetByMonth(month: currentMonthIndex + 1));
+      },
       getBudgetByMonthSuccess: (budgetsModel) {
         if (!mounted) return;
         setState(() {
@@ -89,6 +94,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                   'total': budget.totalBudget.toDouble(),
                   'spent': double.parse(budget.current.toString()),
                   'color': _getCategoryColor(budget.name),
+                  'budgetId': budget.budgetId, // Add budget ID
                 };
               }).toList();
         });
@@ -211,31 +217,26 @@ class _BudgetScreenState extends State<BudgetScreen> {
 
   /// 🔹 UI for when there is budget data
   Widget _buildBudgetDataUI(List<Map<String, dynamic>> budgets) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (builder) => DetailBudgetScreen()));
-      },
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
-        child: ListView.builder(
-          itemCount: budgets.length,
-          itemBuilder: (context, index) {
-            return Column(
-              children: [
-                _buildBudgetCard(
-                  budgets[index]['category'],
-                  budgets[index]['remaining'].toDouble(),
-                  budgets[index]['total'].toDouble(),
-                  budgets[index]['spent'].toDouble(),
-                  budgets[index]['color'],
-                ),
-                if (index < budgets.length - 1) SizedBox(height: 10.h),
-              ],
-            );
-          },
-        ),
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
+      child: ListView.builder(
+        itemCount: budgets.length,
+        itemBuilder: (context, index) {
+          return Column(
+            children: [
+              _buildBudgetCard(
+                budgets[index]['category'],
+                budgets[index]['remaining'].toDouble(),
+                budgets[index]['total'].toDouble(),
+                budgets[index]['spent'].toDouble(),
+                budgets[index]['color'],
+                budgets[index]['budgetId'] ?? '', // Add budget ID
+                budgets[index]['category'], // Use category as name for now
+              ),
+              if (index < budgets.length - 1) SizedBox(height: 10.h),
+            ],
+          );
+        },
       ),
     );
   }
@@ -247,35 +248,56 @@ class _BudgetScreenState extends State<BudgetScreen> {
     double total,
     double spent,
     Color color,
+    String budgetId, // Add budget ID
+    String name, // Add name
   ) {
-    return Card(
-      child: Padding(
-        padding: EdgeInsets.all(10.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              category,
-              style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              "Remaining \$${remaining.toStringAsFixed(0)}",
-              style: TextStyle(fontSize: 14.sp),
-            ),
-            LinearProgressIndicator(
-              value: spent / total,
-              color: color,
-              backgroundColor: color.withOpacity(0.3),
-            ),
-            Text(
-              "\$${spent.toStringAsFixed(0)} of \$${total.toStringAsFixed(0)}",
-            ),
-            if (spent > total)
+    return GestureDetector(
+      onTap: () {
+        // Navigate to DetailBudgetScreen with specific budget details
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder:
+                (builder) => DetailBudgetScreen(
+                  budgetId: budgetId,
+                  category: category,
+                  current: spent,
+                  name: name,
+                  totalBudget: total,
+                  remaining: remaining,
+                  color: color,
+                ),
+          ),
+        );
+      },
+      child: Card(
+        child: Padding(
+          padding: EdgeInsets.all(10.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Text(
-                "You've exceeded the limit!",
-                style: TextStyle(color: Colors.red),
+                category,
+                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
               ),
-          ],
+              Text(
+                "Remaining \$${remaining.toStringAsFixed(0)}",
+                style: TextStyle(fontSize: 14.sp),
+              ),
+              LinearProgressIndicator(
+                value: spent / total,
+                color: color,
+                backgroundColor: color.withOpacity(0.3),
+              ),
+              Text(
+                "\$${spent.toStringAsFixed(0)} of \$${total.toStringAsFixed(0)}",
+              ),
+              if (spent > total)
+                Text(
+                  "You've exceeded the limit!",
+                  style: TextStyle(color: Colors.red),
+                ),
+            ],
+          ),
         ),
       ),
     );

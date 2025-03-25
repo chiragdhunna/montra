@@ -1,7 +1,28 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 
-class EditBudgetScreen extends StatefulWidget {
-  const EditBudgetScreen({super.key});
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:montra/logic/blocs/budget_bloc/budget_bloc.dart';
+import 'package:montra/screens/user_screens/budget_screen.dart';
+
+class EditBudgetScreen extends StatefulWidget with SU {
+  final String? budgetId;
+  final String? category;
+  final double? current;
+  final String? name;
+  final double? totalBudget;
+  final Color? color;
+
+  const EditBudgetScreen({
+    Key? key,
+    required this.budgetId,
+    required this.category,
+    required this.current,
+    required this.name,
+    required this.totalBudget,
+    required this.color,
+  }) : super(key: key);
 
   @override
   State<EditBudgetScreen> createState() => _EditBudgetScreenState();
@@ -9,13 +30,166 @@ class EditBudgetScreen extends StatefulWidget {
 
 class _EditBudgetScreenState extends State<EditBudgetScreen> {
   bool _receiveAlert = true;
-  double _sliderValue = 80.0;
+  late double _sliderValue;
+  late TextEditingController _totalBudgetController;
+  late TextEditingController _budgetNameController;
+  late TextEditingController _budgetAmountController;
+  bool _isLoading = false;
+
+  late StreamSubscription<BudgetState> bugetStreamListener;
+
+  final List<String> _categories = [
+    'Shopping',
+    'Groceries',
+    'Transportation',
+    'Entertainment',
+    'Dining Out',
+    'Utilities',
+    'Rent',
+    'Other',
+  ];
+  late String _selectedCategory;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize values from widget parameters or defaults
+    _selectedCategory = widget.category ?? 'Shopping';
+    _totalBudgetController = TextEditingController(
+      text: widget.totalBudget?.toStringAsFixed(2) ?? '0.00',
+    );
+    _budgetAmountController = TextEditingController(
+      text: widget.current?.toStringAsFixed(2) ?? '0.00',
+    );
+    _budgetNameController = TextEditingController(text: widget.name);
+
+    // Calculate slider value based on current spending
+    _sliderValue =
+        widget.current != null && widget.totalBudget != null
+            ? (widget.current! / widget.totalBudget! * 100).clamp(0.0, 100.0)
+            : 80.0;
+    bugetStreamListener = BlocProvider.of<BudgetBloc>(
+      context,
+    ).stream.listen(budgetBlocChangeHandler);
+    budgetBlocChangeHandler(BlocProvider.of<BudgetBloc>(context).state);
+  }
+
+  @override
+  void dispose() {
+    _totalBudgetController.dispose();
+    super.dispose();
+  }
+
+  Future<void> budgetBlocChangeHandler(BudgetState state) async {
+    state.maybeWhen(
+      orElse: () {},
+      inProgress: () {
+        setState(() {
+          _isLoading = true;
+        });
+      },
+      failure: () {
+        setState(() {
+          _isLoading = false;
+        });
+      },
+      createBudgetSuccess: () {
+        setState(() {
+          _isLoading = false;
+        });
+      },
+      updateBudgetSuccess: () {
+        setState(() {
+          _isLoading = false;
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) {
+              return Dialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16.r),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(20.w),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircleAvatar(
+                        radius: 30.r,
+                        backgroundColor: Colors.purple.withOpacity(0.1),
+                        child: Icon(
+                          Icons.check_circle,
+                          color: Colors.purple,
+                          size: 40.r,
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      const Text(
+                        "Transaction has been successfully added",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                builder: (context) => BudgetScreen(),
+                              ),
+                              (Route<dynamic> route) => false,
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.purple,
+                            padding: EdgeInsets.symmetric(vertical: 12.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.r),
+                            ),
+                          ),
+                          child: const Text(
+                            "OK",
+                            style: TextStyle(color: Colors.white, fontSize: 16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        });
+      },
+    );
+  }
+
+  Widget _buildTextField(String hint, TextEditingController controller) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        hintText: hint,
+
+        filled: true,
+        fillColor: Colors.grey[100],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.r),
+          borderSide: BorderSide.none,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _isLoading ? Colors.white : Colors.purple,
       appBar: AppBar(
-        backgroundColor: Colors.purple,
+        backgroundColor: _isLoading ? Colors.white : Colors.purple,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -24,151 +198,271 @@ class _EditBudgetScreenState extends State<EditBudgetScreen> {
         ),
         title: Center(
           child: Transform.translate(
-            offset: Offset(-20, 0), // Adjust this value as needed
-            child: Text('Edit Budget', style: TextStyle(color: Colors.white)),
+            offset: const Offset(-20, 0), // Adjust this value as needed
+            child: const Text(
+              'Edit Budget',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ),
         centerTitle: true,
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return Stack(
-            children: [
-              Column(
-                children: [
-                  Container(
-                    height: constraints.maxHeight * 0.5,
-                    width: double.infinity,
-                    color: Colors.purple,
-                    padding: const EdgeInsets.all(32.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Text(
-                          'How much do you want to spend?',
-                          style: TextStyle(color: Colors.white, fontSize: 18.0),
-                        ),
-                        SizedBox(height: 16.0),
-                        Text(
-                          '\$2000',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 48.0,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    height: constraints.maxHeight * 0.5,
-                    color: Colors.white,
-                  ),
-                ],
-              ),
-              Positioned(
-                top: constraints.maxHeight * 0.5 - 30, // Adjust this value
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30.0),
-                    topRight: Radius.circular(30.0),
-                  ),
-                  child: Container(
-                    color: Colors.white,
-                    child: SingleChildScrollView(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            DropdownButtonFormField<String>(
-                              decoration: const InputDecoration(
-                                labelText: 'Category',
-                              ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'Shopping',
-                                  child: Text('Shopping'),
-                                ),
-                                // Add more categories as needed
-                              ],
-                              onChanged: (value) {
-                                // Handle category change
-                              },
-                            ),
-                            const SizedBox(height: 16.0),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body:
+          _isLoading
+              ? Center(child: CircularProgressIndicator())
+              : LayoutBuilder(
+                builder: (context, constraints) {
+                  return Stack(
+                    children: [
+                      Column(
+                        children: [
+                          Container(
+                            height: constraints.maxHeight * 0.5,
+                            width: double.infinity,
+                            color: Colors.purple,
+                            padding: const EdgeInsets.all(32.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Text('Receive Alert'),
-                                Switch(
-                                  value: _receiveAlert,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _receiveAlert = value;
-                                    });
-                                  },
-                                ),
-                              ],
-                            ),
-                            const Text(
-                              'Receive alert when it reaches some point.',
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                            const SizedBox(height: 16.0),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Slider(
-                                    value: _sliderValue,
-                                    min: 0,
-                                    max: 100,
-                                    divisions: 100,
-                                    activeColor: Colors.purple,
-                                    inactiveColor: Colors.grey[300],
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _sliderValue = value;
-                                      });
-                                    },
+                                Center(
+                                  child: const Text(
+                                    'How much did you spend?',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18.0,
+                                    ),
                                   ),
                                 ),
-                                Text('${_sliderValue.toInt()}%'),
+                                const SizedBox(height: 10.0),
+                                Center(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      const Text(
+                                        '\$',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 38.0,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      SizedBox(width: 8.w),
+                                      SizedBox(
+                                        width: 120.w, // adjust as needed
+                                        child: TextField(
+                                          textAlign: TextAlign.center,
+                                          controller: _budgetAmountController,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 38.0,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          decoration: const InputDecoration(
+                                            border: InputBorder.none,
+                                          ),
+                                          keyboardType: TextInputType.number,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                SizedBox(height: 10.h),
+                                Center(
+                                  child: const Text(
+                                    'How much do you want to spend?',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18.0,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 10.0),
+                                Center(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      const Text(
+                                        '\$',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 38.0,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      SizedBox(width: 8.w),
+                                      SizedBox(
+                                        width: 120.w, // adjust as needed
+                                        child: TextField(
+                                          textAlign: TextAlign.center,
+                                          controller: _totalBudgetController,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 38.0,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          decoration: const InputDecoration(
+                                            border: InputBorder.none,
+                                          ),
+                                          keyboardType: TextInputType.number,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ],
                             ),
-                            const SizedBox(height: 16.0),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.purple,
-                                minimumSize: const Size(double.infinity, 50),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
+                          ),
+                        ],
+                      ),
+                      Positioned(
+                        top:
+                            constraints.maxHeight * 0.5 -
+                            30, // Adjust this value
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(30.0),
+                            topRight: Radius.circular(30.0),
+                          ),
+                          child: Container(
+                            color: Colors.white,
+                            child: SingleChildScrollView(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildTextField(
+                                      "Budget Name",
+                                      _budgetNameController,
+                                    ),
+                                    const SizedBox(height: 16.0),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const Text('Receive Alert'),
+                                        Switch(
+                                          value: _receiveAlert,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              _receiveAlert = value;
+                                            });
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                    const Text(
+                                      'Receive alert when it reaches some point.',
+                                      style: TextStyle(color: Colors.grey),
+                                    ),
+                                    const SizedBox(height: 16.0),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Slider(
+                                            value: _sliderValue,
+                                            min: 0,
+                                            max: 100,
+                                            divisions: 100,
+                                            activeColor: Colors.purple,
+                                            inactiveColor: Colors.grey[300],
+                                            onChanged: (value) {
+                                              setState(() {
+                                                _sliderValue = value;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        Text('${_sliderValue.toInt()}%'),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16.0),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.purple,
+                                        minimumSize: const Size(
+                                          double.infinity,
+                                          50,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            10.0,
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed: () {
+                                        // TODO: Implement update budget logic
+                                        // You'll want to pass back the updated budget details
+                                        // Navigator.pop(context);
+                                        if (_budgetAmountController
+                                                .text
+                                                .isNotEmpty &&
+                                            _budgetNameController
+                                                .text
+                                                .isNotEmpty &&
+                                            _totalBudgetController
+                                                .text
+                                                .isNotEmpty) {
+                                          int totalBudget =
+                                              double.parse(
+                                                _totalBudgetController.text,
+                                              ).toInt();
+                                          int current =
+                                              double.parse(
+                                                _budgetAmountController.text,
+                                              ).toInt();
+
+                                          BlocProvider.of<BudgetBloc>(
+                                            context,
+                                          ).add(
+                                            BudgetEvent.updateBudget(
+                                              totalBudget: totalBudget,
+                                              budgetName:
+                                                  _budgetNameController.text,
+                                              budgetId: widget.budgetId!,
+                                              current: current,
+                                            ),
+                                          );
+                                        } else {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Something went wrong',
+                                                selectionColor: Colors.red,
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                      child: const Text(
+                                        'Update Budget',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              onPressed: () {
-                                // Handle continue action
-                              },
-                              child: const Text(
-                                'Continue',
-                                style: TextStyle(color: Colors.white),
-                              ),
                             ),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                ),
+                    ],
+                  );
+                },
               ),
-            ],
-          );
-        },
-      ),
     );
   }
 }
