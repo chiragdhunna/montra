@@ -93,7 +93,12 @@ class _BudgetScreenState extends State<BudgetScreen> {
               }).toList();
         });
       },
-
+      createBudgetSuccess: () {
+        log.w('Current Month is : $currentMonthIndex');
+        BlocProvider.of<BudgetBloc>(
+          context,
+        ).add(BudgetEvent.getBudgetByMonth(month: currentMonthIndex + 1));
+      },
       failure: () {
         log.d('State is failure');
         if (!mounted) return;

@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:montra/logic/api/bank/models/total_bank_balance_model.dart';
 import 'package:montra/logic/api/budget/models/budget_month_model.dart';
 import 'package:montra/logic/api/budget/models/budgets_model.dart';
-import 'package:montra/logic/api/users/models/user_image_model.dart';
+import 'package:montra/logic/api/budget/models/create_budget_model.dart';
 import 'package:retrofit/retrofit.dart';
 
 part 'budget_api.g.dart';
@@ -11,14 +11,11 @@ part 'budget_api.g.dart';
 abstract class BudgetApi {
   factory BudgetApi(Dio dio, {String? baseUrl}) = _BudgetApi;
 
-  // @POST('income/add')
-  // Future<LoginUserResponseModel> addIncome(@Body() IncomeModel request);
+  @POST('budget/create')
+  Future<void> createBudget(@Body() CreateBudgetModel budget);
 
   @GET('budget/balance')
   Future<TotalBankBalanceModel> getBalance();
-
-  // @DELETE('income/delete')
-  // Future<LoginUserResponseModel> deleteIncome(@Body() LoginUserModel request);
 
   @GET("budget/getall")
   Future<BudgetsModel> getAllBudgets();
