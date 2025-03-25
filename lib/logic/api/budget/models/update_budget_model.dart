@@ -13,7 +13,7 @@ abstract class UpdateBudgetModel with _$UpdateBudgetModel {
     required int totalBudget,
     required String name,
     required int current,
-  }) = _BudgetModel;
+  }) = _UpdateBudgetModel;
 
   factory UpdateBudgetModel.fromJson(Map<String, Object?> json) =>
       _$UpdateBudgetModelFromJson(json);

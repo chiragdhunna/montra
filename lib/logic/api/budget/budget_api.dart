@@ -3,6 +3,7 @@ import 'package:montra/logic/api/bank/models/total_bank_balance_model.dart';
 import 'package:montra/logic/api/budget/models/budget_month_model.dart';
 import 'package:montra/logic/api/budget/models/budgets_model.dart';
 import 'package:montra/logic/api/budget/models/create_budget_model.dart';
+import 'package:montra/logic/api/budget/models/delete_budget_model.dart';
 import 'package:montra/logic/api/budget/models/update_budget_model.dart';
 import 'package:retrofit/retrofit.dart';
 
@@ -17,6 +18,9 @@ abstract class BudgetApi {
 
   @POST('budget/update')
   Future<void> updateBudget(@Body() UpdateBudgetModel budget);
+
+  @DELETE('budget/delete')
+  Future<void> deleteBudget(@Body() DeleteBudgetModel budget);
 
   @GET('budget/balance')
   Future<TotalBankBalanceModel> getBalance();

@@ -75,6 +75,11 @@ class _BudgetScreenState extends State<BudgetScreen> {
   void budgetBlocChangeHandler(BudgetState state) {
     state.maybeWhen(
       orElse: () {},
+      deleteBudgetSuccess: () {
+        BlocProvider.of<BudgetBloc>(
+          context,
+        ).add(BudgetEvent.getBudgetByMonth(month: currentMonthIndex + 1));
+      },
       updateBudgetSuccess: () {
         BlocProvider.of<BudgetBloc>(
           context,

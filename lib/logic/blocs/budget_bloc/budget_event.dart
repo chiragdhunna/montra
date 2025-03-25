@@ -5,6 +5,8 @@ class BudgetEvent with _$BudgetEvent {
   const factory BudgetEvent.started() = _Started;
   const factory BudgetEvent.getBudgetByMonth({required int month}) =
       _GetBudgetByMonth;
+  const factory BudgetEvent.deleteBudget({required String budgetId}) =
+      _DeleteBudget;
   const factory BudgetEvent.createBudget({
     required int amount,
     required String budgetName,
