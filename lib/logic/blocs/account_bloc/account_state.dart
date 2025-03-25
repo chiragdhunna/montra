@@ -10,6 +10,8 @@ class AccountState with _$AccountState {
     required WalletsModel wallets,
     required BanksModel banks,
   }) = _GetAccountDetailsSuccess;
-  const factory AccountState.failure() = _Failure;
+  const factory AccountState.failure({required String error}) = _Failure;
+  const factory AccountState.createBankAccountSuccess() =
+      _CreateBankAccountSuccess;
   const factory AccountState.inProgress() = _InProgress;
 }

@@ -253,7 +253,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _isLoading = false;
         });
       },
-      failure: () {
+      failure: (error) {
         log.d('State is failure');
         if (!mounted) return;
         setState(() {

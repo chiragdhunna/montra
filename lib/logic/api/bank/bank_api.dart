@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:montra/logic/api/bank/models/banks_model.dart';
+import 'package:montra/logic/api/bank/models/create_bank_account_model.dart';
 import 'package:montra/logic/api/bank/models/total_bank_balance_model.dart';
 import 'package:retrofit/retrofit.dart';
 
@@ -9,14 +10,11 @@ part 'bank_api.g.dart';
 abstract class BankApi {
   factory BankApi(Dio dio, {String? baseUrl}) = _BankApi;
 
-  // @POST('income/add')
-  // Future<LoginUserResponseModel> addIncome(@Body() IncomeModel request);
+  @POST('bank/create')
+  Future<void> createBankAccount(@Body() CreateBankAccountModel bankAccount);
 
   @GET('bank/balance')
   Future<TotalBankBalanceModel> getBalance();
-
-  // @DELETE('income/delete')
-  // Future<LoginUserResponseModel> deleteIncome(@Body() LoginUserModel request);
 
   @GET("bank/get")
   Future<BanksModel> getAllBankAccounts();

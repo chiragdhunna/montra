@@ -13,7 +13,7 @@ class _AddNewAccountScreenState extends State<AddNewAccountScreen> {
   String? _selectedAccountType;
   String? _selectedBank;
 
-  final List<String> _accountTypes = ["Bank", "Wallet", "Credit Card"];
+  final List<String> _accountTypes = ["Bank", "Wallet"];
   final List<Map<String, String>> _banks = [
     {"name": "Chase", "logo": "assets/chase_logo.png"},
     {"name": "PayPal", "logo": "assets/paypal_logo.png"},
