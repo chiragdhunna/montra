@@ -2,6 +2,10 @@ import 'package:bloc/bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logger/logger.dart';
 import 'package:montra/logic/api/bank/bank_api.dart';
+import 'package:montra/logic/api/bank/models/bank_model.dart';
+import 'package:montra/logic/api/bank/models/banks_model.dart';
+import 'package:montra/logic/api/wallet/models/wallet_model.dart';
+import 'package:montra/logic/api/wallet/models/wallets_model.dart';
 import 'package:montra/logic/api/wallet/wallet_api.dart';
 import 'package:montra/logic/dio_factory.dart';
 
@@ -17,6 +21,7 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
       // TODO: implement event handler
     });
     on<_GetAccountBalance>(_getAccountBalance);
+    on<_GetAccountDetails>(_getAccountDetails);
   }
 
   final _bankApi = BankApi(DioFactory().create());
@@ -29,12 +34,41 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
     try {
       emit(AccountState.inProgress());
       final bankBalance = await _bankApi.getBalance();
-      log.d('Get Bank Balance Response: $bankBalance');
+      log.w('Get Bank Balance Response: $bankBalance');
       final walletBalance = await _walletApi.getBalance();
-      log.d('Get Wallet Balance Response: $walletBalance');
+      log.w('Get Wallet Balance Response: $walletBalance');
       final totalBalance = bankBalance.balance + walletBalance.balance;
-      log.d('Total Balance: $totalBalance');
+      log.w('Total Balance: $totalBalance');
       emit(AccountState.getAccountBalanceSuccess(balance: totalBalance));
+      // final response = await _accountApi.getAccount();
+      // log.d('Get Account Response: $response');
+      // emit(AccountState.getAccountSuccess(account: response.account));
+    } catch (e) {
+      log.e('Error: $e');
+      emit(AccountState.failure());
+    }
+  }
+
+  Future<void> _getAccountDetails(
+    _GetAccountDetails event,
+    Emitter<AccountState> emit,
+  ) async {
+    try {
+      emit(AccountState.inProgress());
+      final bankBalance = await _bankApi.getBalance();
+      final walletBalance = await _walletApi.getBalance();
+      final totalBalance = bankBalance.balance + walletBalance.balance;
+
+      final banks = await _bankApi.getAllBankAccounts();
+      final wallets = await _walletApi.getAllBankAccounts();
+
+      emit(
+        AccountState.getAccountDetailsSuccess(
+          balance: totalBalance,
+          wallets: wallets,
+          banks: banks,
+        ),
+      );
       // final response = await _accountApi.getAccount();
       // log.d('Get Account Response: $response');
       // emit(AccountState.getAccountSuccess(account: response.account));

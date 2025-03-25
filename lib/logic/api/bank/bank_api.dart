@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
+import 'package:montra/logic/api/bank/models/banks_model.dart';
 import 'package:montra/logic/api/bank/models/total_bank_balance_model.dart';
-import 'package:montra/logic/api/users/models/user_image_model.dart';
 import 'package:retrofit/retrofit.dart';
 
 part 'bank_api.g.dart';
@@ -18,6 +18,6 @@ abstract class BankApi {
   // @DELETE('income/delete')
   // Future<LoginUserResponseModel> deleteIncome(@Body() LoginUserModel request);
 
-  @GET("income/all")
-  Future<UserImageModel> getAllBankAccounts(@Body() FormData formData);
+  @GET("bank/get")
+  Future<BanksModel> getAllBankAccounts();
 }

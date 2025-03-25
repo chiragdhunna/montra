@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:montra/logic/blocs/account_bloc/account_bloc.dart';
 import 'package:montra/logic/blocs/authentication_bloc/authentication_bloc.dart';
 import 'package:montra/logic/blocs/budget_bloc/budget_bloc.dart';
 import 'package:montra/logic/blocs/expense/expense_bloc.dart';
@@ -39,6 +40,7 @@ class MyApp extends StatelessWidget {
         BlocProvider<TransactionsBloc>(create: (context) => TransactionsBloc()),
         BlocProvider<ExportDataBloc>(create: (context) => ExportDataBloc()),
         BlocProvider<BudgetBloc>(create: (context) => BudgetBloc()),
+        BlocProvider<AccountBloc>(create: (context) => AccountBloc()),
         BlocProvider<LoginBloc>(create: (context) => LoginBloc()),
         BlocProvider<AuthenticationBloc>(
           create: (context) {

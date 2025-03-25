@@ -11,6 +11,7 @@ import 'package:montra/logic/api/expense/models/expense_stats_frequency_model.da
 import 'package:montra/logic/api/expense/models/expense_stats_model.dart';
 import 'package:montra/logic/api/expense/models/expense_stats_summary_model.dart';
 import 'package:montra/logic/api/users/models/user_model.dart';
+import 'package:montra/logic/blocs/account_bloc/account_bloc.dart';
 import 'package:montra/logic/blocs/expense/expense_bloc.dart';
 import 'package:montra/logic/blocs/income_bloc/income_bloc.dart';
 import 'package:montra/logic/blocs/transactions_bloc/transactions_bloc.dart';
@@ -39,9 +40,11 @@ class _HomeScreenState extends State<HomeScreen> {
   late StreamSubscription<IncomeState> _incomeStreamSubscription;
   late StreamSubscription<ExpenseState> _expenseStreamSubscription;
   late StreamSubscription<TransactionsState> _transactionsStreamSubscription;
+  late StreamSubscription<AccountState> _accountStreamSubscription;
   bool _isLoading = true;
   int totalIncome = 0;
   int totalExpense = 0;
+  int totalBalance = 0;
   String selectedFilter = "Today";
   final List<String> months = [
     'January',
@@ -89,6 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
     selectedMonth = months[DateTime.now().month - 1];
     BlocProvider.of<IncomeBloc>(context).add(IncomeEvent.getIncome());
     BlocProvider.of<ExpenseBloc>(context).add(ExpenseEvent.getExpense());
+    BlocProvider.of<AccountBloc>(context).add(AccountEvent.getAccountBalance());
     BlocProvider.of<TransactionsBloc>(
       context,
     ).add(TransactionsEvent.getAllTransactions());
@@ -101,9 +105,13 @@ class _HomeScreenState extends State<HomeScreen> {
     _transactionsStreamSubscription = BlocProvider.of<TransactionsBloc>(
       context,
     ).stream.listen(transactionsBlocChangeHandler);
+    _accountStreamSubscription = BlocProvider.of<AccountBloc>(
+      context,
+    ).stream.listen(accountBlocChangeHandler);
 
     incomeBlocChangeHandler(BlocProvider.of<IncomeBloc>(context).state);
     expenseBlocChangeHandler(BlocProvider.of<ExpenseBloc>(context).state);
+    accountBlocChangeHandler(BlocProvider.of<AccountBloc>(context).state);
     transactionsBlocChangeHandler(
       BlocProvider.of<TransactionsBloc>(context).state,
     );
@@ -229,12 +237,46 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void accountBlocChangeHandler(AccountState state) {
+    state.maybeWhen(
+      orElse: () {
+        log.d('State is or else');
+      },
+      getAccountBalanceSuccess: (balance) {
+        setState(() {
+          _isLoading = false;
+          totalBalance = balance;
+        });
+      },
+      getAccountDetailsSuccess: (balance, wallets, banks) {
+        setState(() {
+          _isLoading = false;
+        });
+      },
+      failure: () {
+        log.d('State is failure');
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+        });
+      },
+      inProgress: () {
+        log.d('State is inProgress');
+        if (!mounted) return;
+        setState(() {
+          _isLoading = true;
+        });
+      },
+    );
+  }
+
   @override
   void dispose() {
     // TODO: implement dispose
     _incomeStreamSubscription.cancel();
     _expenseStreamSubscription.cancel();
     _transactionsStreamSubscription.cancel();
+    _accountStreamSubscription.cancel();
     super.dispose();
   }
 
@@ -400,7 +442,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               SizedBox(height: 5.h),
                               Text(
-                                "\$$totalExpense",
+                                "\$$totalBalance",
                                 style: TextStyle(
                                   fontSize: 32.sp,
                                   fontWeight: FontWeight.bold,
