@@ -76,6 +76,16 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
               ),
             );
           });
+        } else {
+          setState(() {
+            isLoading = false;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Something went wrong'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          });
         }
       },
       getAccountDetailsSuccess: (balance, fetchedWallets, fetchedBanks) {
@@ -83,7 +93,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           isLoading = false;
         });
       },
-      createBankAccountSuccess: () {
+      createAccountSuccess: () {
         setState(() {
           isLoading = false;
           showDialog(
@@ -110,7 +120,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
                       ),
                       const SizedBox(height: 15),
                       const Text(
-                        "Bank Account successfully added",
+                        "Wallet successfully added",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 16,
@@ -383,21 +393,37 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
 
                                     // Call BLoC for bank account
                                     BlocProvider.of<AccountBloc>(context).add(
-                                      AccountEvent.createBankAccount(
-                                        bankName: _selectedBankName!,
+                                      AccountEvent.createAccount(
+                                        isWallet: false,
+                                        name: _selectedBankName!,
                                         amount: enteredAmount,
                                       ),
                                     );
                                   } else {
-                                    // TODO: handle wallet case when implemented
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          "Wallet creation coming soon.",
+                                    if (amountEditingController
+                                            .text
+                                            .isNotEmpty &&
+                                        _walletController.text.isNotEmpty) {
+                                      BlocProvider.of<AccountBloc>(context).add(
+                                        AccountEvent.createAccount(
+                                          isWallet: true,
+                                          name: _walletController.text,
+                                          amount: enteredAmount,
                                         ),
-                                        backgroundColor: Colors.orange,
-                                      ),
-                                    );
+                                      );
+                                    } else {
+                                      // TODO: handle wallet case when implemented
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            "Please fill all the details",
+                                          ),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
                                   }
                                 },
 

@@ -51,7 +51,7 @@ class _AccountScreenState extends State<AccountScreen> {
           banks = fetchedBanks;
         });
       },
-      createBankAccountSuccess: () {
+      createAccountSuccess: () {
         BlocProvider.of<AccountBloc>(
           context,
         ).add(AccountEvent.getAccountDetails());

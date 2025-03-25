@@ -11,7 +11,6 @@ class AccountState with _$AccountState {
     required BanksModel banks,
   }) = _GetAccountDetailsSuccess;
   const factory AccountState.failure({required String error}) = _Failure;
-  const factory AccountState.createBankAccountSuccess() =
-      _CreateBankAccountSuccess;
+  const factory AccountState.createAccountSuccess() = _CreateAccountSuccess;
   const factory AccountState.inProgress() = _InProgress;
 }

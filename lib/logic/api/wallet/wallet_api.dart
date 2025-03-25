@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:montra/logic/api/users/models/user_image_model.dart';
+import 'package:montra/logic/api/wallet/models/create_wallet_model.dart';
 import 'package:montra/logic/api/wallet/models/total_wallet_balance_model.dart';
 import 'package:montra/logic/api/wallet/models/wallets_model.dart';
 import 'package:retrofit/retrofit.dart';
@@ -16,8 +16,8 @@ abstract class WalletApi {
   @GET('wallet/balance')
   Future<TotalWalletBalanceModel> getBalance();
 
-  // @DELETE('income/delete')
-  // Future<LoginUserResponseModel> deleteIncome(@Body() LoginUserModel request);
+  @POST('wallet/create')
+  Future<void> createWallet(@Body() CreateWalletModel request);
 
   @GET("wallet/getall")
   Future<WalletsModel> getAllBankAccounts();

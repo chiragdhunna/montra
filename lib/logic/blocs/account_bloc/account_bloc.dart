@@ -6,6 +6,7 @@ import 'package:montra/logic/api/bank/bank_api.dart';
 import 'package:montra/logic/api/bank/models/bank_model.dart';
 import 'package:montra/logic/api/bank/models/banks_model.dart';
 import 'package:montra/logic/api/bank/models/create_bank_account_model.dart';
+import 'package:montra/logic/api/wallet/models/create_wallet_model.dart';
 import 'package:montra/logic/api/wallet/models/wallet_model.dart';
 import 'package:montra/logic/api/wallet/models/wallets_model.dart';
 import 'package:montra/logic/api/wallet/wallet_api.dart';
@@ -24,7 +25,7 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
     });
     on<_GetAccountBalance>(_getAccountBalance);
     on<_GetAccountDetails>(_getAccountDetails);
-    on<_CreateBankAccount>(_createBankAccount);
+    on<_CreateAccount>(_createAccount);
   }
 
   final _bankApi = BankApi(DioFactory().create());
@@ -86,20 +87,28 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
     }
   }
 
-  Future<void> _createBankAccount(
-    _CreateBankAccount event,
+  Future<void> _createAccount(
+    _CreateAccount event,
     Emitter<AccountState> emit,
   ) async {
     try {
       emit(AccountState.inProgress());
 
-      final createBankAccount = CreateBankAccountModel(
-        bankName: event.bankName,
-        amount: event.amount,
-      );
-      await _bankApi.createBankAccount(createBankAccount);
+      if (event.isWallet == false) {
+        final createBankAccount = CreateBankAccountModel(
+          bankName: event.name,
+          amount: event.amount,
+        );
+        await _bankApi.createBankAccount(createBankAccount);
+      } else {
+        final createWallet = CreateWalletModel(
+          name: event.name,
+          amount: event.amount,
+        );
+        await _walletApi.createWallet(createWallet);
+      }
 
-      emit(AccountState.createBankAccountSuccess());
+      emit(AccountState.createAccountSuccess());
     } catch (e) {
       log.e('Error: $e');
       if (e is DioException) {

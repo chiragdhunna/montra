@@ -5,8 +5,9 @@ class AccountEvent with _$AccountEvent {
   const factory AccountEvent.started() = _Started;
   const factory AccountEvent.getAccountDetails() = _GetAccountDetails;
   const factory AccountEvent.getAccountBalance() = _GetAccountBalance;
-  const factory AccountEvent.createBankAccount({
-    required String bankName,
+  const factory AccountEvent.createAccount({
+    required String name,
     required int amount,
-  }) = _CreateBankAccount;
+    required bool isWallet,
+  }) = _CreateAccount;
 }
