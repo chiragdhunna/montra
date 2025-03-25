@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:montra/logic/blocs/authentication_bloc/authentication_bloc.dart';
 import 'package:montra/logic/blocs/budget_bloc/budget_bloc.dart';
 import 'package:montra/logic/blocs/expense/expense_bloc.dart';
+import 'package:montra/logic/blocs/export_data/export_data_bloc.dart';
 import 'package:montra/logic/blocs/income_bloc/income_bloc.dart';
 import 'package:montra/logic/blocs/login_bloc/login_bloc.dart';
 import 'package:montra/logic/blocs/network_bloc/network_bloc.dart';
@@ -36,6 +37,7 @@ class MyApp extends StatelessWidget {
         BlocProvider<ExpenseBloc>(create: (context) => ExpenseBloc()),
         BlocProvider<TransferBloc>(create: (context) => TransferBloc()),
         BlocProvider<TransactionsBloc>(create: (context) => TransactionsBloc()),
+        BlocProvider<ExportDataBloc>(create: (context) => ExportDataBloc()),
         BlocProvider<BudgetBloc>(create: (context) => BudgetBloc()),
         BlocProvider<LoginBloc>(create: (context) => LoginBloc()),
         BlocProvider<AuthenticationBloc>(

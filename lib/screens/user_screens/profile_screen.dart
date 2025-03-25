@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:montra/logic/api/users/models/user_model.dart';
 import 'package:montra/logic/blocs/authentication_bloc/authentication_bloc.dart';
 import 'package:montra/screens/user_screens/profile_section/account_screen.dart';
 import 'package:montra/screens/user_screens/profile_section/export%20screens/export_data_screen.dart';
@@ -14,8 +17,24 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  UserModel? user;
+
+  @override
+  void initState() {
+    super.initState();
+    BlocProvider.of<AuthenticationBloc>(context).getAuthUser().then((onValue) {
+      setState(() {
+        user = onValue;
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (user == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -25,18 +44,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Row(
               children: [
                 CircleAvatar(
-                  radius: 40,
-                  backgroundImage: AssetImage(
-                    'assets/profile.png',
-                  ), // Replace with your image asset
+                  radius: 40.r,
+                  backgroundImage:
+                      user!.imgUrl != null && user!.imgUrl!.isNotEmpty
+                          ? user!.imgUrl!.startsWith('/')
+                              ? FileImage(File(user!.imgUrl!)) as ImageProvider
+                              : AssetImage(user!.imgUrl!)
+                          : AssetImage("assets/default_avatar.png"),
                 ),
                 const SizedBox(width: 16),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Text('Username', style: TextStyle(color: Colors.grey)),
                     Text(
-                      'Iriana Saliha',
+                      user!.name,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -45,7 +67,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
                 const Spacer(),
-                IconButton(icon: const Icon(Icons.edit), onPressed: () {}),
               ],
             ),
             const SizedBox(height: 40),

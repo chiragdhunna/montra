@@ -187,4 +187,9 @@ class AuthenticationBloc
   bool isAuthenticated() {
     return state.isAuthenticated;
   }
+
+  Future<UserModel> getAuthUser() async {
+    final user = await _authRepository.getAuthUser();
+    return user!;
+  }
 }

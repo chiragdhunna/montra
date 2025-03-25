@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:montra/logic/blocs/export_data/export_data_bloc.dart';
 import 'package:montra/screens/user_screens/profile_section/export%20screens/export_data_success_screen.dart';
 
 class ExportDataScreen extends StatefulWidget {
@@ -12,6 +16,71 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
   String selectedDataType = 'All';
   String selectedDateRange = 'Last 30 days';
   String selectedFormat = 'CSV';
+
+  final List<String> dataTypes = [
+    'All',
+    'Income',
+    'Expense',
+    'Transfer',
+    'Budget',
+  ];
+  final List<String> dateRanges = [
+    'Last 30 days',
+    'Last Quarter',
+    '6 months',
+    'Last Year',
+  ];
+  final List<String> formats = ['CSV', 'PDF'];
+
+  String _mapDateRangeToKey(String range) {
+    switch (range) {
+      case 'Last Year':
+        return 'lastYear';
+      case 'Last Quarter':
+        return 'lastQuarter';
+      case '6 months':
+        return '6months';
+      default:
+        return '1month'; // Last 30 days
+    }
+  }
+
+  bool _isLoading = false;
+
+  late StreamSubscription<ExportDataState> exportDataSubscription;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    exportDataSubscription = BlocProvider.of<ExportDataBloc>(
+      context,
+    ).stream.listen(exportDataOnChangeHandler);
+    super.initState();
+  }
+
+  Future<void> exportDataOnChangeHandler(ExportDataState state) async {
+    state.maybeWhen(
+      orElse: () {},
+      getExportDataSuccess: (filePath) {
+        setState(() {
+          _isLoading = false;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text("Exported to: $filePath")));
+        });
+      },
+      failure: (error) {
+        setState(() {
+          _isLoading = false;
+        });
+      },
+      inProgress: () {
+        setState(() {
+          _isLoading = true;
+        });
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +110,7 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
               const SizedBox(height: 8),
               _buildDropdownField(
                 value: selectedDataType,
+                items: dataTypes,
                 onChanged: (value) {
                   if (value != null) {
                     setState(() {
@@ -58,6 +128,7 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
               const SizedBox(height: 8),
               _buildDropdownField(
                 value: selectedDateRange,
+                items: dateRanges,
                 onChanged: (value) {
                   if (value != null) {
                     setState(() {
@@ -75,6 +146,7 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
               const SizedBox(height: 8),
               _buildDropdownField(
                 value: selectedFormat,
+                items: formats,
                 onChanged: (value) {
                   if (value != null) {
                     setState(() {
@@ -92,9 +164,16 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
                 child: ElevatedButton(
                   onPressed: () {
                     // Handle export action
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (builder) => ExportDataSuccessScreen(),
+                    // Navigator.of(context).push(
+                    //   MaterialPageRoute(
+                    //     builder: (builder) => ExportDataSuccessScreen(),
+                    //   ),
+                    // );
+                    BlocProvider.of<ExportDataBloc>(context).add(
+                      ExportDataEvent.getExportData(
+                        dataType: selectedDataType.toLowerCase(),
+                        dateRange: _mapDateRangeToKey(selectedDateRange),
+                        format: selectedFormat.toLowerCase(),
                       ),
                     );
                   },
@@ -131,6 +210,7 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
 
   Widget _buildDropdownField({
     required String value,
+    required List<String> items,
     required Function(String?) onChanged,
   }) {
     return Container(
@@ -146,7 +226,10 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
         isExpanded: true,
         underline: const SizedBox(),
         icon: const Icon(Icons.keyboard_arrow_down),
-        items: [DropdownMenuItem(value: value, child: Text(value))],
+        items:
+            items.map((item) {
+              return DropdownMenuItem(value: item, child: Text(item));
+            }).toList(),
         style: const TextStyle(color: Colors.black, fontSize: 16),
       ),
     );
