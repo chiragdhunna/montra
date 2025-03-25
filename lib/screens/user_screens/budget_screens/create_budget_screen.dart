@@ -123,6 +123,7 @@ class _CreateBudgetScreenState extends State<CreateBudgetScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: _isLoading ? Colors.white : Colors.purple,
       appBar: _buildAppBar(),
       body:
@@ -224,13 +225,24 @@ class _CreateBudgetScreenState extends State<CreateBudgetScreen> {
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTextField("Budget Name", budgetNameController),
-          const SizedBox(height: 15),
-          _buildAlertToggle(),
-          const Spacer(),
-          _buildContinueButton(),
+          Expanded(
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: 1, // Since you only have one form, keep it 1
+              itemBuilder: (context, index) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildTextField("Budget Name", budgetNameController),
+                    const SizedBox(height: 15),
+                    _buildAlertToggle(),
+                  ],
+                );
+              },
+            ),
+          ),
+          _buildContinueButton(), // Fixed at the bottom
         ],
       ),
     );
