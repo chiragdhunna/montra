@@ -2,15 +2,41 @@ import 'package:flutter/material.dart';
 import 'package:montra/screens/user_screens/profile_section/account%20screens/account_management_screen.dart';
 
 class DetailAccountScreen extends StatefulWidget {
-  const DetailAccountScreen({super.key});
+  final String accountName;
+  final int amount;
+
+  const DetailAccountScreen({
+    super.key,
+    required this.accountName,
+    required this.amount,
+  });
 
   @override
   State<DetailAccountScreen> createState() => _DetailAccountScreenState();
 }
 
 class _DetailAccountScreenState extends State<DetailAccountScreen> {
+  final List<Map<String, String>> _banks = [
+    {"name": "Chase", "logo": "assets/chase_logo.png"},
+    {"name": "PayPal", "logo": "assets/paypal_logo.png"},
+    {"name": "Citi", "logo": "assets/citi_logo.png"},
+    {"name": "Bank of America", "logo": "assets/bofa_logo.png"},
+    {"name": "Jago", "logo": "assets/jago_logo.png"},
+    {"name": "Mandiri", "logo": "assets/mandiri_logo.png"},
+    {"name": "BCA", "logo": "assets/bca_logo.png"},
+  ];
+
   @override
   Widget build(BuildContext context) {
+    // Determine if the account name matches a bank
+    final bankData = _banks.firstWhere(
+      (b) => b['name']!.toLowerCase() == widget.accountName.toLowerCase(),
+      orElse: () => {"logo": ""},
+    );
+
+    final isBank = bankData['logo']!.isNotEmpty;
+    final String logoPath = bankData['logo'] ?? "";
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -56,30 +82,38 @@ class _DetailAccountScreenState extends State<DetailAccountScreen> {
                         borderRadius: BorderRadius.circular(30),
                       ),
                       child: Center(
-                        child: Image.asset(
-                          'assets/paypal_logo.png',
-                          width: 30,
-                          height: 30,
-                          color: const Color(0xFF0F2A7A),
-                        ),
+                        child:
+                            isBank
+                                ? Image.asset(
+                                  logoPath,
+                                  width: 30,
+                                  height: 30,
+                                  fit: BoxFit.contain,
+                                )
+                                : Icon(
+                                  Icons.account_balance_wallet,
+                                  color: Colors.purple,
+                                  size: 30,
+                                ),
                       ),
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      'Paypal',
-                      style: TextStyle(
+                    Text(
+                      widget.accountName,
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      '\$2400',
+                    Text(
+                      '\$${widget.amount}', // You can make this dynamic if needed
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+
                     const SizedBox(height: 24),
                   ],
                 ),

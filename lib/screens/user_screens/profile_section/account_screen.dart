@@ -1,4 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:montra/logic/api/bank/models/bank_model.dart';
+import 'package:montra/logic/api/bank/models/banks_model.dart';
+import 'package:montra/logic/api/wallet/models/wallet_model.dart';
+import 'package:montra/logic/api/wallet/models/wallets_model.dart';
+import 'package:montra/logic/blocs/account_bloc/account_bloc.dart';
 import 'package:montra/screens/user_screens/profile_section/account%20screens/account_management_screen.dart';
 import 'package:montra/screens/user_screens/profile_section/account%20screens/detail_account_screen.dart';
 
@@ -10,42 +18,78 @@ class AccountScreen extends StatefulWidget {
 }
 
 class _AccountScreenState extends State<AccountScreen> {
-  final List<Map<String, dynamic>> accounts = [
-    {
-      'name': 'Wallet',
-      'balance': 400,
-      'icon': Icons.account_balance_wallet,
-      'iconColor': Colors.blue,
-      'iconBgColor': Colors.blue.shade100,
-    },
-    {
-      'name': 'Chase',
-      'balance': 1000,
-      'icon': Icons.crop_square,
-      'iconColor': Colors.blue,
-      'iconBgColor': Colors.blue.shade100,
-    },
-    {
-      'name': 'Citi',
-      'balance': 6000,
-      'icon': null, // This will be a custom logo
-      'iconColor': null,
-      'iconBgColor': null,
-    },
-    {
-      'name': 'Paypal',
-      'balance': 2000,
-      'icon': Icons.paypal,
-      'iconColor': Colors.indigo,
-      'iconBgColor': Colors.indigo.shade100,
-    },
+  WalletsModel wallets = WalletsModel(wallets: []);
+  BanksModel banks = BanksModel(banks: []);
+  bool isLoading = false;
+  int totalBalance = 0;
+
+  late StreamSubscription<AccountState> accountStreamSubscription;
+
+  final List<Map<String, String>> _banks = [
+    {"name": "Chase", "logo": "assets/chase_logo.png"},
+    {"name": "PayPal", "logo": "assets/paypal_logo.png"},
+    {"name": "Citi", "logo": "assets/citi_logo.png"},
+    {"name": "Bank of America", "logo": "assets/bofa_logo.png"},
+    {"name": "Jago", "logo": "assets/jago_logo.png"},
+    {"name": "Mandiri", "logo": "assets/mandiri_logo.png"},
+    {"name": "BCA", "logo": "assets/bca_logo.png"},
   ];
 
-  int get totalBalance =>
-      accounts.fold(0, (sum, account) => sum + account['balance'] as int);
+  Future<void> accountOnChangeSubscription(AccountState state) async {
+    state.maybeWhen(
+      orElse: () {},
+      inProgress: () {
+        setState(() {
+          isLoading = true;
+        });
+      },
+      getAccountDetailsSuccess: (balance, fetchedWallets, fetchedBanks) {
+        setState(() {
+          isLoading = false;
+          totalBalance = balance;
+          wallets = fetchedWallets;
+          banks = fetchedBanks;
+        });
+      },
+    );
+  }
+
+  Widget _buildBankLogo(BankModel bank) {
+    final bankData = _banks.firstWhere(
+      (b) => b['name']!.toLowerCase() == bank.name.toLowerCase(),
+      orElse: () => {"logo": ""},
+    );
+
+    final logoPath = bankData['logo'];
+
+    if (logoPath == null || logoPath.isEmpty) {
+      return const Icon(Icons.account_balance, color: Colors.indigo, size: 20);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(6.0),
+      child: Image.asset(logoPath, fit: BoxFit.contain),
+    );
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    accountStreamSubscription = BlocProvider.of<AccountBloc>(
+      context,
+    ).stream.listen(accountOnChangeSubscription);
+    BlocProvider.of<AccountBloc>(context).add(AccountEvent.getAccountDetails());
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Combine wallets and banks safely (nullable lists)
+    final List<dynamic> accounts = [
+      ...(wallets.wallets ?? []),
+      ...(banks.banks ?? []),
+    ];
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -53,9 +97,7 @@ class _AccountScreenState extends State<AccountScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Account',
@@ -63,194 +105,213 @@ class _AccountScreenState extends State<AccountScreen> {
         ),
         centerTitle: true,
       ),
-      body: Stack(
-        children: [
-          // Background purple blobs
-          Positioned(
-            top: -20,
-            right: -20,
-            child: Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: Colors.purple.shade200.withOpacity(0.5),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Positioned(
-            top: 50,
-            right: 80,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.purple.shade200.withOpacity(0.3),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Positioned(
-            top: 20,
-            left: 80,
-            child: Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: Colors.purple.shade200.withOpacity(0.4),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-
-          // Main content
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      body:
+          isLoading
+              ? Center(child: CircularProgressIndicator())
+              : Stack(
                 children: [
-                  const SizedBox(height: 20),
-                  Center(
-                    child: Column(
-                      children: [
-                        const Text(
-                          'Account Balance',
-                          style: TextStyle(color: Colors.grey, fontSize: 16),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '\$$totalBalance',
-                          style: const TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
+                  // Background blobs
+                  Positioned(
+                    top: -20,
+                    right: -20,
+                    child: _blob(100, Colors.purple.shade200.withOpacity(0.5)),
                   ),
-                  const SizedBox(height: 30),
-                  Expanded(
-                    child: ListView.separated(
-                      itemCount: accounts.length,
-                      separatorBuilder:
-                          (context, index) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final account = accounts[index];
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (builder) => DetailAccountScreen(),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Row(
+                  Positioned(
+                    top: 50,
+                    right: 80,
+                    child: _blob(40, Colors.purple.shade200.withOpacity(0.3)),
+                  ),
+                  Positioned(
+                    top: 20,
+                    left: 80,
+                    child: _blob(30, Colors.purple.shade200.withOpacity(0.4)),
+                  ),
+
+                  // Main content
+                  SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 20),
+                          Center(
+                            child: Column(
                               children: [
-                                account['name'] == 'Citi'
-                                    ? Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey.shade100,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          'citi',
-                                          style: TextStyle(
-                                            color: Colors.blue.shade800,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                    : Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: BoxDecoration(
-                                        color:
-                                            account['iconBgColor'] ??
-                                            Colors.grey.shade200,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Icon(
-                                        account['icon'] ??
-                                            Icons.account_balance,
-                                        color:
-                                            account['iconColor'] ?? Colors.grey,
-                                        size: 20,
-                                      ),
-                                    ),
-                                const SizedBox(width: 16),
-                                Text(
-                                  account['name'],
-                                  style: const TextStyle(
+                                const Text(
+                                  'Account Balance',
+                                  style: TextStyle(
+                                    color: Colors.grey,
                                     fontSize: 16,
-                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
-                                const Spacer(),
+                                const SizedBox(height: 8),
                                 Text(
-                                  '\$${account['balance']}',
+                                  '\$$totalBalance',
                                   style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                  Container(
-                    width: double.infinity,
-                    height: 56,
-                    margin: const EdgeInsets.only(bottom: 20),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder:
-                                (builder) => AccountManagementScreen(
-                                  isAccountEdit: false,
+                          const SizedBox(height: 30),
+
+                          // Account list or empty message
+                          Expanded(
+                            child:
+                                accounts.isEmpty
+                                    ? const Center(
+                                      child: Text(
+                                        'No accounts found',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    )
+                                    : ListView.separated(
+                                      itemCount: accounts.length,
+                                      separatorBuilder:
+                                          (_, __) => const SizedBox(height: 12),
+                                      itemBuilder: (context, index) {
+                                        final account = accounts[index];
+
+                                        // Safely extract name and amount
+                                        final String name;
+                                        final int amount;
+
+                                        if (account is WalletModel) {
+                                          name = account.name;
+                                          amount = account.amount;
+                                        } else if (account is BankModel) {
+                                          name = account.name;
+                                          amount = account.amount;
+                                        } else {
+                                          name = 'Unknown';
+                                          amount = 0;
+                                        }
+
+                                        return GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder:
+                                                    (_) => DetailAccountScreen(
+                                                      accountName: name,
+                                                      amount: amount,
+                                                    ),
+                                              ),
+                                            );
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 8,
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Container(
+                                                  width: 40,
+                                                  height: 40,
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.grey.shade200,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          8,
+                                                        ),
+                                                  ),
+                                                  child:
+                                                      account is WalletModel
+                                                          ? Icon(
+                                                            Icons
+                                                                .account_balance_wallet,
+                                                            color:
+                                                                Colors.purple,
+                                                            size: 20,
+                                                          )
+                                                          : _buildBankLogo(
+                                                            account,
+                                                          ),
+                                                ),
+
+                                                const SizedBox(width: 16),
+                                                Text(
+                                                  name,
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                                const Spacer(),
+                                                Text(
+                                                  '\$$amount',
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                          ),
+
+                          // Add wallet button
+                          Container(
+                            width: double.infinity,
+                            height: 56,
+                            margin: const EdgeInsets.only(bottom: 20),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder:
+                                        (_) => const AccountManagementScreen(
+                                          isAccountEdit: false,
+                                        ),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.purple.shade500,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
                                 ),
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.add, color: Colors.white),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Add new wallet',
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.purple.shade500,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.add, color: Colors.white),
-                          SizedBox(width: 8),
-                          Text(
-                            'Add new wallet',
-                            style: TextStyle(fontSize: 16),
-                          ),
+                          const SizedBox(height: 20),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
                 ],
               ),
-            ),
-          ),
-        ],
-      ),
+    );
+  }
+
+  // Background blob helper widget
+  Widget _blob(double size, Color color) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }

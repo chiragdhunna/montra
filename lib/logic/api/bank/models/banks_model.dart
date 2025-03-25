@@ -11,6 +11,6 @@ part 'banks_model.g.dart';
 abstract class BanksModel with _$BanksModel {
   const factory BanksModel({List<BankModel>? banks}) = _BanksModel;
 
-  factory BanksModel.fromJson(Map<String, Object?> json) =>
+  factory BanksModel.fromJson(Map<String, dynamic> json) =>
       _$BanksModelFromJson(json);
 }

@@ -19,7 +19,7 @@ class _AddNewAccountScreenState extends State<AddNewAccountScreen> {
     {"name": "PayPal", "logo": "assets/paypal_logo.png"},
     {"name": "Citi", "logo": "assets/citi_logo.png"},
     {"name": "Bank of America", "logo": "assets/bofa_logo.png"},
-    {"name": "Bank of America", "logo": "assets/jago_logo.png"},
+    {"name": "Jago", "logo": "assets/jago_logo.png"},
     {"name": "Mandiri", "logo": "assets/mandiri_logo.png"},
     {"name": "BCA", "logo": "assets/bca_logo.png"},
     {"name": "See Other", "logo": ""},
