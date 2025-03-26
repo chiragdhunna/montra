@@ -26,6 +26,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
   bool _isRepeat = false;
   bool _isRepeatConfigured = false;
   File? _selectedImage;
+  String? _selectedBank;
   int amount = 0;
   bool _isLoading = false;
   TextEditingController amountController = TextEditingController();
@@ -40,6 +41,26 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
 
   final List<String> _sources = ["Salary", "Freelance", "Investment", "Bonus"];
   final List<String> _wallets = ["Bank", "Cash", "Credit Card", "Wallet"];
+  final List<Map<String, String>> _banks = [
+    {"name": "Chase", "logo": "assets/chase_logo.png"},
+    {"name": "PayPal", "logo": "assets/paypal_logo.png"},
+    {"name": "Citi", "logo": "assets/citi_logo.png"},
+    {"name": "Bank of America", "logo": "assets/bofa_logo.png"},
+    {"name": "Jago", "logo": "assets/jago_logo.png"},
+    {"name": "Mandiri", "logo": "assets/mandiri_logo.png"},
+    {"name": "BCA", "logo": "assets/bca_logo.png"},
+    {"name": "See Other", "logo": ""},
+  ];
+  final Set<String> _validBankNames = {
+    "Chase",
+    "PayPal",
+    "Citi",
+    "Bank of America",
+    "Jago",
+    "Mandiri",
+    "BCA",
+  };
+
   final List<String> _months = [
     "Jan",
     "Feb",
@@ -171,6 +192,22 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
   void _showSuccessDialog() {
     if (amountController.text.isNotEmpty &&
         descriptionController.text.isNotEmpty &&
+        _selectedImage != null &&
+        (_selectedSource != "Bank" || _selectedBank != null)) {
+      // Proceed to create income
+
+      BlocProvider.of<ExpenseBloc>(context).add(
+        ExpenseEvent.createExpense(
+          amount: int.parse(amountController.text),
+          isBank: true,
+          bankName: _selectedBank,
+          source: _selectedExpenseSource,
+          description: descriptionController.text,
+          attachment: _selectedImage,
+        ),
+      );
+    } else if (amountController.text.isNotEmpty &&
+        descriptionController.text.isNotEmpty &&
         _selectedImage != null) {
       BlocProvider.of<ExpenseBloc>(context).add(
         ExpenseEvent.createExpense(
@@ -178,6 +215,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
           source: _selectedExpenseSource,
           description: descriptionController.text,
           attachment: _selectedImage,
+          isBank: false,
         ),
       );
     } else {
@@ -321,6 +359,27 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                             },
                           ),
                           SizedBox(height: 10.h),
+                          if (_selectedSource == "Bank") ...[
+                            const SizedBox(height: 20),
+                            const Text(
+                              "Select Bank",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            GridView.count(
+                              crossAxisCount: 4,
+                              shrinkWrap: true,
+                              mainAxisSpacing: 10,
+                              crossAxisSpacing: 10,
+                              childAspectRatio: 1.2,
+                              physics: const NeverScrollableScrollPhysics(),
+                              children: _buildBankOptions(),
+                            ),
+                          ],
+                          SizedBox(height: 20.h),
                           _buildAttachmentSection(),
                           SizedBox(height: 20.h),
                           _buildRepeatTransactionToggle(),
@@ -461,6 +520,42 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
           ),
       ],
     );
+  }
+
+  List<Widget> _buildBankOptions() {
+    return _banks.map((bank) {
+      return GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedBank = bank["name"];
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: EdgeInsets.all(6.w),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(8.r),
+            border: Border.all(
+              color:
+                  _selectedBank == bank["name"]
+                      ? Colors.purple
+                      : Colors.grey.shade300,
+              width: _selectedBank == bank["name"] ? 2 : 1,
+            ),
+          ),
+          child: Center(
+            child:
+                bank["logo"]!.isNotEmpty
+                    ? Image.asset(bank["logo"]!, height: 24.h)
+                    : const Text(
+                      "See Other",
+                      style: TextStyle(color: Colors.purple),
+                    ),
+          ),
+        ),
+      );
+    }).toList();
   }
 
   // Add this method to show the repeat transaction bottom sheet

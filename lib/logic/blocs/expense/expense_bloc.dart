@@ -49,17 +49,33 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
         contentType: MediaType(mimeTypeData[0], mimeTypeData[1]),
       );
 
-      // Build FormData directly
-      FormData formData = FormData.fromMap({
-        "amount": event.amount.toString(),
-        "source": event.source.name,
-        "description": event.description,
-        "file": multipartFile,
-      });
+      if (event.isBank) {
+        // Build FormData directly
+        FormData formData = FormData.fromMap({
+          "amount": event.amount.toString(),
+          "source": event.source.name,
+          "description": event.description,
+          "file": multipartFile,
+          "bank_name": event.bankName,
+        });
 
-      await _expenseApi.createExpense(
-        formData,
-      ); // Change this method to accept FormData
+        await _expenseApi.createExpense(
+          formData,
+        ); // Change this method to accept FormData
+      } else {
+        // Build FormData directly
+        FormData formData = FormData.fromMap({
+          "amount": event.amount.toString(),
+          "source": event.source.name,
+          "description": event.description,
+          "file": multipartFile,
+        });
+
+        await _expenseApi.createExpense(
+          formData,
+        ); // Change this method to accept FormData
+      }
+
       emit(ExpenseState.createExpenseSuccess());
     } catch (e) {
       log.e('Error: $e');

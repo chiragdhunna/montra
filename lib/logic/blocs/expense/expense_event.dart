@@ -9,6 +9,8 @@ class ExpenseEvent with _$ExpenseEvent {
     required ExpenseType source,
     required String description,
     File? attachment,
+    required bool isBank,
+    String? bankName,
   }) = _CreateExpense;
   const factory ExpenseEvent.setExpense({
     required int amount,
