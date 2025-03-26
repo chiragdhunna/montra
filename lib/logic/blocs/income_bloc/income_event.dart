@@ -9,6 +9,8 @@ class IncomeEvent with _$IncomeEvent {
     required IncomeSource source,
     required String description,
     File? attachment,
+    required bool isBank,
+    String? bankName,
   }) = _CreateIncome;
   const factory IncomeEvent.setIncome({
     required int amount,
