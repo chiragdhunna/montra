@@ -16,9 +16,16 @@ abstract class ExpenseModel with _$ExpenseModel {
     required ExpenseType source,
     String? attachment,
     required String description,
+    @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
     required DateTime createdAt,
+    String? bankName,
+    String? walletName,
   }) = _ExpenseModel;
 
-  factory ExpenseModel.fromJson(Map<String, Object?> json) =>
+  factory ExpenseModel.fromJson(Map<String, dynamic> json) =>
       _$ExpenseModelFromJson(json);
 }
+
+// Custom converters for DateTime
+DateTime _dateTimeFromJson(String date) => DateTime.parse(date);
+String _dateTimeToJson(DateTime date) => date.toIso8601String();

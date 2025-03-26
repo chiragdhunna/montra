@@ -21,7 +21,9 @@ class NewExpenseScreen extends StatefulWidget {
 
 class _NewExpenseScreenState extends State<NewExpenseScreen> {
   String? _selectedCategory;
-  String? _selectedSource;
+  String? _selectedSource = "Wallet";
+  List<String> _walletsNames = [];
+  String? _selectedWalletName = "Select Wallets";
   ExpenseType _selectedExpenseSource = ExpenseType.wallet;
   bool _isRepeat = false;
   bool _isRepeatConfigured = false;
@@ -107,6 +109,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
       context,
     ).stream.listen(incomeBlocChangeHandler);
     incomeBlocChangeHandler(BlocProvider.of<ExpenseBloc>(context).state);
+    BlocProvider.of<ExpenseBloc>(context).add(ExpenseEvent.getWallets());
     super.initState();
   }
 
@@ -116,6 +119,12 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
       inProgress: () {
         setState(() {
           _isLoading = true;
+        });
+      },
+      getWalletNamesSuccess: (walletNames) {
+        setState(() {
+          _isLoading = false;
+          _walletsNames = walletNames;
         });
       },
       failure: () {
@@ -193,7 +202,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
     if (amountController.text.isNotEmpty &&
         descriptionController.text.isNotEmpty &&
         _selectedImage != null &&
-        (_selectedSource != "Bank" || _selectedBank != null)) {
+        (_selectedSource == "Bank" || _selectedBank != null)) {
       // Proceed to create income
 
       BlocProvider.of<ExpenseBloc>(context).add(
@@ -201,6 +210,21 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
           amount: int.parse(amountController.text),
           isBank: true,
           bankName: _selectedBank,
+          source: _selectedExpenseSource,
+          description: descriptionController.text,
+          attachment: _selectedImage,
+        ),
+      );
+    } else if (amountController.text.isNotEmpty &&
+        descriptionController.text.isNotEmpty &&
+        _selectedImage != null &&
+        (_selectedSource == "Wallet" || _selectedWalletName != null)) {
+      BlocProvider.of<ExpenseBloc>(context).add(
+        ExpenseEvent.createExpense(
+          amount: int.parse(amountController.text),
+          isBank: false,
+          isWallet: true,
+          walletName: _selectedWalletName,
           source: _selectedExpenseSource,
           description: descriptionController.text,
           attachment: _selectedImage,
@@ -345,19 +369,38 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                             (value) {
                               setState(() {
                                 _selectedSource = value;
+
                                 if (_selectedSource == "Wallet") {
+                                  _selectedSource = "Wallet";
                                   _selectedExpenseSource = ExpenseType.wallet;
                                 } else if (_selectedSource == "Bank") {
+                                  _selectedSource = "Bank";
                                   _selectedExpenseSource = ExpenseType.bank;
                                 } else if (_selectedSource == "Cash") {
+                                  _selectedSource = "Cash";
                                   _selectedExpenseSource = ExpenseType.cash;
                                 } else {
+                                  _selectedSource = "Credit Card";
                                   _selectedExpenseSource =
                                       ExpenseType.creditCard;
                                 }
                               });
                             },
                           ),
+                          if (_selectedSource == "Wallet") ...[
+                            const SizedBox(height: 20),
+                            _buildDropdownField(
+                              "Select Wallets",
+                              _selectedWalletName ?? "Select Wallets",
+                              _walletsNames,
+                              (value) {
+                                setState(() {
+                                  _selectedWalletName = value;
+                                });
+                              },
+                            ),
+                          ],
+
                           SizedBox(height: 10.h),
                           if (_selectedSource == "Bank") ...[
                             const SizedBox(height: 20),

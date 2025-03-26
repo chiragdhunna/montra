@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:logger/logger.dart';
 import 'package:montra/logic/api/bank/models/bank_model.dart';
 import 'package:montra/logic/api/bank/models/banks_model.dart';
 import 'package:montra/logic/api/wallet/models/wallet_model.dart';
@@ -9,6 +10,8 @@ import 'package:montra/logic/api/wallet/models/wallets_model.dart';
 import 'package:montra/logic/blocs/account_bloc/account_bloc.dart';
 import 'package:montra/screens/user_screens/profile_section/account%20screens/account_management_screen.dart';
 import 'package:montra/screens/user_screens/profile_section/account%20screens/detail_account_screen.dart';
+
+Logger log = Logger(printer: PrettyPrinter());
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -38,9 +41,40 @@ class _AccountScreenState extends State<AccountScreen> {
   Future<void> accountOnChangeSubscription(AccountState state) async {
     state.maybeWhen(
       orElse: () {},
+      failure: (error) {
+        setState(() {
+          isLoading = false;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error : $error'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        });
+      },
+      updateBankBalanceSuccess: () {
+        setState(() {
+          isLoading = false;
+        });
+      },
+      updateWalletSuccess: () {
+        setState(() {
+          isLoading = false;
+        });
+      },
       inProgress: () {
         setState(() {
           isLoading = true;
+        });
+      },
+      getAccountBalanceSuccess: (balance) {
+        setState(() {
+          isLoading = false;
+        });
+      },
+      getAccountSourceDetailsSuccess: (transactions) {
+        setState(() {
+          isLoading = false;
         });
       },
       getAccountDetailsSuccess: (balance, fetchedWallets, fetchedBanks) {
@@ -205,8 +239,14 @@ class _AccountScreenState extends State<AccountScreen> {
                                               MaterialPageRoute(
                                                 builder:
                                                     (_) => DetailAccountScreen(
-                                                      accountName: name,
-                                                      amount: amount,
+                                                      wallet:
+                                                          account is WalletModel
+                                                              ? account
+                                                              : null,
+                                                      bank:
+                                                          account is BankModel
+                                                              ? account
+                                                              : null,
                                                     ),
                                               ),
                                             );
@@ -274,10 +314,7 @@ class _AccountScreenState extends State<AccountScreen> {
                               onPressed: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder:
-                                        (_) => const AccountManagementScreen(
-                                          isAccountEdit: false,
-                                        ),
+                                    builder: (_) => CreateAccountScreen(),
                                   ),
                                 );
                               },

@@ -124,6 +124,11 @@ class _HomeScreenState extends State<HomeScreen> {
       orElse: () {
         log.d('State is or else');
       },
+      getWalletNamesSuccess: (walletNames) {
+        setState(() {
+          _isLoading = false;
+        });
+      },
       getIncomeSuccess: (income) {
         log.d('State is getIncomeSuccess');
         if (!mounted) return;
@@ -242,6 +247,12 @@ class _HomeScreenState extends State<HomeScreen> {
       orElse: () {
         log.d('State is or else');
       },
+      getAccountSourceDetailsSuccess: (transactions) {
+        setState(() {
+          _isLoading = false;
+        });
+      },
+
       getAccountBalanceSuccess: (balance) {
         setState(() {
           _isLoading = false;

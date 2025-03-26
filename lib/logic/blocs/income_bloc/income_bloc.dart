@@ -8,6 +8,7 @@ import 'package:logger/logger.dart';
 import 'package:mime/mime.dart';
 import 'package:montra/constants/income_source.dart';
 import 'package:montra/logic/api/income/income_api.dart';
+import 'package:montra/logic/api/wallet/wallet_api.dart';
 import 'package:montra/logic/dio_factory.dart';
 
 part 'income_event.dart';
@@ -24,9 +25,11 @@ class IncomeBloc extends Bloc<IncomeEvent, IncomeState> {
     on<_GetIncome>(_getIncome);
     on<_SetIncome>(_setIncome);
     on<_CreateIncome>(_createIncome);
+    on<_GetWallets>(_getWallets);
   }
 
   final _incomeApi = IncomeApi(DioFactory().create());
+  final _walletApi = WalletApi(DioFactory().create());
 
   Future<void> _getIncome(_GetIncome event, Emitter<IncomeState> emit) async {
     try {
@@ -34,6 +37,18 @@ class IncomeBloc extends Bloc<IncomeEvent, IncomeState> {
       final response = await _incomeApi.getIncome();
       log.d('Get Income Response: $response');
       emit(IncomeState.getIncomeSuccess(income: response.income));
+    } catch (e) {
+      log.e('Error: $e');
+      emit(IncomeState.failure());
+    }
+  }
+
+  Future<void> _getWallets(_GetWallets event, Emitter<IncomeState> emit) async {
+    try {
+      emit(IncomeState.inProgress());
+      final response = await _walletApi.getAllWalletNames();
+      log.d('Get Wallet Names: $response');
+      emit(IncomeState.getWalletNamesSuccess(walletNames: response.wallets));
     } catch (e) {
       log.e('Error: $e');
       emit(IncomeState.failure());
@@ -59,7 +74,7 @@ class IncomeBloc extends Bloc<IncomeEvent, IncomeState> {
         contentType: MediaType(mimeTypeData[0], mimeTypeData[1]),
       );
 
-      if (event.isBank) {
+      if (event.isBank != null && event.isBank!) {
         // Build FormData directly
         FormData formData = FormData.fromMap({
           "amount": event.amount.toString(),
@@ -67,6 +82,19 @@ class IncomeBloc extends Bloc<IncomeEvent, IncomeState> {
           "description": event.description,
           "file": multipartFile,
           "bank_name": event.bankName,
+        });
+
+        await _incomeApi.createIncome(
+          formData,
+        ); // Change this method to accept FormData
+      } else if (event.isWallet != null && event.isWallet!) {
+        // Build FormData directly
+        FormData formData = FormData.fromMap({
+          "amount": event.amount.toString(),
+          "source": event.source.name,
+          "description": event.description,
+          "file": multipartFile,
+          "wallet_name": event.walletName,
         });
 
         await _incomeApi.createIncome(

@@ -10,6 +10,7 @@ import 'package:montra/constants/expense_type.dart';
 import 'package:montra/constants/income_source.dart';
 import 'package:montra/logic/api/expense/expense_api.dart';
 import 'package:montra/logic/api/expense/models/expense_stats_model.dart';
+import 'package:montra/logic/api/wallet/wallet_api.dart';
 import 'package:montra/logic/dio_factory.dart';
 
 part 'expense_event.dart';
@@ -26,9 +27,11 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
     on<_GetExpense>(_getExpense);
     on<_SetExpense>(_setExpense);
     on<_CreateExpense>(_createExpense);
+    on<_GetWallets>(_getWallets);
   }
 
   final _expenseApi = ExpenseApi(DioFactory().create());
+  final _walletApi = WalletApi(DioFactory().create());
 
   Future<void> _createExpense(
     _CreateExpense event,
@@ -49,7 +52,7 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
         contentType: MediaType(mimeTypeData[0], mimeTypeData[1]),
       );
 
-      if (event.isBank) {
+      if (event.isBank != null && event.isBank!) {
         // Build FormData directly
         FormData formData = FormData.fromMap({
           "amount": event.amount.toString(),
@@ -57,6 +60,18 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
           "description": event.description,
           "file": multipartFile,
           "bank_name": event.bankName,
+        });
+
+        await _expenseApi.createExpense(
+          formData,
+        ); // Change this method to accept FormData
+      } else if (event.isWallet != null && event.isWallet!) {
+        FormData formData = FormData.fromMap({
+          "amount": event.amount.toString(),
+          "source": event.source.name,
+          "description": event.description,
+          "file": multipartFile,
+          "wallet_name": event.walletName,
         });
 
         await _expenseApi.createExpense(
@@ -99,6 +114,21 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
           expenseStats: statsData,
         ),
       );
+    } catch (e) {
+      log.e('Error: $e');
+      emit(ExpenseState.failure());
+    }
+  }
+
+  Future<void> _getWallets(
+    _GetWallets event,
+    Emitter<ExpenseState> emit,
+  ) async {
+    try {
+      emit(ExpenseState.inProgress());
+      final response = await _walletApi.getAllWalletNames();
+      log.d('Get Wallet Names: $response');
+      emit(ExpenseState.getWalletNamesSuccess(walletNames: response.wallets));
     } catch (e) {
       log.e('Error: $e');
       emit(ExpenseState.failure());

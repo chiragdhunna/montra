@@ -18,7 +18,8 @@ class NewIncomeScreen extends StatefulWidget {
 
 class _NewIncomeScreenState extends State<NewIncomeScreen> {
   String? _selectedCategory;
-  String? _selectedSource;
+  String? _selectedSource = "Wallet";
+  String? _selectedWalletName = "Select Wallets";
   IncomeSource _selectedIcomeSource = IncomeSource.wallet;
   bool _isRepeat = false;
   bool _isRepeatConfigured = false;
@@ -29,6 +30,7 @@ class _NewIncomeScreenState extends State<NewIncomeScreen> {
   bool _isLoading = false;
   TextEditingController amountController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
+  TextEditingController walletNameController = TextEditingController();
 
   late StreamSubscription<IncomeState> incomeStreamSubscription;
 
@@ -39,6 +41,7 @@ class _NewIncomeScreenState extends State<NewIncomeScreen> {
 
   final List<String> _sources = ["Salary", "Freelance", "Investment", "Bonus"];
   final List<String> _wallets = ["Bank", "Cash", "Credit Card", "Wallet"];
+  List<String> _walletsNames = [];
   final List<String> _months = [
     "Jan",
     "Feb",
@@ -97,6 +100,8 @@ class _NewIncomeScreenState extends State<NewIncomeScreen> {
   void dispose() {
     // TODO: implement dispose
     incomeStreamSubscription.cancel();
+    walletNameController.dispose();
+    descriptionController.dispose();
     super.dispose();
   }
 
@@ -107,6 +112,7 @@ class _NewIncomeScreenState extends State<NewIncomeScreen> {
       context,
     ).stream.listen(incomeBlocChangeHandler);
     incomeBlocChangeHandler(BlocProvider.of<IncomeBloc>(context).state);
+    BlocProvider.of<IncomeBloc>(context).add(IncomeEvent.getWallets());
     super.initState();
   }
 
@@ -116,6 +122,12 @@ class _NewIncomeScreenState extends State<NewIncomeScreen> {
       inProgress: () {
         setState(() {
           _isLoading = true;
+        });
+      },
+      getWalletNamesSuccess: (walletNames) {
+        setState(() {
+          _walletsNames = walletNames;
+          _isLoading = false;
         });
       },
       failure: () {
@@ -193,7 +205,7 @@ class _NewIncomeScreenState extends State<NewIncomeScreen> {
     if (amountController.text.isNotEmpty &&
         descriptionController.text.isNotEmpty &&
         _selectedImage != null &&
-        (_selectedSource != "Bank" || _selectedBank != null)) {
+        (_selectedSource == "Bank" || _selectedBank != null)) {
       // Proceed to create income
 
       BlocProvider.of<IncomeBloc>(context).add(
@@ -201,6 +213,21 @@ class _NewIncomeScreenState extends State<NewIncomeScreen> {
           amount: int.parse(amountController.text),
           isBank: true,
           bankName: _selectedBank,
+          source: _selectedIcomeSource,
+          description: descriptionController.text,
+          attachment: _selectedImage,
+        ),
+      );
+    } else if (amountController.text.isNotEmpty &&
+        descriptionController.text.isNotEmpty &&
+        _selectedImage != null &&
+        (_selectedSource == "Wallet" || _selectedWalletName != null)) {
+      BlocProvider.of<IncomeBloc>(context).add(
+        IncomeEvent.createIncome(
+          amount: int.parse(amountController.text),
+          isBank: false,
+          isWallet: true,
+          walletName: _selectedWalletName,
           source: _selectedIcomeSource,
           description: descriptionController.text,
           attachment: _selectedImage,
@@ -346,18 +373,36 @@ class _NewIncomeScreenState extends State<NewIncomeScreen> {
                               setState(() {
                                 _selectedSource = value;
                                 if (_selectedSource == "Wallet") {
+                                  _selectedSource = "Wallet";
                                   _selectedIcomeSource = IncomeSource.wallet;
                                 } else if (_selectedSource == "Bank") {
+                                  _selectedSource = "Bank";
                                   _selectedIcomeSource = IncomeSource.bank;
                                 } else if (_selectedSource == "Cash") {
+                                  _selectedSource = "Cash";
                                   _selectedIcomeSource = IncomeSource.cash;
                                 } else {
+                                  _selectedSource = "Credit Card";
                                   _selectedIcomeSource =
                                       IncomeSource.creditCard;
                                 }
                               });
                             },
                           ),
+                          if (_selectedSource == "Wallet") ...[
+                            const SizedBox(height: 20),
+                            _buildDropdownField(
+                              "Select Wallets",
+                              _selectedWalletName ?? "Select Wallets",
+                              _walletsNames,
+                              (value) {
+                                setState(() {
+                                  _selectedWalletName = value;
+                                });
+                              },
+                            ),
+                          ],
+
                           if (_selectedSource == "Bank") ...[
                             const SizedBox(height: 20),
                             const Text(

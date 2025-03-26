@@ -1,21 +1,31 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:montra/logic/api/bank/models/bank_model.dart';
+import 'package:montra/logic/api/expense/models/expense_model.dart';
+import 'package:montra/logic/api/income/models/income_model.dart';
+import 'package:montra/logic/api/wallet/models/wallet_model.dart';
+import 'package:montra/logic/blocs/account_bloc/account_bloc.dart';
 import 'package:montra/screens/user_screens/profile_section/account%20screens/account_management_screen.dart';
+import 'package:montra/constants/models/transaction_data_model.dart';
+import 'package:montra/screens/user_screens/profile_section/account%20screens/edit_account_screen.dart';
 
 class DetailAccountScreen extends StatefulWidget {
-  final String accountName;
-  final int amount;
+  WalletModel? wallet;
+  BankModel? bank;
 
-  const DetailAccountScreen({
-    super.key,
-    required this.accountName,
-    required this.amount,
-  });
+  DetailAccountScreen({super.key, this.wallet, this.bank});
 
   @override
   State<DetailAccountScreen> createState() => _DetailAccountScreenState();
 }
 
 class _DetailAccountScreenState extends State<DetailAccountScreen> {
+  bool isLoading = false;
+  List<IncomeModel> _incomes = [];
+  List<ExpenseModel> _expenses = [];
+
   final List<Map<String, String>> _banks = [
     {"name": "Chase", "logo": "assets/chase_logo.png"},
     {"name": "PayPal", "logo": "assets/paypal_logo.png"},
@@ -26,11 +36,189 @@ class _DetailAccountScreenState extends State<DetailAccountScreen> {
     {"name": "BCA", "logo": "assets/bca_logo.png"},
   ];
 
+  String? accountName;
+  int? accountAmount;
+
+  late StreamSubscription<AccountState> accountSubscription;
+
+  Future<void> accountOnChange(AccountState state) async {
+    state.maybeWhen(
+      orElse: () {},
+      updateBankBalanceSuccess: () {
+        setState(() {
+          isLoading = false;
+          BlocProvider.of<AccountBloc>(context).add(
+            AccountEvent.getAccountSourceDetails(
+              wallet: widget.wallet,
+              bank: widget.bank,
+            ),
+          );
+        });
+      },
+      updateWalletSuccess: () {
+        setState(() {
+          isLoading = false;
+          BlocProvider.of<AccountBloc>(context).add(
+            AccountEvent.getAccountSourceDetails(
+              wallet: widget.wallet,
+              bank: widget.bank,
+            ),
+          );
+        });
+      },
+      getAccountSourceDetailsSuccess: (transactions) {
+        setState(() {
+          _incomes = transactions?.incomes ?? [];
+          _expenses = transactions?.expenses ?? [];
+
+          isLoading = false;
+        });
+      },
+      getAccountBalanceSuccess: (balance) {
+        setState(() {
+          isLoading = false;
+        });
+      },
+      getAccountDetailsSuccess: (balance, wallets, banks) {
+        setState(() {
+          isLoading = false;
+        });
+      },
+      createAccountSuccess: () {
+        setState(() {
+          isLoading = false;
+        });
+      },
+      inProgress: () {
+        setState(() {
+          isLoading = true;
+        });
+      },
+      initial: () {
+        setState(() {
+          isLoading = false;
+        });
+      },
+      failure: (error) {
+        setState(() {
+          isLoading = false;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error : $error'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        });
+      },
+    );
+  }
+
+  Map<String, List<TransactionItemData>> _groupTransactions() {
+    final Map<String, List<TransactionItemData>> grouped = {};
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    List<TransactionItemData> all = [
+      ..._expenses.map(
+        (e) => TransactionItemData(
+          isIncome: false,
+          amount: e.amount,
+          description: e.description,
+          createdAt: e.createdAt,
+        ),
+      ),
+      ..._incomes.map(
+        (i) => TransactionItemData(
+          isIncome: true,
+          amount: i.amount,
+          description: i.description ?? "No description",
+          createdAt: i.createdAt,
+        ),
+      ),
+    ];
+
+    for (var item in all) {
+      final createdDate = DateTime(
+        item.createdAt.year,
+        item.createdAt.month,
+        item.createdAt.day,
+      );
+      String key;
+
+      if (createdDate == today) {
+        key = 'Today';
+      } else if (createdDate == yesterday) {
+        key = 'Yesterday';
+      } else {
+        key =
+            "${createdDate.day.toString().padLeft(2, '0')} "
+            "${_monthName(createdDate.month)} ${createdDate.year}";
+      }
+
+      grouped.putIfAbsent(key, () => []);
+      grouped[key]!.add(item);
+      grouped[key]!.sort(
+        (a, b) => b.createdAt.compareTo(a.createdAt),
+      ); // <-- descending sort
+    }
+
+    return grouped;
+  }
+
+  String _monthName(int month) {
+    const months = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return months[month];
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    accountName =
+        widget.wallet != null ? widget.wallet!.name : widget.bank!.name;
+    accountAmount =
+        widget.wallet != null ? widget.wallet!.amount : widget.bank!.amount;
+
+    accountSubscription = BlocProvider.of<AccountBloc>(
+      context,
+    ).stream.listen(accountOnChange);
+    accountOnChange(BlocProvider.of<AccountBloc>(context).state);
+    BlocProvider.of<AccountBloc>(context).add(
+      AccountEvent.getAccountSourceDetails(
+        wallet: widget.wallet,
+        bank: widget.bank,
+      ),
+    );
+    super.initState();
+  }
+
+  String _formatTime(DateTime dt) {
+    final hour = dt.hour > 12 ? dt.hour - 12 : dt.hour;
+    final period = dt.hour >= 12 ? "PM" : "AM";
+    final minute = dt.minute.toString().padLeft(2, '0');
+    return "$hour:$minute $period";
+  }
+
   @override
   Widget build(BuildContext context) {
     // Determine if the account name matches a bank
     final bankData = _banks.firstWhere(
-      (b) => b['name']!.toLowerCase() == widget.accountName.toLowerCase(),
+      (b) => b['name']!.toLowerCase() == accountName!.toLowerCase(),
       orElse: () => {"logo": ""},
     );
 
@@ -56,7 +244,10 @@ class _DetailAccountScreenState extends State<DetailAccountScreen> {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder:
-                      (builder) => AccountManagementScreen(isAccountEdit: true),
+                      (builder) => EditAccountScreen(
+                        wallet: widget.wallet,
+                        bank: widget.bank,
+                      ),
                 ),
               );
             },
@@ -64,107 +255,105 @@ class _DetailAccountScreenState extends State<DetailAccountScreen> {
         ],
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Column(
-            children: [
-              const SizedBox(height: 24),
-              // PayPal account header
-              Center(
-                child: Column(
-                  children: [
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE6EFFC),
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: Center(
-                        child:
-                            isBank
-                                ? Image.asset(
-                                  logoPath,
-                                  width: 30,
-                                  height: 30,
-                                  fit: BoxFit.contain,
-                                )
-                                : Icon(
-                                  Icons.account_balance_wallet,
-                                  color: Colors.purple,
-                                  size: 30,
-                                ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      widget.accountName,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '\$${widget.amount}', // You can make this dynamic if needed
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+      body:
+          isLoading
+              ? Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 24),
+                      // PayPal account header
+                      Center(
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE6EFFC),
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              child: Center(
+                                child:
+                                    isBank
+                                        ? Image.asset(
+                                          logoPath,
+                                          width: 30,
+                                          height: 30,
+                                          fit: BoxFit.contain,
+                                        )
+                                        : Icon(
+                                          Icons.account_balance_wallet,
+                                          color: Colors.purple,
+                                          size: 30,
+                                        ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              accountName!,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '\$${accountAmount}', // You can make this dynamic if needed
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
 
-                    const SizedBox(height: 24),
-                  ],
+                            const SizedBox(height: 24),
+                          ],
+                        ),
+                      ),
+
+                      if (_expenses.isNotEmpty || _incomes.isNotEmpty) ...[
+                        ..._groupTransactions().entries.map((entry) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionHeader(entry.key),
+                              ...entry.value.map((item) {
+                                return _buildTransactionItem(
+                                  icon:
+                                      item.isIncome
+                                          ? Icons.attach_money
+                                          : Icons.money_off,
+                                  iconBackgroundColor:
+                                      item.isIncome
+                                          ? const Color(0xFFE6F4EA)
+                                          : const Color(0xFFFFE9E7),
+                                  iconColor:
+                                      item.isIncome ? Colors.green : Colors.red,
+                                  title: item.isIncome ? "Income" : "Expense",
+                                  subtitle: item.description,
+                                  amount:
+                                      "${item.isIncome ? '+' : '-'}\$${item.amount}",
+                                  time: _formatTime(item.createdAt),
+                                );
+                              }),
+                            ],
+                          );
+                        }).toList(),
+                      ] else
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 32.0),
+                          child: Center(
+                            child: Text("No transactions available"),
+                          ),
+                        ),
+
+                      const SizedBox(height: 24),
+                    ],
+                  ),
                 ),
               ),
-
-              // Transactions section - Today
-              _buildSectionHeader('Today'),
-              _buildTransactionItem(
-                icon: Icons.shopping_bag,
-                iconBackgroundColor: const Color(0xFFFEF1D6),
-                iconColor: Colors.orange,
-                title: 'Shopping',
-                subtitle: 'Buy some grocery',
-                amount: '-\$120',
-                time: '10:00 AM',
-              ),
-              _buildTransactionItem(
-                icon: Icons.description,
-                iconBackgroundColor: const Color(0xFFE6E4FA),
-                iconColor: Colors.indigo,
-                title: 'Subscription',
-                subtitle: 'Disney+ Annual...',
-                amount: '-\$80',
-                time: '03:30 PM',
-              ),
-              _buildTransactionItem(
-                icon: Icons.restaurant,
-                iconBackgroundColor: const Color(0xFFFFE9E7),
-                iconColor: Colors.red,
-                title: 'Food',
-                subtitle: 'Buy a ramen',
-                amount: '-\$32',
-                time: '07:30 PM',
-              ),
-
-              // Transactions section - Yesterday
-              _buildSectionHeader('Yesterday'),
-              _buildTransactionItem(
-                icon: Icons.directions_car,
-                iconBackgroundColor: const Color(0xFFE2F1FF),
-                iconColor: Colors.blue,
-                title: 'Transportation',
-                subtitle: 'Charging Tesla',
-                amount: '-\$18',
-                time: '02:30 PM',
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
-        ),
-      ),
     );
   }
 

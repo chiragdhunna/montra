@@ -6,17 +6,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:montra/logic/blocs/account_bloc/account_bloc.dart';
 
-class AccountManagementScreen extends StatefulWidget with SU {
-  const AccountManagementScreen({super.key, required this.isAccountEdit});
-
-  final bool isAccountEdit;
+class CreateAccountScreen extends StatefulWidget with SU {
+  const CreateAccountScreen({super.key});
 
   @override
-  State<AccountManagementScreen> createState() =>
-      _AccountManagementScreenState();
+  State<CreateAccountScreen> createState() => _CreateAccountScreenState();
 }
 
-class _AccountManagementScreenState extends State<AccountManagementScreen> {
+class _CreateAccountScreenState extends State<CreateAccountScreen> {
   String? _selectedAccountType = "Wallet";
   String? _selectedBankName; // Tracks which bank is selected
 
@@ -184,7 +181,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           },
         ),
         title: Text(
-          widget.isAccountEdit == true ? "Edit account" : "Add new account",
+          "Add new account",
           style: const TextStyle(
             color: Colors.white,
             fontSize: 20,

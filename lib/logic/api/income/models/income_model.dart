@@ -16,9 +16,16 @@ abstract class IncomeModel with _$IncomeModel {
     required IncomeSource source,
     String? attachment,
     String? description,
+    @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
     required DateTime createdAt,
+    String? bankName,
+    String? walletName,
   }) = _IncomeModel;
 
-  factory IncomeModel.fromJson(Map<String, Object?> json) =>
+  factory IncomeModel.fromJson(Map<String, dynamic> json) =>
       _$IncomeModelFromJson(json);
 }
+
+// Custom converters for DateTime
+DateTime _dateTimeFromJson(String date) => DateTime.parse(date);
+String _dateTimeToJson(DateTime date) => date.toIso8601String();

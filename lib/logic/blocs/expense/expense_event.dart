@@ -4,13 +4,16 @@ part of 'expense_bloc.dart';
 class ExpenseEvent with _$ExpenseEvent {
   const factory ExpenseEvent.started() = _Started;
   const factory ExpenseEvent.getExpense() = _GetExpense;
+  const factory ExpenseEvent.getWallets() = _GetWallets;
   const factory ExpenseEvent.createExpense({
     required int amount,
     required ExpenseType source,
     required String description,
     File? attachment,
-    required bool isBank,
+    bool? isBank,
+    bool? isWallet,
     String? bankName,
+    String? walletName,
   }) = _CreateExpense;
   const factory ExpenseEvent.setExpense({
     required int amount,

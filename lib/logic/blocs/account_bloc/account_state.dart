@@ -10,7 +10,15 @@ class AccountState with _$AccountState {
     required WalletsModel wallets,
     required BanksModel banks,
   }) = _GetAccountDetailsSuccess;
+
+  const factory AccountState.getAccountSourceDetailsSuccess({
+    BankTransactionModel? transactions,
+  }) = _GetAccountSourceDetailsSuccess;
+
   const factory AccountState.failure({required String error}) = _Failure;
   const factory AccountState.createAccountSuccess() = _CreateAccountSuccess;
+  const factory AccountState.updateWalletSuccess() = _UpdateWalletSuccess;
+  const factory AccountState.updateBankBalanceSuccess() =
+      _UpdateBankBalanceSuccess;
   const factory AccountState.inProgress() = _InProgress;
 }
