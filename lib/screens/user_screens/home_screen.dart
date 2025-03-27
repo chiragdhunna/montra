@@ -480,28 +480,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         SizedBox(height: 10.h),
 
-                        // Transactions List
-                        // _buildTransactionTile(
-                        //   "Shopping",
-                        //   "Buy some grocery",
-                        //   "-\$120",
-                        //   Colors.orange,
-                        //   "assets/shopping.png",
-                        // ),
-                        // _buildTransactionTile(
-                        //   "Subscription",
-                        //   "Disney+ Annual..",
-                        //   "-\$80",
-                        //   Colors.purple,
-                        //   "assets/subscription.png",
-                        // ),
-                        // _buildTransactionTile(
-                        //   "Food",
-                        //   "Buy a ramen",
-                        //   "-\$32",
-                        //   Colors.red,
-                        //   "assets/food.png",
-                        // ),
                         recentTransactions.isEmpty
                             ? Center(
                               child: Text(
@@ -623,6 +601,20 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildLineChart(List<ExpenseFrequencyDataSetModel> data) {
+    if (data.isEmpty || data.every((item) => item.total == 0)) {
+      return Center(
+        child: SizedBox(
+          height: 150.h,
+          child: Center(
+            child: Text(
+              "No expense today",
+              style: TextStyle(fontSize: 14.sp, color: Colors.grey),
+            ),
+          ),
+        ),
+      );
+    }
+
     List<FlSpot> spots = [];
 
     for (int i = 0; i < data.length; i++) {
@@ -636,29 +628,18 @@ class _HomeScreenState extends State<HomeScreen> {
           gridData: FlGridData(show: false),
           titlesData: FlTitlesData(show: false),
           borderData: FlBorderData(show: false),
-
           lineBarsData: [
             LineChartBarData(
-              // spots: [
-              //   const FlSpot(0, 1),
-              //   const FlSpot(1, 3),
-              //   const FlSpot(2, 2),
-              //   const FlSpot(3, 4),
-              //   const FlSpot(4, 3),
-              //   const FlSpot(5, 5),
-              //   const FlSpot(6, 4),
-              // ],
               spots: spots,
               isCurved: true,
               color: Colors.purple,
-
               dotData: FlDotData(show: false),
               belowBarData: BarAreaData(
                 show: true,
                 gradient: LinearGradient(
                   colors:
                       gradientColors
-                          .map((color) => color.withValues(alpha: 0.3))
+                          .map((color) => color.withOpacity(0.3))
                           .toList(),
                 ),
               ),
