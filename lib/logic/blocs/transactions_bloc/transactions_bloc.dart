@@ -3,8 +3,15 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logger/logger.dart';
 import 'package:montra/constants/models/transactions_model.dart';
 import 'package:montra/logic/api/expense/expense_api.dart';
+import 'package:montra/logic/api/expense/models/expense_model.dart';
+import 'package:montra/logic/api/expense/models/expenses_model.dart';
 import 'package:montra/logic/api/income/income_api.dart';
+import 'package:montra/logic/api/income/models/income_model.dart';
+import 'package:montra/logic/api/income/models/incomes_model.dart';
+import 'package:montra/logic/api/transfer/models/transfer_model.dart';
+import 'package:montra/logic/api/transfer/models/transfers_model.dart';
 import 'package:montra/logic/api/transfer/transfer_api.dart';
+import 'package:montra/logic/database/database_helper.dart';
 import 'package:montra/logic/dio_factory.dart';
 
 part 'transactions_event.dart';
@@ -66,28 +73,137 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
     return allTransactions;
   }
 
+  List<Map<String, dynamic>> preprocessTransfers(
+    List<Map<String, dynamic>> dbTransfers,
+  ) {
+    return dbTransfers.map((e) {
+      return {
+        'transfer_id': e['transfer_id'] ?? '', // Default to empty string
+        'amount': e['amount'] ?? 0, // Default to 0 if null
+        'sender': e['sender'] ?? '',
+        'receiver': e['receiver'] ?? '',
+        'user_id': e['user_id'] ?? '',
+        'is_expense': (e['is_expense'] as int?) == 1, // Convert int to bool
+        'created_at':
+            e['created_at'] ??
+            DateTime.now().toIso8601String(), // Default to current time
+      };
+    }).toList();
+  }
+
+  List<Map<String, dynamic>> preprocessIncomes(
+    List<Map<String, dynamic>> dbIncomes,
+  ) {
+    return dbIncomes.map((e) {
+      return {
+        'income_id': e['income_id'] ?? '', // Default to empty string
+        'amount': e['amount'] ?? 0, // Default to 0 if null
+        'user_id': e['user_id'] ?? '',
+        'source': e['source'] ?? 'unknown', // Default to 'unknown'
+        'attachment': e['attachment'],
+        'description': e['description'] ?? '',
+        'created_at':
+            e['created_at'] ??
+            DateTime.now().toIso8601String(), // Default to current time
+        'bank_name': e['bank_name'],
+        'wallet_name': e['wallet_name'],
+      };
+    }).toList();
+  }
+
+  List<Map<String, dynamic>> preprocessExpenses(
+    List<Map<String, dynamic>> dbExpenses,
+  ) {
+    return dbExpenses.map((e) {
+      return {
+        'expense_id': e['expense_id'] ?? '', // Default to empty string
+        'amount': e['amount'] ?? 0, // Default to 0 if null
+        'user_id': e['user_id'] ?? '',
+        'source': e['source'] ?? 'unknown', // Default to 'unknown'
+        'attachment': e['attachment'],
+        'description': e['description'] ?? '',
+        'created_at':
+            e['created_at'] ??
+            DateTime.now().toIso8601String(), // Default to current time
+        'bank_name': e['bank_name'],
+        'wallet_name': e['wallet_name'],
+      };
+    }).toList();
+  }
+
   Future<void> _getAllTransactions(
     _GetAllTransactions event,
     Emitter<TransactionsState> emit,
   ) async {
     try {
       emit(TransactionsState.inProgress());
-      final expenses = await _expenseApi.getAllExpenses();
-      final incomes = await _incomeApi.getAllIncomes();
-      final transfers = await _transferApi.getAllTransfers();
 
-      final transactions = TransactionsModels(
-        transfer: transfers,
-        incomes: incomes,
-        expenses: expenses,
-      );
+      // Fetch data from the database
+      final dbHelper = DatabaseHelper();
+      final dbExpenses = await dbHelper.getExpenses();
+      final dbIncomes = await dbHelper.getIncome();
+      final dbTransfers = await dbHelper.getTransfers();
 
-      final sortedTransactions = getSortedTransactions(transactions);
-      emit(
-        TransactionsState.getAllTransactionSuccess(
-          transactions: sortedTransactions,
-        ),
-      );
+      if (dbExpenses.isNotEmpty &&
+          dbIncomes.isNotEmpty &&
+          dbTransfers.isNotEmpty) {
+        // Preprocess database data
+        final dbTransfers = await dbHelper.getTransfers();
+        final processedTransfers = preprocessTransfers(dbTransfers);
+
+        final transactions = TransactionsModels(
+          transfer: TransfersModel(
+            transfers:
+                processedTransfers
+                    .map((e) => TransferModel.fromJson(e))
+                    .toList(),
+          ),
+          incomes: IncomesModel(
+            incomes: dbIncomes.map((e) => IncomeModel.fromJson(e)).toList(),
+          ),
+          expenses: ExpensesModel(
+            expenses: dbExpenses.map((e) => ExpenseModel.fromJson(e)).toList(),
+          ),
+        );
+
+        // Sort transactions
+        final sortedTransactions = getSortedTransactions(transactions);
+
+        emit(
+          TransactionsState.getAllTransactionSuccess(
+            transactions: sortedTransactions,
+          ),
+        );
+      } else {
+        // Fetch data from APIs if offline data is not available
+        final expenses = await _expenseApi.getAllExpenses();
+        final incomes = await _incomeApi.getAllIncomes();
+        final transfers = await _transferApi.getAllTransfers();
+
+        // Save fetched data to the database
+        await dbHelper.upsertExpenses(
+          expenses.expenses.map((e) => e.toJson()).toList(),
+        );
+        await dbHelper.upsertIncome(
+          incomes.incomes.map((e) => e.toJson()).toList(),
+        );
+        await dbHelper.upsertTransfers(
+          transfers.transfers.map((e) => e.toJson()).toList(),
+        );
+
+        final transactions = TransactionsModels(
+          transfer: transfers,
+          incomes: incomes,
+          expenses: expenses,
+        );
+
+        final sortedTransactions = getSortedTransactions(transactions);
+        emit(
+          TransactionsState.getAllTransactionSuccess(
+            transactions: sortedTransactions,
+          ),
+        );
+      }
     } catch (e) {
       log.e('Error getting all transactions : $e');
       emit(TransactionsState.failure());

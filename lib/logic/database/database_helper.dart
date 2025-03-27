@@ -245,4 +245,21 @@ class DatabaseHelper {
     }
     return null; // Return null if no stats are stored
   }
+
+  Future<void> upsertTransfers(List<Map<String, dynamic>> transfers) async {
+    final db = await database;
+
+    // Clear existing transfer data
+    await db.delete('transfer');
+
+    // Insert new transfer data
+    for (var transfer in transfers) {
+      await db.insert('transfer', transfer);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getTransfers() async {
+    final db = await database;
+    return await db.query('transfer');
+  }
 }
