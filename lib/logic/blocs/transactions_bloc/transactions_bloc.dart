@@ -217,23 +217,40 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
     try {
       emit(const TransactionsState.inProgress());
 
-      // Fetch all transactions
-      final expenses = await _expenseApi.getAllExpenses();
-      final incomes = await _incomeApi.getAllIncomes();
-      final transfers =
-          await _transferApi.getAllTransfers(); // correct if needed
+      // Fetch data from the database
+      final dbHelper = DatabaseHelper();
+      final dbExpenses = await dbHelper.getExpenses();
+      final dbIncomes = await dbHelper.getIncome();
+      final dbTransfers = await dbHelper.getTransfers();
+
+      // Preprocess database data
+      final processedExpenses = preprocessExpenses(dbExpenses);
+      final processedIncomes = preprocessIncomes(dbIncomes);
+      final processedTransfers = preprocessTransfers(dbTransfers);
 
       final all = <Map<String, dynamic>>[];
 
       // Merge and label data
-      for (final e in expenses.expenses) {
-        all.add({'data': e, 'type': 'expense', 'createdAt': e.createdAt});
+      for (final e in processedExpenses) {
+        all.add({
+          'data': ExpenseModel.fromJson(e),
+          'type': 'expense',
+          'createdAt': e['created_at'],
+        });
       }
-      for (final i in incomes.incomes) {
-        all.add({'data': i, 'type': 'income', 'createdAt': i.createdAt});
+      for (final i in processedIncomes) {
+        all.add({
+          'data': IncomeModel.fromJson(i),
+          'type': 'income',
+          'createdAt': i['created_at'],
+        });
       }
-      for (final t in transfers.transfers) {
-        all.add({'data': t, 'type': 'transfer', 'createdAt': t.createdAt});
+      for (final t in processedTransfers) {
+        all.add({
+          'data': TransferModel.fromJson(t),
+          'type': 'transfer',
+          'createdAt': t['created_at'],
+        });
       }
 
       // Apply filters
