@@ -9,8 +9,10 @@ import 'package:mime/mime.dart';
 import 'package:montra/constants/expense_type.dart';
 import 'package:montra/constants/income_source.dart';
 import 'package:montra/logic/api/expense/expense_api.dart';
+import 'package:montra/logic/api/expense/models/expense_model.dart';
 import 'package:montra/logic/api/expense/models/expense_stats_model.dart';
 import 'package:montra/logic/api/wallet/wallet_api.dart';
+import 'package:montra/logic/database/database_helper.dart';
 import 'package:montra/logic/dio_factory.dart';
 
 part 'expense_event.dart';
@@ -104,16 +106,53 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
   ) async {
     try {
       emit(ExpenseState.inProgress());
-      final response = await _expenseApi.getExpense();
-      log.d('Get Income Response: $response');
-      final statsData = await _expenseApi.getExpenseStats();
-      log.d('Get Income Response: $statsData');
-      emit(
-        ExpenseState.getExpenseSuccess(
-          expense: response.expense,
-          expenseStats: statsData,
-        ),
-      );
+
+      final dbHelper = DatabaseHelper();
+
+      // Try fetching expense data from the API
+      try {
+        final response = await _expenseApi.getExpense();
+        log.d('Get Total Expense Response: $response');
+
+        final statsData = await _expenseApi.getExpenseStats();
+        log.d('Get Expense Stats Response: $statsData');
+
+        // Store the total expense in the local database
+        await dbHelper.upsertAccountBalance(response.expense.toDouble());
+
+        // Store expense stats in the local database
+        await dbHelper.upsertExpenseStats(statsData.toJson());
+
+        // Emit success state with API data
+        emit(
+          ExpenseState.getExpenseSuccess(
+            expense: response.expense,
+            expenseStats: statsData,
+          ),
+        );
+      } catch (apiError) {
+        log.e('API Error: $apiError');
+
+        // Fallback to local database
+        final localExpense = await dbHelper.getAccountBalance();
+        final localExpenseStats = await dbHelper.getExpenseStats();
+
+        if (localExpense != null) {
+          emit(
+            ExpenseState.getExpenseSuccess(
+              expense: localExpense.toInt(),
+              expenseStats:
+                  localExpenseStats != null
+                      ? ExpenseStatsModel.fromJson(localExpenseStats)
+                      : null,
+            ),
+          );
+        } else {
+          throw Exception(
+            'Failed to fetch total expense and stats from API and local database',
+          );
+        }
+      }
     } catch (e) {
       log.e('Error: $e');
       emit(ExpenseState.failure());

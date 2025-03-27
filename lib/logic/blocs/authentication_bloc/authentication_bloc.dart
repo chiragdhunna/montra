@@ -9,6 +9,7 @@ import 'package:mime/mime.dart';
 import 'package:montra/logic/api/users/models/user_model.dart';
 import 'package:montra/logic/api/users/user_api.dart';
 import 'package:montra/logic/blocs/authentication_bloc/auth_repository.dart';
+import 'package:montra/logic/database/database_helper.dart';
 import 'package:montra/logic/dio_factory.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -33,6 +34,7 @@ class AuthenticationBloc
 
   final String _logTag = 'LoginBloc';
   final userApi = UserApi(DioFactory().create());
+  final DatabaseHelper _databaseHelper = DatabaseHelper();
 
   static final AuthenticationBloc _instance = AuthenticationBloc._internal();
   final _authRepository = AuthRepository(
@@ -47,6 +49,7 @@ class AuthenticationBloc
       emit(AuthenticationState.inProgress());
       await _authRepository.setAuthToken(event.authToken);
       await _authRepository.setUser(event.user);
+      final db = await _databaseHelper.database;
 
       emit(AuthenticationState.userSignedUp());
     } catch (e) {
@@ -61,6 +64,7 @@ class AuthenticationBloc
 
       await _authRepository.logout();
       /* Login for updating the device token to the backend */
+      await _databaseHelper.deleteDatabaseFile();
       emit(AuthenticationState.loggedOut());
       add(const AuthenticationEvent.checkExisting());
     } on Exception catch (error, stackTrace) {
@@ -124,6 +128,8 @@ class AuthenticationBloc
           emit(AuthenticationState.userSignedUp());
           return;
         } else {
+          final db = await _databaseHelper.database;
+
           emit(
             AuthenticationState.authenticated(
               user: authUser,

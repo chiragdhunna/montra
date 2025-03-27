@@ -16,6 +16,7 @@ import 'package:montra/logic/api/wallet/models/wallet_name_model.dart';
 import 'package:montra/logic/api/wallet/models/wallets_model.dart';
 import 'package:montra/logic/api/wallet/wallet_api.dart';
 import 'package:montra/logic/blocs/network_bloc/network_bloc.dart';
+import 'package:montra/logic/database/database_helper.dart';
 import 'package:montra/logic/dio_factory.dart';
 
 part 'account_event.dart';
@@ -46,13 +47,36 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
   ) async {
     try {
       emit(AccountState.inProgress());
-      final bankBalance = await _bankApi.getBalance();
-      log.d('Get Bank Balance Response: $bankBalance');
-      final walletBalance = await _walletApi.getBalance();
-      log.d('Get Wallet Balance Response: $walletBalance');
-      final totalBalance = bankBalance.balance + walletBalance.balance;
-      log.d('Total Balance: $totalBalance');
-      emit(AccountState.getAccountBalanceSuccess(balance: totalBalance));
+
+      final dbHelper = DatabaseHelper();
+
+      // Try fetching balance from APIs
+      try {
+        final bankBalance = await _bankApi.getBalance();
+        final walletBalance = await _walletApi.getBalance();
+        final totalBalance = bankBalance.balance + walletBalance.balance;
+
+        // Store the balance in the local database
+        await dbHelper.upsertAccountBalance(totalBalance.toDouble());
+
+        emit(AccountState.getAccountBalanceSuccess(balance: totalBalance));
+      } catch (apiError) {
+        log.e('API Error: $apiError');
+
+        // Fallback to local database
+        final localBalance = await dbHelper.getAccountBalance();
+        if (localBalance != null) {
+          emit(
+            AccountState.getAccountBalanceSuccess(
+              balance: localBalance.toInt(),
+            ),
+          );
+        } else {
+          throw Exception(
+            'Failed to fetch balance from API and local database',
+          );
+        }
+      }
     } catch (e) {
       log.e('Error: $e');
       emit(AccountState.failure(error: e.toString()));

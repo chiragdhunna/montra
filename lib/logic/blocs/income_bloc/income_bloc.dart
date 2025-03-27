@@ -9,6 +9,7 @@ import 'package:mime/mime.dart';
 import 'package:montra/constants/income_source.dart';
 import 'package:montra/logic/api/income/income_api.dart';
 import 'package:montra/logic/api/wallet/wallet_api.dart';
+import 'package:montra/logic/database/database_helper.dart';
 import 'package:montra/logic/dio_factory.dart';
 
 part 'income_event.dart';
@@ -34,9 +35,31 @@ class IncomeBloc extends Bloc<IncomeEvent, IncomeState> {
   Future<void> _getIncome(_GetIncome event, Emitter<IncomeState> emit) async {
     try {
       emit(IncomeState.inProgress());
-      final response = await _incomeApi.getIncome();
-      log.d('Get Income Response: $response');
-      emit(IncomeState.getIncomeSuccess(income: response.income));
+
+      final dbHelper = DatabaseHelper();
+
+      // Try fetching total income from the API
+      try {
+        final response = await _incomeApi.getIncome();
+        log.d('Get Total Income Response: $response');
+
+        // Store the total income in the local database
+        await dbHelper.upsertAccountBalance(response.income.toDouble());
+
+        emit(IncomeState.getIncomeSuccess(income: response.income));
+      } catch (apiError) {
+        log.e('API Error: $apiError');
+
+        // Fallback to local database
+        final localIncome = await dbHelper.getAccountBalance();
+        if (localIncome != null) {
+          emit(IncomeState.getIncomeSuccess(income: localIncome.toInt()));
+        } else {
+          throw Exception(
+            'Failed to fetch total income from API and local database',
+          );
+        }
+      }
     } catch (e) {
       log.e('Error: $e');
       emit(IncomeState.failure());

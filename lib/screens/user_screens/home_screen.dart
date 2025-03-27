@@ -160,7 +160,30 @@ class _HomeScreenState extends State<HomeScreen> {
         if (!mounted) return;
         setState(() {
           totalExpense = expense;
-          expenseStats = expenseData;
+          expenseStats =
+              expenseData ??
+              ExpenseStatsModel(
+                summary: ExpenseStatsSummaryModel(
+                  today: 0,
+                  week: 0,
+                  month: 0,
+                  year: 0,
+                ),
+                frequency: ExpenseStatsFrequencyModel(
+                  today: [
+                    ExpenseFrequencyDataSetModel(label: "label", total: 0),
+                  ],
+                  week: [
+                    ExpenseFrequencyDataSetModel(label: "label", total: 0),
+                  ],
+                  month: [
+                    ExpenseFrequencyDataSetModel(label: "label", total: 0),
+                  ],
+                  year: [
+                    ExpenseFrequencyDataSetModel(label: "label", total: 0),
+                  ],
+                ),
+              );
           _isLoading = false;
         });
       },
