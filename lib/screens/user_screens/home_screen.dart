@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:montra/logic/api/expense/models/expense_frequency_data_set_model.dart';
 import 'package:montra/logic/api/expense/models/expense_stats_frequency_model.dart';
@@ -46,21 +47,6 @@ class _HomeScreenState extends State<HomeScreen> {
   int totalExpense = 0;
   int totalBalance = 0;
   String selectedFilter = "Today";
-  final List<String> months = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-  String selectedMonth = "";
 
   final Map<String, String> sourceDisplayNames = {
     "cash": "Cash",
@@ -89,7 +75,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     // TODO: implement initState
-    selectedMonth = months[DateTime.now().month - 1];
     BlocProvider.of<IncomeBloc>(context).add(IncomeEvent.getIncome());
     BlocProvider.of<ExpenseBloc>(context).add(ExpenseEvent.getExpense());
     BlocProvider.of<AccountBloc>(context).add(AccountEvent.getAccountBalance());
@@ -321,105 +306,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                           : AssetImage(widget.user.imgUrl!)
                                       : AssetImage("assets/default_avatar.png"),
                             ),
-                            Center(
-                              child: PopupMenuButton<String>(
-                                onSelected: (value) {
-                                  setState(() {
-                                    selectedMonth = value;
-                                  });
-                                },
-                                itemBuilder: (BuildContext context) {
-                                  return [
-                                    PopupMenuItem<String>(
-                                      enabled: false,
-                                      child: SizedBox(
-                                        width: 200.w, // Width of popup
-                                        height: 250.h, // Height for scroll
-                                        child: Scrollbar(
-                                          thickness: 4,
-                                          radius: Radius.circular(10),
-                                          child: ListView.builder(
-                                            padding: EdgeInsets.zero,
-                                            itemCount: months.length,
-                                            itemBuilder: (context, index) {
-                                              final month = months[index];
-                                              return InkWell(
-                                                onTap: () {
-                                                  Navigator.pop(context);
-                                                  setState(() {
-                                                    selectedMonth = month;
-                                                  });
-                                                },
-                                                child: Container(
-                                                  padding: EdgeInsets.symmetric(
-                                                    horizontal: 12.w,
-                                                    vertical: 10.h,
-                                                  ),
-                                                  child: Center(
-                                                    child: Text(
-                                                      month,
-                                                      style: TextStyle(
-                                                        fontSize: 14.sp,
-                                                        fontWeight:
-                                                            month ==
-                                                                    selectedMonth
-                                                                ? FontWeight
-                                                                    .bold
-                                                                : FontWeight
-                                                                    .normal,
-                                                        color:
-                                                            month ==
-                                                                    selectedMonth
-                                                                ? Colors.blue
-                                                                : Colors.black,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ];
-                                },
-                                offset: Offset(
-                                  -75.w,
-                                  40.h,
-                                ), // Adjust first value to shift left/right
-                                // 👇 THIS makes the dropdown appear centered under the button
-                                position: PopupMenuPosition.under,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12.r),
-                                ),
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 12.w,
-                                    vertical: 6.h,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.black54),
-                                    borderRadius: BorderRadius.circular(10.r),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        selectedMonth,
-                                        style: TextStyle(
-                                          fontSize: 16.sp,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      Icon(
-                                        Icons.keyboard_arrow_down,
-                                        size: 20.r,
-                                      ),
-                                    ],
+                            Row(
+                              children: [
+                                Text(
+                                  DateFormat.MMMM().format(
+                                    DateTime.now(),
+                                  ), // Dynamically get the current month
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                              ),
+                              ],
                             ),
 
                             GestureDetector(
