@@ -41,6 +41,7 @@ class _AccountScreenState extends State<AccountScreen> {
   Future<void> accountOnChangeSubscription(AccountState state) async {
     state.maybeWhen(
       orElse: () {},
+
       failure: (error) {
         setState(() {
           isLoading = false;
@@ -53,14 +54,14 @@ class _AccountScreenState extends State<AccountScreen> {
         });
       },
       updateBankBalanceSuccess: () {
-        setState(() {
-          isLoading = false;
-        });
+        BlocProvider.of<AccountBloc>(
+          context,
+        ).add(AccountEvent.getAccountDetails());
       },
       updateWalletSuccess: () {
-        setState(() {
-          isLoading = false;
-        });
+        BlocProvider.of<AccountBloc>(
+          context,
+        ).add(AccountEvent.getAccountDetails());
       },
       inProgress: () {
         setState(() {
