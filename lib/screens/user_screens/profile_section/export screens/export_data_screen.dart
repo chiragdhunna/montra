@@ -175,12 +175,6 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
                         height: 56,
                         child: ElevatedButton(
                           onPressed: () {
-                            // Handle export action
-                            // Navigator.of(context).push(
-                            //   MaterialPageRoute(
-                            //     builder: (builder) => ExportDataSuccessScreen(),
-                            //   ),
-                            // );
                             BlocProvider.of<ExportDataBloc>(context).add(
                               ExportDataEvent.getExportData(
                                 dataType: selectedDataType.toLowerCase(),
