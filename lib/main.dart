@@ -27,8 +27,15 @@ void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool? _wasConnected;
 
   @override
   Widget build(BuildContext context) {
@@ -70,32 +77,59 @@ class MyApp extends StatelessWidget {
           listener: (context, state) {
             // TODO: implement listener
             state.maybeWhen(
-              orElse: () {},
               success: () {
-                ScaffoldMessenger.of(
-                  navigatorKey.currentContext!,
-                ).hideCurrentSnackBar();
-                ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
-                  const SnackBar(
-                    content: Text('Back online!'),
-                    backgroundColor: Colors.green,
-                    duration: Duration(seconds: 2),
-                  ),
-                );
+                if (_wasConnected == null) {
+                  // App started online – do nothing
+                } else if (_wasConnected == false) {
+                  // Was offline, now online
+                  ScaffoldMessenger.of(
+                    navigatorKey.currentContext!,
+                  ).hideCurrentSnackBar();
+                  ScaffoldMessenger.of(
+                    navigatorKey.currentContext!,
+                  ).showSnackBar(
+                    const SnackBar(
+                      content: Text('Back online!'),
+                      backgroundColor: Colors.green,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+                _wasConnected = true;
               },
               failure: () {
-                ScaffoldMessenger.of(
-                  navigatorKey.currentContext!,
-                ).hideCurrentSnackBar();
+                if (_wasConnected == null) {
+                  // App started offline
+                  ScaffoldMessenger.of(
+                    navigatorKey.currentContext!,
+                  ).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'No internet. Get online to get latest data...',
+                      ),
+                      backgroundColor: Colors.red,
+                      duration: Duration(days: 1),
+                    ),
+                  );
+                } else if (_wasConnected == true) {
+                  // Was online, now offline
+                  ScaffoldMessenger.of(
+                    navigatorKey.currentContext!,
+                  ).hideCurrentSnackBar();
+                  ScaffoldMessenger.of(
+                    navigatorKey.currentContext!,
+                  ).showSnackBar(
+                    const SnackBar(
+                      content: Text('Oops! Internet is gone.'),
+                      backgroundColor: Colors.red,
+                      duration: Duration(days: 1),
+                    ),
+                  );
+                }
 
-                ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
-                  const SnackBar(
-                    content: Text('No internet connection'),
-                    backgroundColor: Colors.red,
-                    duration: Duration(days: 1), // stays until online
-                  ),
-                );
+                _wasConnected = false;
               },
+              orElse: () {},
             );
           },
           child: BlocListener<AuthenticationBloc, AuthenticationState>(
