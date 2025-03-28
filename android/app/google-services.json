@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "727081287744",
+    "project_id": "montra-6ec57",
+    "storage_bucket": "montra-6ec57.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:727081287744:android:ae16828e55f1b97d311fa5",
+        "android_client_info": {
+          "package_name": "com.example.montra"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA8lpSjSAr0ZVSqDa1CV9sagpvl11eGR_c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
