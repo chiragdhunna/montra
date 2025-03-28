@@ -49,7 +49,13 @@ class MyApp extends StatelessWidget {
             return authBloc;
           },
         ),
-        BlocProvider<NetworkBloc>(create: (context) => NetworkBloc()),
+        BlocProvider<NetworkBloc>(
+          create: (context) {
+            final networkBloc = NetworkBloc();
+            networkBloc.add(NetworkEvent.observer());
+            return networkBloc;
+          },
+        ),
       ],
       child: BlocListener<LoginBloc, LoginState>(
         listener: (context, state) {
@@ -63,7 +69,34 @@ class MyApp extends StatelessWidget {
         child: BlocListener<NetworkBloc, NetworkState>(
           listener: (context, state) {
             // TODO: implement listener
-            state.maybeWhen(orElse: () {}, success: () {}, failure: () {});
+            state.maybeWhen(
+              orElse: () {},
+              success: () {
+                ScaffoldMessenger.of(
+                  navigatorKey.currentContext!,
+                ).hideCurrentSnackBar();
+                ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+                  const SnackBar(
+                    content: Text('Back online!'),
+                    backgroundColor: Colors.green,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+              failure: () {
+                ScaffoldMessenger.of(
+                  navigatorKey.currentContext!,
+                ).hideCurrentSnackBar();
+
+                ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+                  const SnackBar(
+                    content: Text('No internet connection'),
+                    backgroundColor: Colors.red,
+                    duration: Duration(days: 1), // stays until online
+                  ),
+                );
+              },
+            );
           },
           child: BlocListener<AuthenticationBloc, AuthenticationState>(
             listener: (context, state) {
