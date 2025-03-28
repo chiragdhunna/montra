@@ -48,7 +48,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
         // Save to local DB
         final budgetJsonList =
             response.budgets
-                ?.map(
+                .map(
                   (b) => {
                     'budget_id': b.budgetId,
                     'total_budget': b.totalBudget,
@@ -60,10 +60,8 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
                 )
                 .toList();
 
-        if (budgetJsonList != null) {
-          await dbHelper.upsertBudgets(budgetJsonList);
-        }
-
+        await dbHelper.upsertBudgets(budgetJsonList);
+      
         emit(BudgetState.getBudgetByMonthSuccess(budgets: response));
       } catch (e) {
         log.e('API Error: $e');

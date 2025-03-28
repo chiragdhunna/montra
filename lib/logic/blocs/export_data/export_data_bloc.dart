@@ -8,7 +8,6 @@ import 'package:logger/logger.dart';
 import 'package:montra/logic/api/users/models/export_data_user_model.dart';
 import 'package:montra/logic/api/users/user_api.dart';
 import 'package:montra/logic/dio_factory.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:open_file/open_file.dart';
 

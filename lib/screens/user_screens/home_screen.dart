@@ -651,11 +651,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildLineChart(List<ExpenseFrequencyDataSetModel> data) {
-    if (_isExpenseStatsLoading)
+    if (_isExpenseStatsLoading) {
       return SizedBox(
         height: 150.h,
         child: Center(child: CircularProgressIndicator()),
       );
+    }
 
     if (data.isEmpty || data.every((item) => item.total == 0)) {
       return Center(

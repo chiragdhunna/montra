@@ -7,7 +7,6 @@ import 'package:montra/logic/api/expense/models/expense_model.dart';
 import 'package:montra/logic/api/income/models/income_model.dart';
 import 'package:montra/logic/api/wallet/models/wallet_model.dart';
 import 'package:montra/logic/blocs/account_bloc/account_bloc.dart';
-import 'package:montra/screens/user_screens/profile_section/account%20screens/account_management_screen.dart';
 import 'package:montra/constants/models/transaction_data_model.dart';
 import 'package:montra/screens/user_screens/profile_section/account%20screens/edit_account_screen.dart';
 
@@ -301,7 +300,7 @@ class _DetailAccountScreenState extends State<DetailAccountScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              '\$${accountAmount}', // You can make this dynamic if needed
+                              '\$$accountAmount', // You can make this dynamic if needed
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -340,7 +339,7 @@ class _DetailAccountScreenState extends State<DetailAccountScreen> {
                               }),
                             ],
                           );
-                        }).toList(),
+                        }),
                       ] else
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 32.0),
