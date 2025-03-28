@@ -15,6 +15,7 @@ import 'package:montra/logic/api/users/models/user_model.dart';
 import 'package:montra/logic/blocs/account_bloc/account_bloc.dart';
 import 'package:montra/logic/blocs/expense/expense_bloc.dart';
 import 'package:montra/logic/blocs/income_bloc/income_bloc.dart';
+import 'package:montra/logic/blocs/network_bloc/network_bloc.dart';
 import 'package:montra/logic/blocs/transactions_bloc/transactions_bloc.dart';
 import 'package:montra/screens/notification/notification_screen.dart';
 import 'package:montra/screens/user_screens/transaction_screen.dart';
@@ -42,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late StreamSubscription<ExpenseState> _expenseStreamSubscription;
   late StreamSubscription<TransactionsState> _transactionsStreamSubscription;
   late StreamSubscription<AccountState> _accountStreamSubscription;
+  late StreamSubscription<NetworkState> _networkStreamSubscription;
   int totalIncome = 0;
   int totalExpense = 0;
   int totalBalance = 0;
@@ -97,6 +99,9 @@ class _HomeScreenState extends State<HomeScreen> {
     _accountStreamSubscription = BlocProvider.of<AccountBloc>(
       context,
     ).stream.listen(accountBlocChangeHandler);
+    _networkStreamSubscription = BlocProvider.of<NetworkBloc>(
+      context,
+    ).stream.listen(networkBlocChangeHandler);
 
     incomeBlocChangeHandler(BlocProvider.of<IncomeBloc>(context).state);
     expenseBlocChangeHandler(BlocProvider.of<ExpenseBloc>(context).state);
@@ -301,6 +306,37 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void networkBlocChangeHandler(NetworkState state) {
+    state.maybeWhen(
+      success: () {
+        // Only show the fetch data snackbar when coming online
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('You are back online. Fetch latest data?'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'Fetch',
+              textColor: Colors.white,
+              onPressed: () {
+                // 🔄 Trigger data refresh events here
+                context.read<IncomeBloc>().add(IncomeEvent.getIncome());
+                context.read<ExpenseBloc>().add(ExpenseEvent.getExpense());
+                context.read<AccountBloc>().add(
+                  AccountEvent.getAccountBalance(),
+                );
+                context.read<TransactionsBloc>().add(
+                  TransactionsEvent.getAllTransactions(),
+                );
+              },
+            ),
+          ),
+        );
+      },
+      orElse: () {},
+    );
+  }
+
   @override
   void dispose() {
     // TODO: implement dispose
@@ -308,6 +344,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _expenseStreamSubscription.cancel();
     _transactionsStreamSubscription.cancel();
     _accountStreamSubscription.cancel();
+    _networkStreamSubscription.cancel();
     super.dispose();
   }
 

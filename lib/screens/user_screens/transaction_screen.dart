@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:montra/logic/blocs/network_bloc/network_bloc.dart';
 import 'package:montra/logic/blocs/transactions_bloc/transactions_bloc.dart';
 import 'package:montra/screens/user_screens/financial_reports/financial_report_status_screen.dart';
 
@@ -19,6 +20,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
   Map<String, List<Map<String, dynamic>>> groupedTransactions = {};
   List<Map<String, dynamic>> recentTransactions = [];
   late StreamSubscription<TransactionsState> _transactionsStreamSubscription;
+  late StreamSubscription<NetworkState> _networkStreamSubscription;
   bool _isLoading = true;
   String _selectedTransactionType =
       "All"; // For Filter By: All / Income / Expense / Transfer
@@ -68,6 +70,32 @@ class _TransactionScreenState extends State<TransactionScreen> {
     );
   }
 
+  void networkBlocChangeHandler(NetworkState state) {
+    state.maybeWhen(
+      success: () {
+        // Only show the fetch data snackbar when coming online
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('You are back online. Fetch latest data?'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'Fetch',
+              textColor: Colors.white,
+              onPressed: () {
+                // 🔄 Trigger data refresh events here
+                context.read<TransactionsBloc>().add(
+                  TransactionsEvent.getAllTransactions(),
+                );
+              },
+            ),
+          ),
+        );
+      },
+      orElse: () {},
+    );
+  }
+
   final Map<String, String> sourceDisplayNames = {
     "cash": "Cash",
     "bank": "Bank",
@@ -100,11 +128,16 @@ class _TransactionScreenState extends State<TransactionScreen> {
     transactionsBlocChangeHandler(
       BlocProvider.of<TransactionsBloc>(context).state,
     );
+
+    _networkStreamSubscription = BlocProvider.of<NetworkBloc>(
+      context,
+    ).stream.listen(networkBlocChangeHandler);
   }
 
   @override
   void dispose() {
     _transactionsStreamSubscription.cancel();
+    _networkStreamSubscription.cancel();
     super.dispose();
   }
 
