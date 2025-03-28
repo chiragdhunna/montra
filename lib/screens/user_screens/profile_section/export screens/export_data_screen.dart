@@ -72,6 +72,9 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
       failure: (error) {
         setState(() {
           _isLoading = false;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error : $error')));
         });
       },
       inProgress: () {

@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:bloc/bloc.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logger/logger.dart';
 import 'package:montra/logic/api/users/models/export_data_user_model.dart';
@@ -35,10 +37,14 @@ class ExportDataBloc extends Bloc<ExportDataEvent, ExportDataState> {
     try {
       emit(ExportDataState.inProgress());
 
-      // 1. Ask for permission
+      // ✅ Android 13+ Permissions Handling
       if (Platform.isAndroid) {
-        final status = await Permission.storage.request();
-        if (!status.isGranted) {
+        if (await Permission.manageExternalStorage.request().isGranted ||
+            await Permission.photos.request().isGranted ||
+            await Permission.videos.request().isGranted ||
+            await Permission.audio.request().isGranted) {
+          log.i("Storage permission granted.");
+        } else {
           emit(
             const ExportDataState.failure(error: "Storage permission denied"),
           );
@@ -46,37 +52,57 @@ class ExportDataBloc extends Bloc<ExportDataEvent, ExportDataState> {
         }
       }
 
-      // 2. Create export request model
+      // ✅ Create File Name
+      final fileName =
+          'financial_report_${DateTime.now().millisecondsSinceEpoch}.${event.format}';
+
+      // ✅ 1. Call API to Get File Data
       final exportDataModel = ExportDataUserModel(
         dataType: event.dataType,
         dateRange: event.dateRange,
         format: event.format,
       );
-
-      // 3. Call API
       final response = await _userApi.exportData(exportDataModel);
 
-      // 4. Get save path
-      final dir = await getExternalStorageDirectory();
-      if (dir == null) {
-        emit(const ExportDataState.failure(error: "Unable to access storage"));
+      final List<int> fileBytes = response.data; // Get raw bytes
+      if (fileBytes.isEmpty) {
+        emit(const ExportDataState.failure(error: "Failed to get file data."));
         return;
       }
 
-      final fileName =
-          'financial_report_${DateTime.now().millisecondsSinceEpoch}.${event.format}';
-      final filePath = '${dir.path}/$fileName';
-      final file = File(filePath);
+      // ✅ 2. Convert `List<int>` to `Uint8List`
+      Uint8List uint8ListBytes = Uint8List.fromList(fileBytes);
 
-      // 5. Save bytes to file
-      await file.writeAsBytes(response.data);
+      // ✅ 3. Use `FilePicker.platform.saveFile()` to save the file
+      String? savePath = await FilePicker.platform.saveFile(
+        dialogTitle: "Save file to...",
+        fileName: fileName,
+        bytes: uint8ListBytes, // ✅ FIX: Convert List<int> → Uint8List
+      );
 
-      // 6. Optionally open the file
-      await OpenFile.open(filePath);
+      if (savePath == null) {
+        emit(
+          const ExportDataState.failure(error: "User canceled file selection"),
+        );
+        return;
+      }
 
-      exportFilePath = filePath;
+      // ✅ 4. Manually Write Bytes to File
+      final file = File(savePath);
+      await file.writeAsBytes(uint8ListBytes);
 
-      emit(ExportDataState.getExportDataSuccess(filePath: filePath));
+      // ✅ 5. Open the File After Saving
+      if (await file.exists()) {
+        await OpenFile.open(savePath);
+      } else {
+        emit(
+          const ExportDataState.failure(error: "File not found after saving"),
+        );
+        return;
+      }
+
+      exportFilePath = savePath;
+      emit(ExportDataState.getExportDataSuccess(filePath: savePath));
     } catch (e) {
       log.e('Download Error: $e');
       emit(ExportDataState.failure(error: e.toString()));
