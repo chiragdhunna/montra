@@ -8,6 +8,7 @@ import 'package:montra/logic/api/bank/models/banks_model.dart';
 import 'package:montra/logic/api/wallet/models/wallet_model.dart';
 import 'package:montra/logic/api/wallet/models/wallets_model.dart';
 import 'package:montra/logic/blocs/account_bloc/account_bloc.dart';
+import 'package:montra/logic/blocs/network_bloc/network_helper.dart';
 import 'package:montra/screens/user_screens/profile_section/account%20screens/account_management_screen.dart';
 import 'package:montra/screens/user_screens/profile_section/account%20screens/detail_account_screen.dart';
 
@@ -313,6 +314,21 @@ class _AccountScreenState extends State<AccountScreen> {
                             margin: const EdgeInsets.only(bottom: 20),
                             child: ElevatedButton(
                               onPressed: () {
+                                bool isConnected = false;
+                                NetworkHelper.checkNow().then((val) {
+                                  isConnected = val;
+                                });
+                                if (!isConnected) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Connect to internet first',
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                  return;
+                                }
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (_) => CreateAccountScreen(),
