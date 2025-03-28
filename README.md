@@ -223,6 +223,39 @@ flutter pub get
 flutter run
 ```
 
+### Fastlane Integration
+
+Fastlane is integrated into the project to streamline app distribution and automate deployment tasks. It supports the following:
+
+- 📦 **App Distribution**: Automate builds and distribute the app to testers or app stores.
+- 🔑 **Code Signing**: Manage certificates and provisioning profiles.
+- 📋 **Changelog Management**: Automatically generate changelogs for releases.
+- 🚀 **CI/CD Integration**: Seamlessly integrate with CI/CD pipelines.
+
+#### Fastlane Commands
+
+1. **Setup Fastlane**:
+
+   ```bash
+   cd android
+   fastlane init
+   ```
+
+2. **Build and Distribute**:
+
+   ```bash
+   # Build APK
+   fastlane build
+
+   # Distribute to Testers
+   fastlane distribute
+   ```
+
+3. **Release to Play Store**:
+   ```bash
+   fastlane release
+   ```
+
 ## 📂 Project Structure
 
 ```
