@@ -1,0 +1,40 @@
+name: Distribute APK via Fastlane
+
+on:
+  push:
+    branches:
+      - main # or 'master' or any branch you want
+
+jobs:
+  build-and-distribute:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v3
+
+      - name: ⚙️ Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.16.0" # or your version
+
+      - name: 📦 Install dependencies
+        run: flutter pub get
+
+      - name: 🔧 Set up Ruby for Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.1"
+
+      - name: 🧪 Install Fastlane + Firebase plugin
+        run: |
+          cd android
+          gem install fastlane
+          fastlane add_plugin firebase_app_distribution
+
+      - name: 🚀 Build and Upload APK to Firebase
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          cd android
+          fastlane beta
