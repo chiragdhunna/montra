@@ -154,6 +154,13 @@ class DatabaseHelper {
       stats TEXT NOT NULL
     )
   ''');
+
+    await db.execute('''
+CREATE TABLE wallet_names (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL
+)
+''');
   }
 
   Future<void> deleteDatabaseFile() async {
@@ -261,5 +268,26 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> getTransfers() async {
     final db = await database;
     return await db.query('transfer');
+  }
+
+  // Insert or update wallet names
+  Future<void> upsertWalletNames(List<String> walletNames) async {
+    final db = await database;
+
+    // Clear existing wallet names
+    await db.delete('wallet_names');
+
+    // Insert new wallet names
+    for (var walletName in walletNames) {
+      await db.insert('wallet_names', {'name': walletName});
+    }
+  }
+
+  // Retrieve wallet names
+  Future<List<String>> getWalletNames() async {
+    final db = await database;
+
+    final result = await db.query('wallet_names');
+    return result.map((row) => row['name'] as String).toList();
   }
 }

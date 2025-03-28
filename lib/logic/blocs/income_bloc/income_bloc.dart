@@ -67,11 +67,36 @@ class IncomeBloc extends Bloc<IncomeEvent, IncomeState> {
   }
 
   Future<void> _getWallets(_GetWallets event, Emitter<IncomeState> emit) async {
+    final dbHelper = DatabaseHelper();
+
     try {
       emit(IncomeState.inProgress());
-      final response = await _walletApi.getAllWalletNames();
-      log.d('Get Wallet Names: $response');
-      emit(IncomeState.getWalletNamesSuccess(walletNames: response.wallets));
+
+      // Try fetching wallet names from the API
+      try {
+        final response = await _walletApi.getAllWalletNames();
+        log.d('Get Wallet Names: $response');
+
+        // Store the wallet names in the local database
+        final walletNames = response.wallets;
+        await dbHelper.upsertWalletNames(walletNames);
+
+        emit(IncomeState.getWalletNamesSuccess(walletNames: walletNames));
+      } catch (apiError) {
+        log.e('API Error: $apiError');
+
+        // Fallback to local database
+        final localWalletNames = await dbHelper.getWalletNames();
+        if (localWalletNames.isNotEmpty) {
+          emit(
+            IncomeState.getWalletNamesSuccess(walletNames: localWalletNames),
+          );
+        } else {
+          throw Exception(
+            'Failed to fetch wallet names from API and local database',
+          );
+        }
+      }
     } catch (e) {
       log.e('Error: $e');
       emit(IncomeState.failure());

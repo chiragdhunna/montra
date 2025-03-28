@@ -12,6 +12,7 @@ import 'package:montra/logic/blocs/authentication_bloc/auth_repository.dart';
 import 'package:montra/logic/database/database_helper.dart';
 import 'package:montra/logic/dio_factory.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:montra/logic/services/initialization_service.dart';
 
 part 'authentication_event.dart';
 part 'authentication_state.dart';
@@ -129,7 +130,8 @@ class AuthenticationBloc
           return;
         } else {
           final db = await _databaseHelper.database;
-
+          final initializationService = InitializationService();
+          await initializationService.initializeWallets();
           emit(
             AuthenticationState.authenticated(
               user: authUser,
