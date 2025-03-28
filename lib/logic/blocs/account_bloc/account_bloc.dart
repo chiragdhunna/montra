@@ -15,7 +15,6 @@ import 'package:montra/logic/api/wallet/models/wallet_model.dart';
 import 'package:montra/logic/api/wallet/models/wallet_name_model.dart';
 import 'package:montra/logic/api/wallet/models/wallets_model.dart';
 import 'package:montra/logic/api/wallet/wallet_api.dart';
-import 'package:montra/logic/blocs/network_bloc/network_bloc.dart';
 import 'package:montra/logic/blocs/network_bloc/network_helper.dart';
 import 'package:montra/logic/database/database_helper.dart';
 import 'package:montra/logic/dio_factory.dart';
@@ -107,29 +106,82 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
     _GetAccountDetails event,
     Emitter<AccountState> emit,
   ) async {
-    try {
-      emit(AccountState.inProgress());
-      final bankBalance = await _bankApi.getBalance();
-      final walletBalance = await _walletApi.getBalance();
-      final totalBalance = bankBalance.balance + walletBalance.balance;
+    emit(AccountState.inProgress());
+    final dbHelper = DatabaseHelper();
+    final isConnected = await NetworkHelper.checkNow();
 
-      final banks = await _bankApi.getAllBankAccounts();
-      final wallets = await _walletApi.getAllWalletAccounts();
+    if (isConnected) {
+      try {
+        // 1. Get from API
+        final bankBalance = await _bankApi.getBalance();
+        final walletBalance = await _walletApi.getBalance();
+        final totalBalance = bankBalance.balance + walletBalance.balance;
 
-      emit(
-        AccountState.getAccountDetailsSuccess(
-          balance: totalBalance,
-          wallets: wallets,
-          banks: banks,
-        ),
-      );
-    } catch (e) {
-      log.e('Error: $e');
-      if (e is DioException) {
-        log.e('Error Message ${e.message!}');
-        emit(AccountState.failure(error: e.message!));
+        final banks = await _bankApi.getAllBankAccounts();
+        final wallets = await _walletApi.getAllWalletAccounts();
+
+        // 2. Store into local DB
+        final db = await dbHelper.database;
+
+        for (final bank in banks.banks ?? []) {
+          await db.insert('banks', {
+            'name': bank.name,
+            'balance': bank.amount, // mapping amount → balance
+            'userId': bank.userId,
+            'accountNumber': bank.accountNumber,
+            'createdAt': bank.createdAt.toIso8601String(),
+          });
+        }
+
+        for (final wallet in wallets.wallets ?? []) {
+          await db.insert('wallets', {
+            'name': wallet.name,
+            'balance': wallet.amount,
+            'userId': wallet.userId,
+            'walletNumber': wallet.walletNumber,
+          });
+        }
+
+        await dbHelper.upsertAccountBalance(totalBalance.toDouble());
+
+        emit(
+          AccountState.getAccountDetailsSuccess(
+            balance: totalBalance,
+            wallets: wallets,
+            banks: banks,
+          ),
+        );
+      } catch (e) {
+        log.e('API Error: $e');
+        // fallback to local DB if API fails
+        final localWallets = await dbHelper.getWallets();
+        final localBanks = await dbHelper.getBanks();
+        final localBalance = await dbHelper.getAccountBalance();
+
+        emit(
+          AccountState.getAccountDetailsSuccess(
+            balance: (localBalance ?? 0).toInt(),
+            wallets: WalletsModel(wallets: localWallets),
+            banks: BanksModel(banks: localBanks),
+          ),
+        );
+      }
+    } else {
+      // Offline Mode
+      final localWallets = await dbHelper.getWallets();
+      final localBanks = await dbHelper.getBanks();
+      final localBalance = await dbHelper.getAccountBalance();
+
+      if (localWallets.isEmpty && localBanks.isEmpty) {
+        emit(AccountState.failure(error: 'No offline data available.'));
       } else {
-        emit(AccountState.failure(error: e.toString()));
+        emit(
+          AccountState.getAccountDetailsSuccess(
+            balance: (localBalance ?? 0).toInt(),
+            wallets: WalletsModel(wallets: localWallets),
+            banks: BanksModel(banks: localBanks),
+          ),
+        );
       }
     }
   }

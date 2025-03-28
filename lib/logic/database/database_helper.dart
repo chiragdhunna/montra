@@ -218,7 +218,15 @@ CREATE TABLE wallet_names (
   Future<List<WalletModel>> getWallets() async {
     final db = await database;
     final result = await db.query('wallets');
-    return result.map((json) => WalletModel.fromJson(json)).toList();
+
+    return result.map((row) {
+      return WalletModel(
+        name: row['name'] as String,
+        amount: (row['balance'] as num).toInt(), // 👈 map balance → amount
+        userId: row['userId'] as String,
+        walletNumber: row['walletNumber'] as String,
+      );
+    }).toList();
   }
 
   // CRUD for Banks
@@ -230,7 +238,16 @@ CREATE TABLE wallet_names (
   Future<List<BankModel>> getBanks() async {
     final db = await database;
     final result = await db.query('banks');
-    return result.map((json) => BankModel.fromJson(json)).toList();
+
+    return result.map((row) {
+      return BankModel(
+        name: row['name'] as String,
+        amount: (row['balance'] as num).toInt(), // 👈 map balance → amount
+        userId: row['userId'] as String,
+        accountNumber: row['accountNumber'] as String,
+        createdAt: DateTime.parse(row['createdAt'] as String),
+      );
+    }).toList();
   }
 
   // Insert or update income
