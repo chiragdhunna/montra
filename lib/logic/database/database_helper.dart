@@ -161,6 +161,46 @@ CREATE TABLE wallet_names (
   name TEXT NOT NULL
 )
 ''');
+
+    await db.execute('''
+    CREATE TABLE offline_income (
+      income_id TEXT PRIMARY KEY,
+      amount INTEGER DEFAULT 0,
+      user_id TEXT NOT NULL,
+      source TEXT,
+      attachment TEXT,
+      description TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      bank_name TEXT,
+      wallet_name TEXT
+    )
+  ''');
+
+    await db.execute('''
+      CREATE TABLE offline_expense (
+        expense_id TEXT PRIMARY KEY,
+        amount INTEGER DEFAULT 0,
+        user_id TEXT NOT NULL,
+        source TEXT,
+        attachment TEXT,
+        description TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        bank_name TEXT,
+        wallet_name TEXT
+      )
+''');
+
+    await db.execute('''
+      CREATE TABLE offline_transfer (
+        transfer_id TEXT PRIMARY KEY,
+        amount INTEGER DEFAULT 0,
+        sender TEXT,
+        receiver TEXT,
+        is_expense INTEGER,
+        user_id TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )
+  ''');
   }
 
   Future<void> deleteDatabaseFile() async {
@@ -289,5 +329,50 @@ CREATE TABLE wallet_names (
 
     final result = await db.query('wallet_names');
     return result.map((row) => row['name'] as String).toList();
+  }
+
+  Future<void> insertOfflineIncome(Map<String, dynamic> income) async {
+    final db = await database;
+    await db.insert('offline_income', income);
+  }
+
+  Future<List<Map<String, dynamic>>> getOfflineIncomes() async {
+    final db = await database;
+    return await db.query('offline_income');
+  }
+
+  Future<void> clearOfflineIncomes() async {
+    final db = await database;
+    await db.delete('offline_income');
+  }
+
+  Future<void> insertOfflineExpense(Map<String, dynamic> expense) async {
+    final db = await database;
+    await db.insert('offline_expense', expense);
+  }
+
+  Future<List<Map<String, dynamic>>> getOfflineExpenses() async {
+    final db = await database;
+    return await db.query('offline_expense');
+  }
+
+  Future<void> clearOfflineExpenses() async {
+    final db = await database;
+    await db.delete('offline_expense');
+  }
+
+  Future<void> insertOfflineTransfer(Map<String, dynamic> transfer) async {
+    final db = await database;
+    await db.insert('offline_transfer', transfer);
+  }
+
+  Future<List<Map<String, dynamic>>> getOfflineTransfers() async {
+    final db = await database;
+    return await db.query('offline_transfer');
+  }
+
+  Future<void> clearOfflineTransfers() async {
+    final db = await database;
+    await db.delete('offline_transfer');
   }
 }

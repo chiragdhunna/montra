@@ -3,6 +3,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logger/logger.dart';
 import 'package:montra/logic/api/transfer/models/create_transfer_model.dart';
 import 'package:montra/logic/api/transfer/transfer_api.dart';
+import 'package:montra/logic/blocs/network_bloc/network_helper.dart';
+import 'package:montra/logic/database/database_helper.dart';
 import 'package:montra/logic/dio_factory.dart';
 
 part 'transfer_event.dart';
@@ -27,14 +29,33 @@ class TransferBloc extends Bloc<TransferEvent, TransferState> {
   ) async {
     try {
       emit(TransferState.inProgress());
+
+      final dbHelper = DatabaseHelper();
+      final isConnected = await NetworkHelper.checkNow();
+
+      if (!isConnected) {
+        await dbHelper.insertOfflineTransfer({
+          "transfer_id": DateTime.now().millisecondsSinceEpoch.toString(),
+          "amount": event.amount,
+          "sender": event.from,
+          "receiver": event.to,
+          "is_expense": event.isExpense ? 1 : 0,
+          "user_id": "mock_id",
+          "created_at": DateTime.now().toIso8601String(),
+        });
+
+        emit(TransferState.createTransferSuccess());
+        return;
+      }
+
       final createTransferModel = CreateTransferModel(
         amount: event.amount,
         sender: event.from,
         receiver: event.to,
         isExpense: event.isExpense,
       );
-      await _transferApi.createTransfer(createTransferModel);
 
+      await _transferApi.createTransfer(createTransferModel);
       emit(TransferState.createTransferSuccess());
     } catch (e) {
       log.e('Error : $e');

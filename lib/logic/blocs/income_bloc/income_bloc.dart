@@ -25,7 +25,6 @@ class IncomeBloc extends Bloc<IncomeEvent, IncomeState> {
       // TODO: implement event handler
     });
     on<_GetIncome>(_getIncome);
-    on<_SetIncome>(_setIncome);
     on<_CreateIncome>(_createIncome);
     on<_GetWallets>(_getWallets);
   }
@@ -41,34 +40,62 @@ class IncomeBloc extends Bloc<IncomeEvent, IncomeState> {
       final isConnected = await NetworkHelper.checkNow();
 
       if (isConnected) {
-        try {
-          final response = await _incomeApi.getIncome();
-          log.d('Get Total Income Response: $response');
+        final pending = await dbHelper.getOfflineIncomes();
 
-          // Store income in local DB
-          await dbHelper.upsertAccountBalance(response.income.toDouble());
+        for (var income in pending) {
+          try {
+            final filePath = income["attachment"] ?? '';
+            MultipartFile? file;
+            if (filePath.isNotEmpty && File(filePath).existsSync()) {
+              final mimeType = lookupMimeType(filePath) ?? "image/jpeg";
+              final mimeSplit = mimeType.split('/');
 
-          emit(IncomeState.getIncomeSuccess(income: response.income));
-        } catch (apiError) {
-          log.e('API Error: $apiError');
+              file = await MultipartFile.fromFile(
+                filePath,
+                filename: filePath.split('/').last,
+                contentType: MediaType(mimeSplit[0], mimeSplit[1]),
+              );
+            }
 
-          // Fallback to local DB
-          final localIncome = await dbHelper.getAccountBalance();
-          if (localIncome != null) {
-            log.w('Falling back to local DB income due to API error');
-            emit(IncomeState.getIncomeSuccess(income: localIncome.toInt()));
-          } else {
-            emit(IncomeState.failure());
+            final formData = FormData.fromMap({
+              "amount": income["amount"].toString(),
+              "source": income["source"],
+              "description": income["description"],
+              if (file != null) "file": file,
+              if (income["bank_name"] != null) "bank_name": income["bank_name"],
+              if (income["wallet_name"] != null)
+                "wallet_name": income["wallet_name"],
+            });
+
+            await _incomeApi.createIncome(formData);
+          } catch (e) {
+            log.e("⛔ Failed to sync income: ${income["income_id"]}\nError: $e");
           }
         }
+
+        await dbHelper.clearOfflineIncomes();
+
+        final response = await _incomeApi.getIncome();
+        await dbHelper.upsertAccountBalance(response.income.toDouble());
+
+        emit(IncomeState.getIncomeSuccess(income: response.income));
       } else {
-        // Offline fallback
         final localIncome = await dbHelper.getAccountBalance();
-        if (localIncome != null) {
-          emit(IncomeState.getIncomeSuccess(income: localIncome.toInt()));
-        } else {
-          emit(IncomeState.failure());
-        }
+        final offline = await dbHelper.getOfflineIncomes();
+        final offlineTotal = offline.fold<int>(
+          0,
+          (sum, e) => sum + (e['amount'] as int),
+        );
+
+        log.w(
+          'localIncome : $localIncome + offline : $offline + offlineTotal : $offlineTotal',
+        );
+
+        emit(
+          IncomeState.getIncomeSuccess(
+            income: (localIncome ?? 0).toInt() + offlineTotal,
+          ),
+        );
       }
     } catch (e) {
       log.e('Unexpected Error: $e');
@@ -133,6 +160,29 @@ class IncomeBloc extends Bloc<IncomeEvent, IncomeState> {
     try {
       emit(IncomeState.inProgress());
 
+      final dbHelper = DatabaseHelper();
+      final isConnected = await NetworkHelper.checkNow();
+
+      if (!isConnected) {
+        await dbHelper.insertOfflineIncome({
+          "income_id": DateTime.now().millisecondsSinceEpoch.toString(),
+          "amount": event.amount,
+          "user_id": "mock_id",
+          "source": event.source.name,
+          "attachment": event.attachment?.path ?? '',
+          "description": event.description,
+          "created_at": DateTime.now().toIso8601String(),
+          "bank_name": event.bankName,
+          "wallet_name": event.walletName,
+        });
+
+        final current = await dbHelper.getAccountBalance() ?? 0;
+        await dbHelper.upsertAccountBalance(current + event.amount);
+
+        emit(IncomeState.createIncomeSuccess());
+        return;
+      }
+
       final imageFile = event.attachment;
       String fileName = imageFile!.path.split('/').last;
 
@@ -190,17 +240,5 @@ class IncomeBloc extends Bloc<IncomeEvent, IncomeState> {
       log.e('Error: $e');
       emit(IncomeState.failure());
     }
-  }
-
-  Future<void> _setIncome(_SetIncome event, Emitter<IncomeState> emit) async {
-    emit(IncomeState.inProgress());
-
-    // final response = await _userApi.setIncome(
-    //   amount: event.amount,
-    //   source: event.source,
-    //   description: event.description,
-    // );
-
-    emit(IncomeState.setIncomeSuccess());
   }
 }

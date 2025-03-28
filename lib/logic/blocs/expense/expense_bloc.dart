@@ -24,9 +24,7 @@ Logger log = Logger(printer: PrettyPrinter());
 
 class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
   ExpenseBloc() : super(_Initial()) {
-    on<ExpenseEvent>((event, emit) {
-      // TODO: implement event handler
-    });
+    on<ExpenseEvent>((event, emit) {});
     on<_GetExpense>(_getExpense);
     on<_SetExpense>(_setExpense);
     on<_CreateExpense>(_createExpense);
@@ -43,6 +41,29 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
     try {
       emit(ExpenseState.inProgress());
 
+      final dbHelper = DatabaseHelper();
+      final isConnected = await NetworkHelper.checkNow();
+
+      if (!isConnected) {
+        await dbHelper.insertOfflineExpense({
+          "expense_id": DateTime.now().millisecondsSinceEpoch.toString(),
+          "amount": event.amount,
+          "user_id": "mock_id",
+          "source": event.source.name,
+          "attachment": event.attachment?.path ?? '',
+          "description": event.description,
+          "created_at": DateTime.now().toIso8601String(),
+          "bank_name": event.bankName,
+          "wallet_name": event.walletName,
+        });
+
+        final current = await dbHelper.getAccountBalance() ?? 0;
+        await dbHelper.upsertAccountBalance(current + event.amount);
+
+        emit(ExpenseState.createExpenseSuccess());
+        return;
+      }
+
       final imageFile = event.attachment;
       String fileName = imageFile!.path.split('/').last;
 
@@ -55,45 +76,16 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
         contentType: MediaType(mimeTypeData[0], mimeTypeData[1]),
       );
 
-      if (event.isBank != null && event.isBank!) {
-        // Build FormData directly
-        FormData formData = FormData.fromMap({
-          "amount": event.amount.toString(),
-          "source": event.source.name,
-          "description": event.description,
-          "file": multipartFile,
-          "bank_name": event.bankName,
-        });
+      FormData formData = FormData.fromMap({
+        "amount": event.amount.toString(),
+        "source": event.source.name,
+        "description": event.description,
+        "file": multipartFile,
+        if (event.isBank == true) "bank_name": event.bankName,
+        if (event.isWallet == true) "wallet_name": event.walletName,
+      });
 
-        await _expenseApi.createExpense(
-          formData,
-        ); // Change this method to accept FormData
-      } else if (event.isWallet != null && event.isWallet!) {
-        FormData formData = FormData.fromMap({
-          "amount": event.amount.toString(),
-          "source": event.source.name,
-          "description": event.description,
-          "file": multipartFile,
-          "wallet_name": event.walletName,
-        });
-
-        await _expenseApi.createExpense(
-          formData,
-        ); // Change this method to accept FormData
-      } else {
-        // Build FormData directly
-        FormData formData = FormData.fromMap({
-          "amount": event.amount.toString(),
-          "source": event.source.name,
-          "description": event.description,
-          "file": multipartFile,
-        });
-
-        await _expenseApi.createExpense(
-          formData,
-        ); // Change this method to accept FormData
-      }
-
+      await _expenseApi.createExpense(formData);
       emit(ExpenseState.createExpenseSuccess());
     } catch (e) {
       log.e('Error: $e');
@@ -112,66 +104,74 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
       final isConnected = await NetworkHelper.checkNow();
 
       if (isConnected) {
-        try {
-          final response = await _expenseApi.getExpense();
-          log.d('Get Total Expense Response: $response');
+        final pending = await dbHelper.getOfflineExpenses();
 
-          final statsData = await _expenseApi.getExpenseStats();
-          log.d('Get Expense Stats Response: $statsData');
+        for (var expense in pending) {
+          try {
+            final filePath = expense["attachment"] ?? '';
+            MultipartFile? file;
+            if (filePath.isNotEmpty && File(filePath).existsSync()) {
+              final mimeType = lookupMimeType(filePath) ?? "image/jpeg";
+              final mimeSplit = mimeType.split('/');
 
-          // Store the total expense in the local database
-          await dbHelper.upsertAccountBalance(response.expense.toDouble());
+              file = await MultipartFile.fromFile(
+                filePath,
+                filename: filePath.split('/').last,
+                contentType: MediaType(mimeSplit[0], mimeSplit[1]),
+              );
+            }
 
-          // Store expense stats in the local database
-          await dbHelper.upsertExpenseStats(statsData.toJson());
+            final formData = FormData.fromMap({
+              "amount": expense["amount"].toString(),
+              "source": expense["source"],
+              "description": expense["description"],
+              if (file != null) "file": file,
+              if (expense["bank_name"] != null)
+                "bank_name": expense["bank_name"],
+              if (expense["wallet_name"] != null)
+                "wallet_name": expense["wallet_name"],
+            });
 
-          // Emit success state with API data
-          emit(
-            ExpenseState.getExpenseSuccess(
-              expense: response.expense,
-              expenseStats: statsData,
-            ),
-          );
-        } catch (apiError) {
-          log.e('API Error: $apiError');
-
-          // Fallback to local DB
-          final localExpense = await dbHelper.getAccountBalance();
-          final localStatsJson = await dbHelper.getExpenseStats();
-
-          if (localExpense != null) {
-            log.w('Falling back to local DB due to API failure');
-            emit(
-              ExpenseState.getExpenseSuccess(
-                expense: localExpense.toInt(),
-                expenseStats:
-                    localStatsJson != null
-                        ? ExpenseStatsModel.fromJson(localStatsJson)
-                        : null,
-              ),
+            await _expenseApi.createExpense(formData);
+          } catch (e) {
+            log.e(
+              "⛔ Failed to sync expense: ${expense["expense_id"]}\nError: $e",
             );
-          } else {
-            emit(ExpenseState.failure());
           }
         }
+
+        await dbHelper.clearOfflineExpenses();
+
+        final response = await _expenseApi.getExpense();
+        final statsData = await _expenseApi.getExpenseStats();
+
+        await dbHelper.upsertAccountBalance(response.expense.toDouble());
+        await dbHelper.upsertExpenseStats(statsData.toJson());
+
+        emit(
+          ExpenseState.getExpenseSuccess(
+            expense: response.expense,
+            expenseStats: statsData,
+          ),
+        );
       } else {
-        // Offline fallback
         final localExpense = await dbHelper.getAccountBalance();
         final localStatsJson = await dbHelper.getExpenseStats();
+        final offline = await dbHelper.getOfflineExpenses();
+        final offlineTotal = offline.fold<int>(
+          0,
+          (sum, e) => sum + (e['amount'] as int),
+        );
 
-        if (localExpense != null) {
-          emit(
-            ExpenseState.getExpenseSuccess(
-              expense: localExpense.toInt(),
-              expenseStats:
-                  localStatsJson != null
-                      ? ExpenseStatsModel.fromJson(localStatsJson)
-                      : null,
-            ),
-          );
-        } else {
-          emit(ExpenseState.failure());
-        }
+        emit(
+          ExpenseState.getExpenseSuccess(
+            expense: (localExpense ?? 0).toInt() + offlineTotal,
+            expenseStats:
+                localStatsJson != null
+                    ? ExpenseStatsModel.fromJson(localStatsJson)
+                    : null,
+          ),
+        );
       }
     } catch (e) {
       log.e('Unexpected Error: $e');
@@ -183,14 +183,44 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
     _GetWallets event,
     Emitter<ExpenseState> emit,
   ) async {
-    try {
-      emit(ExpenseState.inProgress());
-      final response = await _walletApi.getAllWalletNames();
-      log.d('Get Wallet Names: $response');
-      emit(ExpenseState.getWalletNamesSuccess(walletNames: response.wallets));
-    } catch (e) {
-      log.e('Error: $e');
-      emit(ExpenseState.failure());
+    emit(ExpenseState.inProgress());
+
+    final isConnected = await NetworkHelper.checkNow();
+    final dbHelper = DatabaseHelper();
+
+    if (isConnected) {
+      try {
+        final response = await _walletApi.getAllWalletNames();
+        log.d('Get Wallet Names: $response');
+
+        final walletNames = response.wallets;
+
+        // Store to DB
+        await dbHelper.upsertWalletNames(walletNames);
+
+        emit(ExpenseState.getWalletNamesSuccess(walletNames: walletNames));
+      } catch (apiError) {
+        log.e('API Error: $apiError');
+
+        // Fallback to local DB
+        final localWalletNames = await dbHelper.getWalletNames();
+        if (localWalletNames.isNotEmpty) {
+          log.w('Using cached wallet names due to API error');
+          emit(
+            ExpenseState.getWalletNamesSuccess(walletNames: localWalletNames),
+          );
+        } else {
+          emit(ExpenseState.failure());
+        }
+      }
+    } else {
+      // Offline fallback
+      final localWalletNames = await dbHelper.getWalletNames();
+      if (localWalletNames.isNotEmpty) {
+        emit(ExpenseState.getWalletNamesSuccess(walletNames: localWalletNames));
+      } else {
+        emit(ExpenseState.failure());
+      }
     }
   }
 
@@ -199,13 +229,6 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
     Emitter<ExpenseState> emit,
   ) async {
     emit(ExpenseState.inProgress());
-
-    // final response = await _userApi.setIncome(
-    //   amount: event.amount,
-    //   source: event.source,
-    //   description: event.description,
-    // );
-
     emit(ExpenseState.setExpenseSuccess());
   }
 }

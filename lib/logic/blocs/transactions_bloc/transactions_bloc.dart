@@ -339,12 +339,31 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
     final dbExpenses = await dbHelper.getExpenses();
     final dbIncomes = await dbHelper.getIncome();
     final dbTransfers = await dbHelper.getTransfers();
+    final offlineExpenses = await dbHelper.getOfflineExpenses();
+    final offlineIncomes = await dbHelper.getOfflineIncomes();
+    final offlineTransfers = await dbHelper.getOfflineTransfers();
 
-    if (dbExpenses.isEmpty && dbIncomes.isEmpty && dbTransfers.isEmpty) {
+    if (dbExpenses.isEmpty &&
+        dbIncomes.isEmpty &&
+        dbTransfers.isEmpty &&
+        offlineExpenses.isEmpty &&
+        offlineIncomes.isEmpty &&
+        offlineTransfers.isEmpty) {
       return null;
     }
 
-    final processedTransfers = preprocessTransfers(dbTransfers);
+    final processedTransfers = preprocessTransfers([
+      ...dbTransfers,
+      ...offlineTransfers,
+    ]);
+    final processedExpenses = preprocessExpenses([
+      ...dbExpenses,
+      ...offlineExpenses,
+    ]);
+    final processedIncomes = preprocessIncomes([
+      ...dbIncomes,
+      ...offlineIncomes,
+    ]);
 
     final transactionsModel = TransactionsModels(
       transfer: TransfersModel(
@@ -352,10 +371,11 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
             processedTransfers.map((e) => TransferModel.fromJson(e)).toList(),
       ),
       incomes: IncomesModel(
-        incomes: dbIncomes.map((e) => IncomeModel.fromJson(e)).toList(),
+        incomes: processedIncomes.map((e) => IncomeModel.fromJson(e)).toList(),
       ),
       expenses: ExpensesModel(
-        expenses: dbExpenses.map((e) => ExpenseModel.fromJson(e)).toList(),
+        expenses:
+            processedExpenses.map((e) => ExpenseModel.fromJson(e)).toList(),
       ),
     );
 

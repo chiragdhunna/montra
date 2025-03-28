@@ -90,6 +90,10 @@ class AuthenticationBloc
 
       // final user = await _authRepository.userApi.getMe();
 
+      final db = await _databaseHelper.database;
+      final initializationService = InitializationService();
+      await initializationService.initializeWallets();
+
       emit(
         AuthenticationState.userLoggedIn(
           user: user!,
