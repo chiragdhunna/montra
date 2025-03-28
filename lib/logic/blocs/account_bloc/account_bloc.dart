@@ -16,6 +16,7 @@ import 'package:montra/logic/api/wallet/models/wallet_name_model.dart';
 import 'package:montra/logic/api/wallet/models/wallets_model.dart';
 import 'package:montra/logic/api/wallet/wallet_api.dart';
 import 'package:montra/logic/blocs/network_bloc/network_bloc.dart';
+import 'package:montra/logic/blocs/network_bloc/network_helper.dart';
 import 'package:montra/logic/database/database_helper.dart';
 import 'package:montra/logic/dio_factory.dart';
 
@@ -27,9 +28,6 @@ Logger log = Logger(printer: PrettyPrinter());
 
 class AccountBloc extends Bloc<AccountEvent, AccountState> {
   AccountBloc() : super(_Initial()) {
-    on<AccountEvent>((event, emit) {
-      // TODO: implement event handler
-    });
     on<_GetAccountBalance>(_getAccountBalance);
     on<_GetAccountDetails>(_getAccountDetails);
     on<_CreateAccount>(_createAccount);
@@ -40,6 +38,7 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
 
   final _bankApi = BankApi(DioFactory().create());
   final _walletApi = WalletApi(DioFactory().create());
+  bool isConnected = false;
 
   Future<void> _getAccountBalance(
     _GetAccountBalance event,
@@ -49,22 +48,41 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
       emit(AccountState.inProgress());
 
       final dbHelper = DatabaseHelper();
+      final isConnected = await NetworkHelper.checkNow();
 
-      // Try fetching balance from APIs
-      try {
-        final bankBalance = await _bankApi.getBalance();
-        final walletBalance = await _walletApi.getBalance();
-        final totalBalance = bankBalance.balance + walletBalance.balance;
+      if (isConnected) {
+        try {
+          final bankBalance = await _bankApi.getBalance();
+          final walletBalance = await _walletApi.getBalance();
+          final totalBalance = bankBalance.balance + walletBalance.balance;
 
-        // Store the balance in the local database
-        await dbHelper.upsertAccountBalance(totalBalance.toDouble());
+          await dbHelper.upsertAccountBalance(totalBalance.toDouble());
 
-        emit(AccountState.getAccountBalanceSuccess(balance: totalBalance));
-      } catch (apiError) {
-        log.e('API Error: $apiError');
+          emit(AccountState.getAccountBalanceSuccess(balance: totalBalance));
+        } catch (apiError) {
+          log.e('API Error: $apiError');
 
-        // Fallback to local database
+          // Try fallback to local DB even if API fails
+          final localBalance = await dbHelper.getAccountBalance();
+
+          if (localBalance != null) {
+            log.w('Falling back to local DB due to API error');
+            emit(
+              AccountState.getAccountBalanceSuccess(
+                balance: localBalance.toInt(),
+              ),
+            );
+          } else {
+            emit(
+              AccountState.failure(
+                error: 'API failed and no local data available.',
+              ),
+            );
+          }
+        }
+      } else {
         final localBalance = await dbHelper.getAccountBalance();
+
         if (localBalance != null) {
           emit(
             AccountState.getAccountBalanceSuccess(
@@ -72,13 +90,15 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
             ),
           );
         } else {
-          throw Exception(
-            'Failed to fetch balance from API and local database',
+          emit(
+            AccountState.failure(
+              error: 'No internet and no cached data available.',
+            ),
           );
         }
       }
     } catch (e) {
-      log.e('Error: $e');
+      log.e('General Error: $e');
       emit(AccountState.failure(error: e.toString()));
     }
   }

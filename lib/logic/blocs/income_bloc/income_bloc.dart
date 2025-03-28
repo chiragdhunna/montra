@@ -9,6 +9,7 @@ import 'package:mime/mime.dart';
 import 'package:montra/constants/income_source.dart';
 import 'package:montra/logic/api/income/income_api.dart';
 import 'package:montra/logic/api/wallet/wallet_api.dart';
+import 'package:montra/logic/blocs/network_bloc/network_helper.dart';
 import 'package:montra/logic/database/database_helper.dart';
 import 'package:montra/logic/dio_factory.dart';
 
@@ -37,31 +38,40 @@ class IncomeBloc extends Bloc<IncomeEvent, IncomeState> {
       emit(IncomeState.inProgress());
 
       final dbHelper = DatabaseHelper();
+      final isConnected = await NetworkHelper.checkNow();
 
-      // Try fetching total income from the API
-      try {
-        final response = await _incomeApi.getIncome();
-        log.d('Get Total Income Response: $response');
+      if (isConnected) {
+        try {
+          final response = await _incomeApi.getIncome();
+          log.d('Get Total Income Response: $response');
 
-        // Store the total income in the local database
-        await dbHelper.upsertAccountBalance(response.income.toDouble());
+          // Store income in local DB
+          await dbHelper.upsertAccountBalance(response.income.toDouble());
 
-        emit(IncomeState.getIncomeSuccess(income: response.income));
-      } catch (apiError) {
-        log.e('API Error: $apiError');
+          emit(IncomeState.getIncomeSuccess(income: response.income));
+        } catch (apiError) {
+          log.e('API Error: $apiError');
 
-        // Fallback to local database
+          // Fallback to local DB
+          final localIncome = await dbHelper.getAccountBalance();
+          if (localIncome != null) {
+            log.w('Falling back to local DB income due to API error');
+            emit(IncomeState.getIncomeSuccess(income: localIncome.toInt()));
+          } else {
+            emit(IncomeState.failure());
+          }
+        }
+      } else {
+        // Offline fallback
         final localIncome = await dbHelper.getAccountBalance();
         if (localIncome != null) {
           emit(IncomeState.getIncomeSuccess(income: localIncome.toInt()));
         } else {
-          throw Exception(
-            'Failed to fetch total income from API and local database',
-          );
+          emit(IncomeState.failure());
         }
       }
     } catch (e) {
-      log.e('Error: $e');
+      log.e('Unexpected Error: $e');
       emit(IncomeState.failure());
     }
   }
@@ -72,33 +82,46 @@ class IncomeBloc extends Bloc<IncomeEvent, IncomeState> {
     try {
       emit(IncomeState.inProgress());
 
-      // Try fetching wallet names from the API
-      try {
-        final response = await _walletApi.getAllWalletNames();
-        log.d('Get Wallet Names: $response');
+      final isConnected = await NetworkHelper.checkNow();
 
-        // Store the wallet names in the local database
-        final walletNames = response.wallets;
-        await dbHelper.upsertWalletNames(walletNames);
+      if (isConnected) {
+        try {
+          final response = await _walletApi.getAllWalletNames();
+          log.d('Get Wallet Names: $response');
 
-        emit(IncomeState.getWalletNamesSuccess(walletNames: walletNames));
-      } catch (apiError) {
-        log.e('API Error: $apiError');
+          final walletNames = response.wallets;
 
-        // Fallback to local database
+          // Store to DB
+          await dbHelper.upsertWalletNames(walletNames);
+
+          emit(IncomeState.getWalletNamesSuccess(walletNames: walletNames));
+        } catch (apiError) {
+          log.e('API Error: $apiError');
+
+          // Fallback to local DB
+          final localWalletNames = await dbHelper.getWalletNames();
+          if (localWalletNames.isNotEmpty) {
+            log.w('Using cached wallet names due to API error');
+            emit(
+              IncomeState.getWalletNamesSuccess(walletNames: localWalletNames),
+            );
+          } else {
+            emit(IncomeState.failure());
+          }
+        }
+      } else {
+        // Offline fallback
         final localWalletNames = await dbHelper.getWalletNames();
         if (localWalletNames.isNotEmpty) {
           emit(
             IncomeState.getWalletNamesSuccess(walletNames: localWalletNames),
           );
         } else {
-          throw Exception(
-            'Failed to fetch wallet names from API and local database',
-          );
+          emit(IncomeState.failure());
         }
       }
     } catch (e) {
-      log.e('Error: $e');
+      log.e('Unexpected Error: $e');
       emit(IncomeState.failure());
     }
   }

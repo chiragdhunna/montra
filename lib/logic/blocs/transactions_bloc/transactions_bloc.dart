@@ -11,6 +11,7 @@ import 'package:montra/logic/api/income/models/incomes_model.dart';
 import 'package:montra/logic/api/transfer/models/transfer_model.dart';
 import 'package:montra/logic/api/transfer/models/transfers_model.dart';
 import 'package:montra/logic/api/transfer/transfer_api.dart';
+import 'package:montra/logic/blocs/network_bloc/network_helper.dart';
 import 'package:montra/logic/database/database_helper.dart';
 import 'package:montra/logic/dio_factory.dart';
 
@@ -138,74 +139,70 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
     try {
       emit(TransactionsState.inProgress());
 
-      // Fetch data from the database
       final dbHelper = DatabaseHelper();
-      final dbExpenses = await dbHelper.getExpenses();
-      final dbIncomes = await dbHelper.getIncome();
-      final dbTransfers = await dbHelper.getTransfers();
+      final isConnected = await NetworkHelper.checkNow();
 
-      if (dbExpenses.isNotEmpty &&
-          dbIncomes.isNotEmpty &&
-          dbTransfers.isNotEmpty) {
-        // Preprocess database data
-        final dbTransfers = await dbHelper.getTransfers();
-        final processedTransfers = preprocessTransfers(dbTransfers);
+      log.w('Connectivity in TransactionsBloc : $isConnected');
 
-        final transactions = TransactionsModels(
-          transfer: TransfersModel(
-            transfers:
-                processedTransfers
-                    .map((e) => TransferModel.fromJson(e))
-                    .toList(),
-          ),
-          incomes: IncomesModel(
-            incomes: dbIncomes.map((e) => IncomeModel.fromJson(e)).toList(),
-          ),
-          expenses: ExpensesModel(
-            expenses: dbExpenses.map((e) => ExpenseModel.fromJson(e)).toList(),
-          ),
-        );
+      if (isConnected) {
+        try {
+          final expenses = await _expenseApi.getAllExpenses();
+          final incomes = await _incomeApi.getAllIncomes();
+          final transfers = await _transferApi.getAllTransfers();
 
-        // Sort transactions
-        final sortedTransactions = getSortedTransactions(transactions);
+          // Store data in local DB
+          await dbHelper.upsertExpenses(
+            expenses.expenses.map((e) => e.toJson()).toList(),
+          );
+          await dbHelper.upsertIncome(
+            incomes.incomes.map((e) => e.toJson()).toList(),
+          );
+          await dbHelper.upsertTransfers(
+            transfers.transfers.map((e) => e.toJson()).toList(),
+          );
 
-        emit(
-          TransactionsState.getAllTransactionSuccess(
-            transactions: sortedTransactions,
-          ),
-        );
+          final transactions = TransactionsModels(
+            transfer: transfers,
+            incomes: incomes,
+            expenses: expenses,
+          );
+
+          final sortedTransactions = getSortedTransactions(transactions);
+
+          emit(
+            TransactionsState.getAllTransactionSuccess(
+              transactions: sortedTransactions,
+            ),
+          );
+        } catch (apiError) {
+          log.e('API Error: $apiError');
+          // API failed, fallback to local DB
+          final fallbackTransactions = await _fetchTransactionsFromDb(dbHelper);
+          if (fallbackTransactions != null) {
+            emit(
+              TransactionsState.getAllTransactionSuccess(
+                transactions: fallbackTransactions,
+              ),
+            );
+          } else {
+            emit(TransactionsState.failure());
+          }
+        }
       } else {
-        // Fetch data from APIs if offline data is not available
-        final expenses = await _expenseApi.getAllExpenses();
-        final incomes = await _incomeApi.getAllIncomes();
-        final transfers = await _transferApi.getAllTransfers();
-
-        // Save fetched data to the database
-        await dbHelper.upsertExpenses(
-          expenses.expenses.map((e) => e.toJson()).toList(),
-        );
-        await dbHelper.upsertIncome(
-          incomes.incomes.map((e) => e.toJson()).toList(),
-        );
-        await dbHelper.upsertTransfers(
-          transfers.transfers.map((e) => e.toJson()).toList(),
-        );
-
-        final transactions = TransactionsModels(
-          transfer: transfers,
-          incomes: incomes,
-          expenses: expenses,
-        );
-
-        final sortedTransactions = getSortedTransactions(transactions);
-        emit(
-          TransactionsState.getAllTransactionSuccess(
-            transactions: sortedTransactions,
-          ),
-        );
+        // Offline fallback
+        final offlineTransactions = await _fetchTransactionsFromDb(dbHelper);
+        if (offlineTransactions != null) {
+          emit(
+            TransactionsState.getAllTransactionSuccess(
+              transactions: offlineTransactions,
+            ),
+          );
+        } else {
+          emit(TransactionsState.failure());
+        }
       }
     } catch (e) {
-      log.e('Error getting all transactions : $e');
+      log.e('Error getting all transactions: $e');
       emit(TransactionsState.failure());
     }
   }
@@ -217,20 +214,54 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
     try {
       emit(const TransactionsState.inProgress());
 
-      // Fetch data from the database
       final dbHelper = DatabaseHelper();
-      final dbExpenses = await dbHelper.getExpenses();
-      final dbIncomes = await dbHelper.getIncome();
-      final dbTransfers = await dbHelper.getTransfers();
+      List<Map<String, dynamic>> dbExpenses = [];
+      List<Map<String, dynamic>> dbIncomes = [];
+      List<Map<String, dynamic>> dbTransfers = [];
 
-      // Preprocess database data
+      final isConnected = await NetworkHelper.checkNow();
+
+      if (isConnected) {
+        try {
+          final expenses = await _expenseApi.getAllExpenses();
+          final incomes = await _incomeApi.getAllIncomes();
+          final transfers = await _transferApi.getAllTransfers();
+
+          // Store API data into DB
+          await dbHelper.upsertExpenses(
+            expenses.expenses.map((e) => e.toJson()).toList(),
+          );
+          await dbHelper.upsertIncome(
+            incomes.incomes.map((e) => e.toJson()).toList(),
+          );
+          await dbHelper.upsertTransfers(
+            transfers.transfers.map((e) => e.toJson()).toList(),
+          );
+
+          dbExpenses = await dbHelper.getExpenses();
+          dbIncomes = await dbHelper.getIncome();
+          dbTransfers = await dbHelper.getTransfers();
+        } catch (apiError) {
+          log.e('API error during filter fallback: $apiError');
+
+          // Fallback to DB in case of API error
+          dbExpenses = await dbHelper.getExpenses();
+          dbIncomes = await dbHelper.getIncome();
+          dbTransfers = await dbHelper.getTransfers();
+        }
+      } else {
+        // Offline - use local DB
+        dbExpenses = await dbHelper.getExpenses();
+        dbIncomes = await dbHelper.getIncome();
+        dbTransfers = await dbHelper.getTransfers();
+      }
+
       final processedExpenses = preprocessExpenses(dbExpenses);
       final processedIncomes = preprocessIncomes(dbIncomes);
       final processedTransfers = preprocessTransfers(dbTransfers);
 
       final all = <Map<String, dynamic>>[];
 
-      // Merge and label data
       for (final e in processedExpenses) {
         all.add({
           'data': ExpenseModel.fromJson(e),
@@ -253,15 +284,13 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
         });
       }
 
-      // Apply filters
+      // Filter
       List<Map<String, dynamic>> filtered = all;
 
-      // Type filter
       if (event.type.toLowerCase() != "all") {
         filtered = filtered.where((t) => t['type'] == event.type).toList();
       }
 
-      // Category filter
       if (event.categories != null && event.categories!.isNotEmpty) {
         filtered =
             filtered.where((t) {
@@ -275,7 +304,6 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
             }).toList();
       }
 
-      // Sorting
       if (event.sortBy == "newest") {
         filtered.sort(
           (a, b) => DateTime.parse(
@@ -303,5 +331,34 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
       log.e('Filter error: $e\n$stack');
       emit(const TransactionsState.failure());
     }
+  }
+
+  Future<List<Map<String, dynamic>>?> _fetchTransactionsFromDb(
+    DatabaseHelper dbHelper,
+  ) async {
+    final dbExpenses = await dbHelper.getExpenses();
+    final dbIncomes = await dbHelper.getIncome();
+    final dbTransfers = await dbHelper.getTransfers();
+
+    if (dbExpenses.isEmpty && dbIncomes.isEmpty && dbTransfers.isEmpty) {
+      return null;
+    }
+
+    final processedTransfers = preprocessTransfers(dbTransfers);
+
+    final transactionsModel = TransactionsModels(
+      transfer: TransfersModel(
+        transfers:
+            processedTransfers.map((e) => TransferModel.fromJson(e)).toList(),
+      ),
+      incomes: IncomesModel(
+        incomes: dbIncomes.map((e) => IncomeModel.fromJson(e)).toList(),
+      ),
+      expenses: ExpensesModel(
+        expenses: dbExpenses.map((e) => ExpenseModel.fromJson(e)).toList(),
+      ),
+    );
+
+    return getSortedTransactions(transactionsModel);
   }
 }

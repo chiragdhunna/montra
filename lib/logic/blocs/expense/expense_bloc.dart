@@ -12,6 +12,7 @@ import 'package:montra/logic/api/expense/expense_api.dart';
 import 'package:montra/logic/api/expense/models/expense_model.dart';
 import 'package:montra/logic/api/expense/models/expense_stats_model.dart';
 import 'package:montra/logic/api/wallet/wallet_api.dart';
+import 'package:montra/logic/blocs/network_bloc/network_helper.dart';
 import 'package:montra/logic/database/database_helper.dart';
 import 'package:montra/logic/dio_factory.dart';
 
@@ -108,53 +109,72 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
       emit(ExpenseState.inProgress());
 
       final dbHelper = DatabaseHelper();
+      final isConnected = await NetworkHelper.checkNow();
 
-      // Try fetching expense data from the API
-      try {
-        final response = await _expenseApi.getExpense();
-        log.d('Get Total Expense Response: $response');
+      if (isConnected) {
+        try {
+          final response = await _expenseApi.getExpense();
+          log.d('Get Total Expense Response: $response');
 
-        final statsData = await _expenseApi.getExpenseStats();
-        log.d('Get Expense Stats Response: $statsData');
+          final statsData = await _expenseApi.getExpenseStats();
+          log.d('Get Expense Stats Response: $statsData');
 
-        // Store the total expense in the local database
-        await dbHelper.upsertAccountBalance(response.expense.toDouble());
+          // Store the total expense in the local database
+          await dbHelper.upsertAccountBalance(response.expense.toDouble());
 
-        // Store expense stats in the local database
-        await dbHelper.upsertExpenseStats(statsData.toJson());
+          // Store expense stats in the local database
+          await dbHelper.upsertExpenseStats(statsData.toJson());
 
-        // Emit success state with API data
-        emit(
-          ExpenseState.getExpenseSuccess(
-            expense: response.expense,
-            expenseStats: statsData,
-          ),
-        );
-      } catch (apiError) {
-        log.e('API Error: $apiError');
+          // Emit success state with API data
+          emit(
+            ExpenseState.getExpenseSuccess(
+              expense: response.expense,
+              expenseStats: statsData,
+            ),
+          );
+        } catch (apiError) {
+          log.e('API Error: $apiError');
 
-        // Fallback to local database
+          // Fallback to local DB
+          final localExpense = await dbHelper.getAccountBalance();
+          final localStatsJson = await dbHelper.getExpenseStats();
+
+          if (localExpense != null) {
+            log.w('Falling back to local DB due to API failure');
+            emit(
+              ExpenseState.getExpenseSuccess(
+                expense: localExpense.toInt(),
+                expenseStats:
+                    localStatsJson != null
+                        ? ExpenseStatsModel.fromJson(localStatsJson)
+                        : null,
+              ),
+            );
+          } else {
+            emit(ExpenseState.failure());
+          }
+        }
+      } else {
+        // Offline fallback
         final localExpense = await dbHelper.getAccountBalance();
-        final localExpenseStats = await dbHelper.getExpenseStats();
+        final localStatsJson = await dbHelper.getExpenseStats();
 
         if (localExpense != null) {
           emit(
             ExpenseState.getExpenseSuccess(
               expense: localExpense.toInt(),
               expenseStats:
-                  localExpenseStats != null
-                      ? ExpenseStatsModel.fromJson(localExpenseStats)
+                  localStatsJson != null
+                      ? ExpenseStatsModel.fromJson(localStatsJson)
                       : null,
             ),
           );
         } else {
-          throw Exception(
-            'Failed to fetch total expense and stats from API and local database',
-          );
+          emit(ExpenseState.failure());
         }
       }
     } catch (e) {
-      log.e('Error: $e');
+      log.e('Unexpected Error: $e');
       emit(ExpenseState.failure());
     }
   }

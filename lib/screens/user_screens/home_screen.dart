@@ -42,10 +42,14 @@ class _HomeScreenState extends State<HomeScreen> {
   late StreamSubscription<ExpenseState> _expenseStreamSubscription;
   late StreamSubscription<TransactionsState> _transactionsStreamSubscription;
   late StreamSubscription<AccountState> _accountStreamSubscription;
-  bool _isLoading = true;
   int totalIncome = 0;
   int totalExpense = 0;
   int totalBalance = 0;
+  bool _isAccountBalanceLoading = true;
+  bool _isIncomeLoading = true;
+  bool _isExpensesLoading = true;
+  bool _isExpenseStatsLoading = true;
+  bool _isTransactionsLoading = true;
   String selectedFilter = "Today";
 
   final Map<String, String> sourceDisplayNames = {
@@ -111,7 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       getWalletNamesSuccess: (walletNames) {
         setState(() {
-          _isLoading = false;
+          _isIncomeLoading = false;
         });
       },
       getIncomeSuccess: (income) {
@@ -119,32 +123,32 @@ class _HomeScreenState extends State<HomeScreen> {
         if (!mounted) return;
         setState(() {
           totalIncome = income;
-          _isLoading = false;
+          _isIncomeLoading = false;
         });
       },
       failure: () {
         log.d('State is failure');
         if (!mounted) return;
         setState(() {
-          _isLoading = false;
+          _isIncomeLoading = false;
         });
       },
       inProgress: () {
         log.d('State is inProgress');
         if (!mounted) return;
         setState(() {
-          _isLoading = true;
+          _isIncomeLoading = true;
         });
       },
       setIncomeSuccess: () {
         log.d('State is setIncomeSuccess');
         if (!mounted) return;
         setState(() {
-          _isLoading = false;
+          _isIncomeLoading = false;
         });
       },
       createIncomeSuccess: () {
-        _isLoading = false;
+        _isIncomeLoading = false;
         BlocProvider.of<IncomeBloc>(context).add(IncomeEvent.getIncome());
       },
     );
@@ -184,32 +188,40 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               );
-          _isLoading = false;
+          _isExpensesLoading = false; // Mark expenses as loaded
+          _isExpenseStatsLoading = false; // Mark expense stats as loaded
         });
       },
       failure: () {
         log.d('State is failure');
         if (!mounted) return;
         setState(() {
-          _isLoading = false;
+          _isExpensesLoading = false; // Mark expenses as loaded even on failure
+          _isExpenseStatsLoading =
+              false; // Mark expense stats as loaded even on failure
         });
       },
       inProgress: () {
         log.d('State is inProgress');
         if (!mounted) return;
         setState(() {
-          _isLoading = true;
+          _isExpensesLoading = true; // Mark expenses as loading
+          _isExpenseStatsLoading = true; // Mark expense stats as loading
         });
       },
       setExpenseSuccess: () {
         log.d('State is setExpenseSuccess');
         if (!mounted) return;
         setState(() {
-          _isLoading = false;
+          _isExpensesLoading = false; // Mark expenses as loaded even on failure
+          _isExpenseStatsLoading =
+              false; // Mark expense stats as loaded even on failure
         });
       },
       createExpenseSuccess: () {
-        _isLoading = false;
+        _isExpensesLoading = false; // Mark expenses as loaded even on failure
+        _isExpenseStatsLoading =
+            false; // Mark expense stats as loaded even on failure
         BlocProvider.of<ExpenseBloc>(context).add(ExpenseEvent.getExpense());
       },
     );
@@ -229,7 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   .take(3)
                   .map((item) => item as Map<String, dynamic>)
                   .toList();
-          _isLoading = false;
+          _isTransactionsLoading = false;
           log.d('Transactions from recentTransactions : $recentTransactions');
         });
       },
@@ -237,14 +249,14 @@ class _HomeScreenState extends State<HomeScreen> {
         log.d('State is failure');
         if (!mounted) return;
         setState(() {
-          _isLoading = false;
+          _isTransactionsLoading = false;
         });
       },
       inProgress: () {
         log.d('State is inProgress');
         if (!mounted) return;
         setState(() {
-          _isLoading = true;
+          _isTransactionsLoading = true;
         });
       },
     );
@@ -257,33 +269,33 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       getAccountSourceDetailsSuccess: (transactions) {
         setState(() {
-          _isLoading = false;
+          _isAccountBalanceLoading = false;
         });
       },
 
       getAccountBalanceSuccess: (balance) {
         setState(() {
-          _isLoading = false;
+          _isAccountBalanceLoading = false; // Mark account balance as loaded
           totalBalance = balance;
         });
       },
       getAccountDetailsSuccess: (balance, wallets, banks) {
         setState(() {
-          _isLoading = false;
+          _isAccountBalanceLoading = false;
         });
       },
       failure: (error) {
         log.d('State is failure');
         if (!mounted) return;
         setState(() {
-          _isLoading = false;
+          _isAccountBalanceLoading = false;
         });
       },
       inProgress: () {
         log.d('State is inProgress');
         if (!mounted) return;
         setState(() {
-          _isLoading = true;
+          _isAccountBalanceLoading = true;
         });
       },
     );
@@ -304,269 +316,265 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child:
-            _isLoading
-                ? Center(child: CircularProgressIndicator())
-                : SingleChildScrollView(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20.w),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Section
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Change this line in the Header Section
+                    CircleAvatar(
+                      radius: 20.r,
+                      backgroundImage:
+                          widget.user.imgUrl != null &&
+                                  widget.user.imgUrl!.isNotEmpty
+                              ? widget.user.imgUrl!.startsWith('/')
+                                  ? FileImage(File(widget.user.imgUrl!))
+                                      as ImageProvider
+                                  : AssetImage(widget.user.imgUrl!)
+                              : AssetImage("assets/default_avatar.png"),
+                    ),
+                    Row(
                       children: [
-                        // Header Section
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            // Change this line in the Header Section
-                            CircleAvatar(
-                              radius: 20.r,
-                              backgroundImage:
-                                  widget.user.imgUrl != null &&
-                                          widget.user.imgUrl!.isNotEmpty
-                                      ? widget.user.imgUrl!.startsWith('/')
-                                          ? FileImage(File(widget.user.imgUrl!))
-                                              as ImageProvider
-                                          : AssetImage(widget.user.imgUrl!)
-                                      : AssetImage("assets/default_avatar.png"),
-                            ),
-                            Row(
-                              children: [
-                                Text(
-                                  DateFormat.MMMM().format(
-                                    DateTime.now(),
-                                  ), // Dynamically get the current month
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (builder) => NotificationScreen(),
-                                  ),
-                                );
-                              },
-                              child: Icon(
-                                Icons.notifications,
-                                size: 24.r,
-                                color: Colors.purple,
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 20.h),
-
-                        // Account Balance
-                        Center(
-                          child: Column(
-                            children: [
-                              Text(
-                                "Account Balance",
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                              SizedBox(height: 5.h),
-                              Text(
-                                "\$$totalBalance",
-                                style: TextStyle(
-                                  fontSize: 32.sp,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(height: 20.h),
-
-                        // Income & Expenses Cards
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _buildIncomeExpenseCard(
-                              "Income",
-                              "\$$totalIncome",
-                              Colors.green,
-                            ),
-                            _buildIncomeExpenseCard(
-                              "Expenses",
-                              "\$$totalExpense",
-                              Colors.red,
-                            ),
-                          ],
-                        ),
-
-                        SizedBox(height: 20.h),
-
-                        // Spend Frequency Chart
                         Text(
-                          "Spend Frequency",
+                          DateFormat.MMMM().format(
+                            DateTime.now(),
+                          ), // Dynamically get the current month
                           style: TextStyle(
                             fontSize: 16.sp,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 10.h),
-                        _buildLineChart(
-                          selectedFilter == "Today"
-                              ? expenseStats.frequency.today
-                              : selectedFilter == "Month"
-                              ? expenseStats.frequency.month
-                              : selectedFilter == "Year"
-                              ? expenseStats.frequency.year
-                              : expenseStats.frequency.week,
-                        ),
-                        SizedBox(height: 10.h),
-
-                        // Time Filters
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _buildFilterChip(
-                              "Today",
-                              isSelected: selectedFilter == "Today",
-                            ),
-                            _buildFilterChip(
-                              "Week",
-                              isSelected: selectedFilter == "Week",
-                            ),
-                            _buildFilterChip(
-                              "Month",
-                              isSelected: selectedFilter == "Month",
-                            ),
-                            _buildFilterChip(
-                              "Year",
-                              isSelected: selectedFilter == "Year",
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 20.h),
-
-                        // Recent Transactions
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "Recent Transaction",
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (builder) => TransactionScreen(),
-                                  ),
-                                );
-                              },
-                              child: Text(
-                                "See All",
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.purple,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 10.h),
-
-                        recentTransactions.isEmpty
-                            ? Center(
-                              child: Text(
-                                "No recent transactions",
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            )
-                            : Column(
-                              children:
-                                  recentTransactions.map((transaction) {
-                                    String title = "";
-                                    String subtitle = "";
-                                    String amount = "";
-                                    Color iconColor = Colors.grey;
-                                    String imagePath = "assets/default.png";
-
-                                    final type = transaction['type'];
-                                    final data = transaction['data'];
-
-                                    // Determine transaction type and set properties accordingly
-                                    if (type == 'expense') {
-                                      final rawSource =
-                                          data.source
-                                              .toString()
-                                              .split('.')
-                                              .last;
-                                      title =
-                                          sourceDisplayNames[rawSource] ??
-                                          _capitalize(rawSource);
-                                      final expense = transaction['data'];
-
-                                      subtitle = expense.description;
-                                      amount = "-\$${expense.amount}";
-                                      iconColor = Colors.red;
-                                      imagePath =
-                                          "assets/expense.png"; // Use appropriate image
-                                    } else if (type == 'income') {
-                                      final rawSource =
-                                          data.source
-                                              .toString()
-                                              .split('.')
-                                              .last;
-                                      title =
-                                          sourceDisplayNames[rawSource] ??
-                                          _capitalize(rawSource);
-                                      final income = transaction['data'];
-
-                                      subtitle = income.description ?? "Income";
-                                      amount = "+\$${income.amount}";
-                                      iconColor = Colors.green;
-                                      imagePath =
-                                          "assets/income.png"; // Use appropriate image
-                                    } else {
-                                      final transfer = transaction['data'];
-                                      title = "Transfer";
-                                      subtitle =
-                                          "From ${transfer.sender} to ${transfer.receiver}";
-                                      amount =
-                                          transfer.isExpense
-                                              ? "-\$${transfer.amount}"
-                                              : "+\$${transfer.amount}";
-                                      iconColor = Colors.blue;
-                                      imagePath =
-                                          "assets/transfer.png"; // Use appropriate image
-                                    }
-
-                                    return _buildTransactionTile(
-                                      title,
-                                      subtitle,
-                                      amount,
-                                      iconColor,
-                                      imagePath,
-                                    );
-                                  }).toList(),
-                            ),
                       ],
                     ),
+
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (builder) => NotificationScreen(),
+                          ),
+                        );
+                      },
+                      child: Icon(
+                        Icons.notifications,
+                        size: 24.r,
+                        color: Colors.purple,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20.h),
+
+                // Account Balance
+                Center(
+                  child: Column(
+                    children: [
+                      Text(
+                        "Account Balance",
+                        style: TextStyle(fontSize: 14.sp, color: Colors.grey),
+                      ),
+                      SizedBox(height: 5.h),
+                      _isAccountBalanceLoading
+                          ? CircularProgressIndicator()
+                          : Text(
+                            "\$$totalBalance",
+                            style: TextStyle(
+                              fontSize: 32.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                    ],
                   ),
                 ),
+                SizedBox(height: 20.h),
+
+                // Income & Expenses Cards
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildIncomeExpenseCard(
+                      "Income",
+                      "\$$totalIncome",
+                      Colors.green,
+                      _isIncomeLoading,
+                    ),
+                    _buildIncomeExpenseCard(
+                      "Expenses",
+                      "\$$totalExpense",
+                      Colors.red,
+                      _isExpensesLoading,
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 20.h),
+
+                // Spend Frequency Chart
+                Text(
+                  "Spend Frequency",
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 10.h),
+                _buildLineChart(
+                  selectedFilter == "Today"
+                      ? expenseStats.frequency.today
+                      : selectedFilter == "Month"
+                      ? expenseStats.frequency.month
+                      : selectedFilter == "Year"
+                      ? expenseStats.frequency.year
+                      : expenseStats.frequency.week,
+                ),
+                SizedBox(height: 10.h),
+
+                // Time Filters
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildFilterChip(
+                      "Today",
+                      isSelected: selectedFilter == "Today",
+                    ),
+                    _buildFilterChip(
+                      "Week",
+                      isSelected: selectedFilter == "Week",
+                    ),
+                    _buildFilterChip(
+                      "Month",
+                      isSelected: selectedFilter == "Month",
+                    ),
+                    _buildFilterChip(
+                      "Year",
+                      isSelected: selectedFilter == "Year",
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20.h),
+
+                // Recent Transactions
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Recent Transaction",
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (builder) => TransactionScreen(),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        "See All",
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.purple,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 10.h),
+
+                _isTransactionsLoading
+                    ? Center(child: CircularProgressIndicator())
+                    : recentTransactions.isEmpty
+                    ? Center(
+                      child: Text(
+                        "No recent transactions",
+                        style: TextStyle(fontSize: 14.sp, color: Colors.grey),
+                      ),
+                    )
+                    : Column(
+                      children:
+                          recentTransactions.map((transaction) {
+                            String title = "";
+                            String subtitle = "";
+                            String amount = "";
+                            Color iconColor = Colors.grey;
+                            String imagePath = "assets/default.png";
+
+                            final type = transaction['type'];
+                            final data = transaction['data'];
+
+                            // Determine transaction type and set properties accordingly
+                            if (type == 'expense') {
+                              final rawSource =
+                                  data.source.toString().split('.').last;
+                              title =
+                                  sourceDisplayNames[rawSource] ??
+                                  _capitalize(rawSource);
+                              final expense = transaction['data'];
+
+                              subtitle = expense.description;
+                              amount = "-\$${expense.amount}";
+                              iconColor = Colors.red;
+                              imagePath =
+                                  "assets/expense.png"; // Use appropriate image
+                            } else if (type == 'income') {
+                              final rawSource =
+                                  data.source.toString().split('.').last;
+                              title =
+                                  sourceDisplayNames[rawSource] ??
+                                  _capitalize(rawSource);
+                              final income = transaction['data'];
+
+                              subtitle = income.description ?? "Income";
+                              amount = "+\$${income.amount}";
+                              iconColor = Colors.green;
+                              imagePath =
+                                  "assets/income.png"; // Use appropriate image
+                            } else {
+                              final transfer = transaction['data'];
+                              title = "Transfer";
+                              subtitle =
+                                  "From ${transfer.sender} to ${transfer.receiver}";
+                              amount =
+                                  transfer.isExpense
+                                      ? "-\$${transfer.amount}"
+                                      : "+\$${transfer.amount}";
+                              iconColor = Colors.blue;
+                              imagePath =
+                                  "assets/transaction_icon.png"; // Use appropriate image
+                            }
+
+                            return _buildTransactionTile(
+                              title,
+                              subtitle,
+                              amount,
+                              iconColor,
+                              imagePath,
+                            );
+                          }).toList(),
+                    ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildIncomeExpenseCard(String title, String amount, Color color) {
+  Widget _buildIncomeExpenseCard(
+    String title,
+    String amount,
+    Color color,
+    bool isLoading,
+  ) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 15.h),
       width: 154.w,
@@ -589,10 +597,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 title,
                 style: TextStyle(fontSize: 14.sp, color: Colors.black54),
               ),
-              Text(
-                amount,
-                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
-              ),
+              isLoading
+                  ? CircularProgressIndicator()
+                  : Text(
+                    amount,
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
             ],
           ),
         ],
@@ -601,6 +614,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildLineChart(List<ExpenseFrequencyDataSetModel> data) {
+    if (_isExpenseStatsLoading)
+      return SizedBox(
+        height: 150.h,
+        child: Center(child: CircularProgressIndicator()),
+      );
+
     if (data.isEmpty || data.every((item) => item.total == 0)) {
       return Center(
         child: SizedBox(
