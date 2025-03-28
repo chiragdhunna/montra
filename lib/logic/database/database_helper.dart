@@ -392,4 +392,29 @@ CREATE TABLE wallet_names (
     final db = await database;
     await db.delete('offline_transfer');
   }
+
+  Future<void> upsertBudgets(List<Map<String, dynamic>> budgets) async {
+    final db = await database;
+
+    await db.delete('budget'); // Clear existing
+
+    for (var budget in budgets) {
+      await db.insert('budget', budget);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getBudgets() async {
+    final db = await database;
+    return await db.query('budget');
+  }
+
+  Future<List<Map<String, dynamic>>> getBudgetsByMonth(String month) async {
+    final db = await database;
+
+    return await db.query(
+      'budget',
+      where: "strftime('%m', created_at) = ?",
+      whereArgs: [month.padLeft(2, '0')], // pad to '01' format
+    );
+  }
 }

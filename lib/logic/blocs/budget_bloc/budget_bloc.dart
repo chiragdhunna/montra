@@ -2,11 +2,14 @@ import 'package:bloc/bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logger/logger.dart';
 import 'package:montra/logic/api/budget/budget_api.dart';
+import 'package:montra/logic/api/budget/models/budget_model.dart';
 import 'package:montra/logic/api/budget/models/budget_month_model.dart';
 import 'package:montra/logic/api/budget/models/budgets_model.dart';
 import 'package:montra/logic/api/budget/models/create_budget_model.dart';
 import 'package:montra/logic/api/budget/models/delete_budget_model.dart';
 import 'package:montra/logic/api/budget/models/update_budget_model.dart';
+import 'package:montra/logic/blocs/network_bloc/network_helper.dart';
+import 'package:montra/logic/database/database_helper.dart';
 import 'package:montra/logic/dio_factory.dart';
 
 part 'budget_event.dart';
@@ -32,15 +35,92 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     _GetBudgetByMonth event,
     Emitter<BudgetState> emit,
   ) async {
-    try {
-      emit(BudgetState.inProgress());
-      final month = BudgetMonthModel(month: event.month.toString());
-      final response = await _budgetApi.getbymonth(month);
-      log.d('Budget for current Month : $response');
-      emit(BudgetState.getBudgetByMonthSuccess(budgets: response));
-    } catch (e) {
-      log.e('Error : $e');
-      emit(BudgetState.failure());
+    final dbHelper = DatabaseHelper();
+    final isConnected = await NetworkHelper.checkNow();
+
+    emit(BudgetState.inProgress());
+
+    if (isConnected) {
+      try {
+        final month = BudgetMonthModel(month: event.month.toString());
+        final response = await _budgetApi.getbymonth(month);
+
+        // Save to local DB
+        final budgetJsonList =
+            response.budgets
+                ?.map(
+                  (b) => {
+                    'budget_id': b.budgetId,
+                    'total_budget': b.totalBudget,
+                    'name': b.name,
+                    'user_id': b.userId,
+                    'current': b.current,
+                    'created_at': b.createdAt.toIso8601String(),
+                  },
+                )
+                .toList();
+
+        if (budgetJsonList != null) {
+          await dbHelper.upsertBudgets(budgetJsonList);
+        }
+
+        emit(BudgetState.getBudgetByMonthSuccess(budgets: response));
+      } catch (e) {
+        log.e('API Error: $e');
+
+        // fallback to local DB
+        final localBudgets = await dbHelper.getBudgetsByMonth(
+          event.month.toString(),
+        );
+
+        emit(
+          BudgetState.getBudgetByMonthSuccess(
+            budgets: BudgetsModel(
+              budgets:
+                  localBudgets
+                      .map(
+                        (b) => BudgetModel(
+                          budgetId: b['budget_id'] as String,
+                          totalBudget: b['total_budget'] as int,
+                          name: b['name'] as String,
+                          userId: b['user_id'] as String,
+                          current: b['current'] as int,
+                          createdAt: DateTime.parse(b['created_at'] as String),
+                        ),
+                      )
+                      .toList(),
+            ),
+          ),
+        );
+      }
+    } else {
+      final localBudgets = await dbHelper.getBudgetsByMonth(
+        event.month.toString(),
+      );
+
+      if (localBudgets.isEmpty) {
+        emit(BudgetState.failure());
+      } else {
+        emit(
+          BudgetState.getBudgetByMonthSuccess(
+            budgets: BudgetsModel(
+              budgets:
+                  localBudgets
+                      .map(
+                        (b) => BudgetModel(
+                          budgetId: b['budget_id'] as String,
+                          totalBudget: b['total_budget'] as int,
+                          name: b['name'] as String,
+                          userId: b['user_id'] as String,
+                          current: b['current'] as int,
+                          createdAt: DateTime.parse(b['created_at'] as String),
+                        ),
+                      )
+                      .toList(),
+            ),
+          ),
+        );
+      }
     }
   }
 
