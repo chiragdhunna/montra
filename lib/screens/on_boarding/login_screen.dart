@@ -22,6 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool isLoading = false;
 
   late StreamSubscription<AuthenticationState> authStreamSubscription;
+  late StreamSubscription<LoginState> loginStreamSubscription;
 
   Future<void> authChangeHandler(AuthenticationState state) async {
     state.maybeWhen(
@@ -82,6 +83,32 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Future<void> loginChangeHandler(LoginState state) async {
+    state.maybeWhen(
+      orElse: () {},
+      initial: () {
+        setState(() {
+          isLoading = false;
+        });
+      },
+      inProgress: () {
+        setState(() {
+          isLoading = true;
+        });
+      },
+      loginFail: () {
+        setState(() {
+          isLoading = false;
+        });
+      },
+      loginSuccess: () {
+        setState(() {
+          isLoading = false;
+        });
+      },
+    );
+  }
+
   @override
   void initState() {
     // TODO: implement initState
@@ -89,6 +116,10 @@ class _LoginScreenState extends State<LoginScreen> {
       context,
     ).stream.listen(authChangeHandler);
     authChangeHandler(BlocProvider.of<AuthenticationBloc>(context).state);
+    loginStreamSubscription = BlocProvider.of<LoginBloc>(
+      context,
+    ).stream.listen(loginChangeHandler);
+    loginChangeHandler(BlocProvider.of<LoginBloc>(context).state);
     super.initState();
   }
 
