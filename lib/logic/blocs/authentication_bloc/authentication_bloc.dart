@@ -84,7 +84,18 @@ class AuthenticationBloc
       await _authRepository.setAuthToken(event.authToken);
       await _authRepository.setUser(event.user);
 
-      await _authRepository.getProfileImage();
+      try {
+        await _authRepository.getProfileImage();
+      } catch (e) {
+        log.e('Error : e');
+
+        emit(
+          AuthenticationState.userLoggedIn(
+            user: event.user,
+            authToken: event.authToken,
+          ),
+        );
+      }
 
       final user = await _authRepository.getAuthUser();
 
