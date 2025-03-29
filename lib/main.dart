@@ -69,7 +69,7 @@ class _MyAppState extends State<MyApp> {
           state.maybeWhen(
             orElse: () {},
             loginSuccess: () {},
-            loginFail: () {},
+            loginFail: (error) {},
             inProgress: () {},
           );
         },

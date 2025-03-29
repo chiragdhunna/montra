@@ -96,9 +96,12 @@ class _LoginScreenState extends State<LoginScreen> {
           isLoading = true;
         });
       },
-      loginFail: () {
+      loginFail: (error) {
         setState(() {
           isLoading = false;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error), backgroundColor: Colors.red),
+          );
         });
       },
       loginSuccess: () {

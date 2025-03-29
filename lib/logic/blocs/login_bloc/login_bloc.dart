@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:dio/dio.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logger/logger.dart';
 import 'package:montra/logic/api/users/models/login_user_model.dart';
@@ -38,7 +39,11 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       );
     } catch (e) {
       log.e('Error in StartLogin: ${e.toString()}');
-      emit(LoginState.loginFail());
+      if (e is DioException) {
+        emit(LoginState.loginFail(error: e.response?.data?['message']));
+      } else {
+        emit(LoginState.loginFail(error: e.toString()));
+      }
     }
   }
 
@@ -62,7 +67,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       );
     } catch (e) {
       log.e('Error in StartLogin: ${e.toString()}');
-      emit(LoginState.loginFail());
+      emit(LoginState.loginFail(error: e.toString()));
     }
   }
 
@@ -75,7 +80,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       await Future.delayed(Duration(seconds: 2));
       emit(LoginState.loginSuccess());
     } catch (e) {
-      emit(LoginState.loginFail());
+      emit(LoginState.loginFail(error: e.toString()));
     }
   }
 }

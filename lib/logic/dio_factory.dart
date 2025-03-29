@@ -30,11 +30,12 @@ class DioFactory {
       RetryInterceptor(
         dio: dio,
         logPrint: print, // specify log function
-        retries: 1, // retry count
+        retries: 4, // Retry up to 4 times
         retryDelays: const [
-          Duration.zero, // wait 1 sec before first retry
-          // Duration(seconds: 2), // wait 2 sec before second retry
-          // Duration(seconds: 3), // wait 3 sec before third retry
+          Duration(seconds: 1), // Wait 1 sec before first retry
+          Duration(seconds: 3), // Wait 3 sec before second retry
+          Duration(seconds: 5), // Wait 5 sec before third retry
+          Duration(seconds: 10), // Wait 10 sec before fourth retry
         ],
       ),
     );
@@ -61,22 +62,12 @@ class DioFactory {
   }
 
   BaseOptions _createBaseOptions() => BaseOptions(
-    // Request base url
     baseUrl: baseUrl,
-
-    // Timeout in milliseconds for receiving data
-    receiveTimeout: const Duration(milliseconds: 15000),
-
-    // Timeout in milliseconds for sending data
-    sendTimeout: const Duration(milliseconds: 15000),
-
-    // Timeout in milliseconds for opening url
-    connectTimeout: const Duration(milliseconds: 15000),
-
-    // // Common query parameters for each request
-    // queryParameters: <String, dynamic>{'parameter1': 'value1'},
-
-    // Common headers for each request
+    receiveTimeout: const Duration(seconds: 60), // ⬆ Increase from 15s to 60s
+    sendTimeout: const Duration(seconds: 60), // ⬆ Also increase send timeout
+    connectTimeout: const Duration(
+      seconds: 60,
+    ), // ⬆ Ensure connect timeout is high
     headers: <String, dynamic>{'accept-encoding': 'br'},
   );
 }
