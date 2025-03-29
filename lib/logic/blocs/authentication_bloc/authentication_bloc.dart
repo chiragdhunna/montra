@@ -89,12 +89,7 @@ class AuthenticationBloc
       } catch (e) {
         log.e('Error : e');
 
-        emit(
-          AuthenticationState.userLoggedIn(
-            user: event.user,
-            authToken: event.authToken,
-          ),
-        );
+        emit(AuthenticationState.userSignedUp());
       }
 
       final user = await _authRepository.getAuthUser();
@@ -126,16 +121,6 @@ class AuthenticationBloc
 
       final authToken = await _authRepository.getAuthToken();
       final authUser = await _authRepository.getAuthUser();
-      // var isOnline = false;
-      // NetworkBloc().state.maybeWhen(
-      //   success: () {
-      //     isOnline = true;
-      //   },
-      //   failure: () {
-      //     isOnline = false;
-      //   },
-      //   orElse: () {},
-      // );
 
       if (authToken != null && authUser != null) {
         // final user = await _authRepository.userApi.getMe();
