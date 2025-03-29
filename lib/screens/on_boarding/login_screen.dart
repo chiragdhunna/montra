@@ -40,9 +40,18 @@ class _LoginScreenState extends State<LoginScreen> {
       failure: (error) {
         setState(() {
           isLoading = false;
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Error $error')));
+          if (error == 'Error getting profile image') {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('$error , please upload it again!!'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(error), backgroundColor: Colors.red),
+            );
+          }
         });
       },
       inProgress: () {

@@ -84,13 +84,7 @@ class AuthenticationBloc
       await _authRepository.setAuthToken(event.authToken);
       await _authRepository.setUser(event.user);
 
-      try {
-        await _authRepository.getProfileImage();
-      } catch (e) {
-        log.e('Error : e');
-
-        emit(AuthenticationState.userSignedUp());
-      }
+      await _authRepository.getProfileImage();
 
       final user = await _authRepository.getAuthUser();
 
@@ -108,7 +102,11 @@ class AuthenticationBloc
       );
     } on Exception catch (error, stackTrace) {
       log.e(_logTag, error: 'Caught an exception  $error     $stackTrace');
-      emit(AuthenticationState.failure(error: error.toString()));
+
+      String message = error.toString().replaceFirst('Exception: ', '');
+      log.e(message);
+
+      emit(AuthenticationState.failure(error: message));
     }
   }
 

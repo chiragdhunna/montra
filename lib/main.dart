@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:logger/logger.dart';
 import 'package:montra/logic/blocs/account_bloc/account_bloc.dart';
 import 'package:montra/logic/blocs/authentication_bloc/authentication_bloc.dart';
 import 'package:montra/logic/blocs/budget_bloc/budget_bloc.dart';
@@ -18,6 +19,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:montra/screens/user_screens/home.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+Logger log = Logger(printer: PrettyPrinter());
 
 void main() {
   SystemChrome.setSystemUIOverlayStyle(
@@ -167,9 +170,14 @@ class _MyAppState extends State<MyApp> {
                   );
                 },
                 failure: (error) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(error)));
+                  log.e('Error in main.dart : $error');
+
+                  if (error == 'Error getting profile image') {
+                    log.w('Checking Existing');
+                    BlocProvider.of<AuthenticationBloc>(
+                      context,
+                    ).add(AuthenticationEvent.checkExisting());
+                  }
                 },
               );
             },

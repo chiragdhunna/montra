@@ -78,9 +78,9 @@ class AuthRepository {
 
       await saveProfileImage(response.data);
     } catch (e) {
-      log.e('Error uploading profile image: $e');
+      log.e('Error getting profile image: $e');
       // You need to handle the error case by either:
-      rethrow; // Re-throw the error, or
+      throw Exception('Error getting profile image'); // Re-throw the error, or
       // Return a default HttpResponse object that represents an error
     }
   }
