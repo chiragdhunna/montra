@@ -5,6 +5,9 @@ on:
     branches:
       - main # or 'master' or any branch you want
 
+permissions:
+  contents: write
+
 jobs:
   build-and-distribute:
     runs-on: ubuntu-latest
@@ -21,6 +24,54 @@ jobs:
 
       - name: 📦 Install dependencies
         run: flutter pub get
+
+      - name: 🤖 Semantic Version Bump & Commit (extended)
+        id: semver
+        run: |
+          echo "🔍 Checking last commit..."
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "Commit message: $COMMIT_MSG"
+
+          CURRENT_VERSION_LINE=$(grep '^version:' pubspec.yaml)
+          VERSION_NAME=$(echo "$CURRENT_VERSION_LINE" | cut -d ':' -f2 | cut -d '+' -f1 | xargs)
+          VERSION_CODE=$(echo "$CURRENT_VERSION_LINE" | cut -d '+' -f2 | xargs)
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION_NAME"
+
+          VERSION_BUMPED=false
+
+          if echo "$COMMIT_MSG" | grep -q "BREAKING CHANGE"; then
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+            VERSION_BUMPED=true
+          elif echo "$COMMIT_MSG" | grep -qE "^feat"; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+            VERSION_BUMPED=true
+          elif echo "$COMMIT_MSG" | grep -qE "^(fix|perf|refactor|chore)"; then
+            PATCH=$((PATCH + 1))
+            VERSION_BUMPED=true
+          else
+            echo "🟡 No version bump keyword found. Keeping version the same."
+          fi
+
+          VERSION_CODE=$((VERSION_CODE + 1))
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH+$VERSION_CODE"
+
+          if [ "$VERSION_BUMPED" = true ]; then
+            echo "📦 Updating version to: $NEW_VERSION"
+            sed -i "s/^version:.*/version: $NEW_VERSION/" pubspec.yaml
+
+            echo "📝 Committing version bump to GitHub..."
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add pubspec.yaml
+            git commit -m "chore(release): $NEW_VERSION"
+            git push origin HEAD:${{ github.ref_name }}
+          else
+            echo "✅ Version unchanged — skipping commit."
+          fi
 
       - name: 🛠️ Run code generation (Freezed, JSON Serializable, etc.)
         run: flutter pub run build_runner build --delete-conflicting-outputs
