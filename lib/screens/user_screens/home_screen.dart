@@ -197,7 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _isExpenseStatsLoading = false; // Mark expense stats as loaded
         });
       },
-      failure: () {
+      failure: (error) {
         log.d('State is failure');
         if (!mounted) return;
         setState(() {
