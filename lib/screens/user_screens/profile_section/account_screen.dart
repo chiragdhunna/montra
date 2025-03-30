@@ -313,11 +313,9 @@ class _AccountScreenState extends State<AccountScreen> {
                             height: 56,
                             margin: const EdgeInsets.only(bottom: 20),
                             child: ElevatedButton(
-                              onPressed: () {
-                                bool isConnected = false;
-                                NetworkHelper.checkNow().then((val) {
-                                  isConnected = val;
-                                });
+                              onPressed: () async {
+                                bool isConnected =
+                                    await NetworkHelper.checkNow();
                                 if (!isConnected) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
@@ -329,12 +327,16 @@ class _AccountScreenState extends State<AccountScreen> {
                                   );
                                   return;
                                 }
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => CreateAccountScreen(),
-                                  ),
-                                );
+
+                                if (context.mounted) {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => CreateAccountScreen(),
+                                    ),
+                                  );
+                                }
                               },
+
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.purple.shade500,
                                 foregroundColor: Colors.white,
