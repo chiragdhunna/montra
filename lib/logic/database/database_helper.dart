@@ -422,4 +422,9 @@ CREATE TABLE wallet_names (
       whereArgs: [month.padLeft(2, '0')], // pad to '01' format
     );
   }
+
+  Future<List<Map<String, dynamic>>> getAllBudgets() async {
+    final db = await database;
+    return await db.query('budget');
+  }
 }

@@ -23,16 +23,50 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     on<BudgetEvent>((event, emit) {
       // TODO: implement event handler
     });
-    on<_GetBudgetByMonth>(_getBudgetByMonthSuccess);
+    on<_GetBudgetByMonth>(_getBudgetByMonth);
     on<_CreateBudget>(_createBudget);
     on<_UpdateBudget>(_updateBudget);
     on<_DeleteBudget>(_deleteBudget);
+    on<_GetAllBudgets>(_getAllBudget);
   }
 
   final _budgetApi = BudgetApi(DioFactory().create());
 
-  Future<void> _getBudgetByMonthSuccess(
+  Future<void> _getBudgetByMonth(
     _GetBudgetByMonth event,
+    Emitter<BudgetState> emit,
+  ) async {
+    final dbHelper = DatabaseHelper();
+
+    emit(BudgetState.inProgress());
+
+    final localBudgets = await dbHelper.getBudgetsByMonth(
+      event.month.toString(),
+    );
+
+    emit(
+      BudgetState.getBudgetByMonthSuccess(
+        budgets: BudgetsModel(
+          budgets:
+              localBudgets
+                  .map(
+                    (b) => BudgetModel(
+                      budgetId: b['budget_id'] as String,
+                      totalBudget: b['total_budget'] as int,
+                      name: b['name'] as String,
+                      userId: b['user_id'] as String,
+                      current: b['current'] as int,
+                      createdAt: DateTime.parse(b['created_at'] as String),
+                    ),
+                  )
+                  .toList(),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _getAllBudget(
+    _GetAllBudgets event,
     Emitter<BudgetState> emit,
   ) async {
     final dbHelper = DatabaseHelper();
@@ -42,8 +76,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
 
     if (isConnected) {
       try {
-        final month = BudgetMonthModel(month: event.month.toString());
-        final response = await _budgetApi.getbymonth(month);
+        final response = await _budgetApi.getAllBudgets();
 
         // Save to local DB
         final budgetJsonList =
@@ -61,18 +94,16 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
                 .toList();
 
         await dbHelper.upsertBudgets(budgetJsonList);
-      
-        emit(BudgetState.getBudgetByMonthSuccess(budgets: response));
+
+        emit(BudgetState.getBudgetsSuccess(budgets: response));
       } catch (e) {
         log.e('API Error: $e');
 
         // fallback to local DB
-        final localBudgets = await dbHelper.getBudgetsByMonth(
-          event.month.toString(),
-        );
+        final localBudgets = await dbHelper.getAllBudgets();
 
         emit(
-          BudgetState.getBudgetByMonthSuccess(
+          BudgetState.getBudgetsSuccess(
             budgets: BudgetsModel(
               budgets:
                   localBudgets
@@ -92,15 +123,13 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
         );
       }
     } else {
-      final localBudgets = await dbHelper.getBudgetsByMonth(
-        event.month.toString(),
-      );
+      final localBudgets = await dbHelper.getAllBudgets();
 
       if (localBudgets.isEmpty) {
         emit(BudgetState.failure());
       } else {
         emit(
-          BudgetState.getBudgetByMonthSuccess(
+          BudgetState.getBudgetsSuccess(
             budgets: BudgetsModel(
               budgets:
                   localBudgets

@@ -92,7 +92,7 @@ class AuthenticationBloc
 
       final db = await _databaseHelper.database;
       final initializationService = InitializationService();
-      await initializationService.initializeWallets();
+      await initializationService.initialise();
 
       emit(
         AuthenticationState.userLoggedIn(
@@ -129,7 +129,7 @@ class AuthenticationBloc
         } else {
           final db = await _databaseHelper.database;
           final initializationService = InitializationService();
-          await initializationService.initializeWallets();
+          await initializationService.initialise();
           emit(
             AuthenticationState.authenticated(
               user: authUser,
