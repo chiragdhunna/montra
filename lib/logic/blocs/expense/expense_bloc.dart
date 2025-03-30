@@ -6,6 +6,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:logger/logger.dart';
 import 'package:mime/mime.dart';
+import 'package:montra/constants/error_message.dart';
 import 'package:montra/constants/expense_type.dart';
 import 'package:montra/constants/income_source.dart';
 import 'package:montra/logic/api/expense/expense_api.dart';
@@ -88,7 +89,8 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
       emit(ExpenseState.createExpenseSuccess());
     } catch (e) {
       log.e('Error: $e');
-      emit(ExpenseState.failure());
+      final message = errorMessage(e.toString());
+      emit(ExpenseState.failure(error: message));
     }
   }
 
@@ -174,7 +176,8 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
       }
     } catch (e) {
       log.e('Unexpected Error: $e');
-      emit(ExpenseState.failure());
+      final message = errorMessage(e.toString());
+      emit(ExpenseState.failure(error: message));
     }
   }
 
@@ -203,23 +206,13 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
 
         // Fallback to local DB
         final localWalletNames = await dbHelper.getWalletNames();
-        if (localWalletNames.isNotEmpty) {
-          log.w('Using cached wallet names due to API error');
-          emit(
-            ExpenseState.getWalletNamesSuccess(walletNames: localWalletNames),
-          );
-        } else {
-          emit(ExpenseState.failure());
-        }
+        log.w('Using cached wallet names due to API error');
+        emit(ExpenseState.getWalletNamesSuccess(walletNames: localWalletNames));
       }
     } else {
       // Offline fallback
       final localWalletNames = await dbHelper.getWalletNames();
-      if (localWalletNames.isNotEmpty) {
-        emit(ExpenseState.getWalletNamesSuccess(walletNames: localWalletNames));
-      } else {
-        emit(ExpenseState.failure());
-      }
+      emit(ExpenseState.getWalletNamesSuccess(walletNames: localWalletNames));
     }
   }
 

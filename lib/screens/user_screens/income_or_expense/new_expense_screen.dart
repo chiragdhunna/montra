@@ -127,9 +127,12 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
           _walletsNames = walletNames;
         });
       },
-      failure: () {
+      failure: (error) {
         setState(() {
           _isLoading = false;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error), backgroundColor: Colors.red),
+          );
         });
       },
       createExpenseSuccess: () {
