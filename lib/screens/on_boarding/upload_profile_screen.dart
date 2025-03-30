@@ -46,9 +46,9 @@ class _UploadImageScreenState extends State<UploadImageScreen> {
       failure: (error) {
         setState(() {
           isLoading = false;
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Error $error')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error), backgroundColor: Colors.red),
+          );
         });
       },
       inProgress: () {
