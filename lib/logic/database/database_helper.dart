@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:montra/logic/blocs/network_bloc/network_helper.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:montra/logic/api/bank/models/bank_model.dart';
@@ -82,18 +83,20 @@ class DatabaseHelper {
   ''');
 
     // Add the budget table
+    // When creating your database or during a migration
     await db.execute('''
-    CREATE TABLE budget (
-      budget_id TEXT PRIMARY KEY,
-      total_budget INTEGER DEFAULT 0,
-      name TEXT,
-      user_id TEXT NOT NULL,
-      current INTEGER DEFAULT 0,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(user_id)
-    )
-  ''');
-
+CREATE TABLE budgets (
+  budget_id TEXT PRIMARY KEY,
+  total_budget INTEGER DEFAULT 0,
+  name TEXT,
+  user_id TEXT NOT NULL,
+  current INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  is_synced INTEGER DEFAULT 1,
+  pending_deletion INTEGER DEFAULT 0,
+  FOREIGN KEY (user_id) REFERENCES users(user_id)
+)
+''');
     // Add the expense table
     await db.execute('''
     CREATE TABLE expense (
@@ -398,33 +401,164 @@ CREATE TABLE wallet_names (
     await db.delete('offline_transfer');
   }
 
-  Future<void> upsertBudgets(List<Map<String, dynamic>> budgets) async {
-    final db = await database;
-
-    await db.delete('budget'); // Clear existing
-
-    for (var budget in budgets) {
-      await db.insert('budget', budget);
-    }
-  }
-
   Future<List<Map<String, dynamic>>> getBudgets() async {
     final db = await database;
     return await db.query('budget');
   }
 
-  Future<List<Map<String, dynamic>>> getBudgetsByMonth(String month) async {
+  Future<String?> getUserId() async {
+    final db = await database;
+    final results = await db.query('users', limit: 1);
+    return results.isNotEmpty ? results.first['user_id'] as String : null;
+  }
+
+  // Insert a new budget
+  Future<int> insertBudget(Map<String, dynamic> budget) async {
+    final db = await database;
+    return await db.insert('budgets', budget);
+  }
+
+  // Update an existing budget
+  Future<int> updateBudget(Map<String, dynamic> budget) async {
+    final db = await database;
+    return await db.update(
+      'budgets',
+      budget,
+      where: 'budget_id = ?',
+      whereArgs: [budget['budget_id']],
+    );
+  }
+
+  // Delete a budget
+  Future<void> deleteBudget(String budgetId) async {
+    final db = await database;
+    final isConnected = await NetworkHelper.checkNow();
+
+    if (!isConnected) {
+      // Mark as pending deletion if offline
+      await db.update(
+        'budgets',
+        {'pending_deletion': 1},
+        where: 'budget_id = ?',
+        whereArgs: [budgetId],
+      );
+    } else {
+      // Delete budget from local DB if online
+      await db.delete('budgets', where: 'budget_id = ?', whereArgs: [budgetId]);
+    }
+  }
+
+  // Mark a budget as synced with server
+  Future<void> markBudgetAsSynced(String budgetId) async {
+    final db = await database;
+    await db.update(
+      'budgets',
+      {'is_synced': 1},
+      where: 'budget_id = ?',
+      whereArgs: [budgetId],
+    );
+  }
+
+  // Mark a budget for deletion when back online
+  Future<int> markBudgetForDeletion(String budgetId) async {
+    final db = await database;
+    return await db.update(
+      'budgets',
+      {'pending_deletion': 1},
+      where: 'budget_id = ?',
+      whereArgs: [budgetId],
+    );
+  }
+
+  // Upsert budgets (used for syncing from server)
+  // Insert or update budget
+  Future<void> upsertBudgets(List<Map<String, dynamic>> budgets) async {
     final db = await database;
 
+    // Iterate over all budgets to insert or update
+    for (var budget in budgets) {
+      // Mark as unsynced if the device is offline
+      final isConnected = await NetworkHelper.checkNow();
+      budget['is_synced'] = isConnected ? 1 : 0;
+
+      final existingBudget = await db.query(
+        'budgets',
+        where: 'budget_id = ?',
+        whereArgs: [budget['budget_id']],
+      );
+
+      if (existingBudget.isNotEmpty) {
+        // Update existing budget
+        await db.update(
+          'budgets',
+          budget,
+          where: 'budget_id = ?',
+          whereArgs: [budget['budget_id']],
+        );
+      } else {
+        // Insert new budget
+        await db.insert('budgets', budget);
+      }
+    }
+  }
+
+  // Get budgets by month (as shown in original code)
+  Future<List<Map<String, dynamic>>> getBudgetsByMonth(String month) async {
+    final db = await database;
+    // Implement as needed - this is a placeholder based on the original code
     return await db.query(
-      'budget',
-      where: "strftime('%m', created_at) = ?",
-      whereArgs: [month.padLeft(2, '0')], // pad to '01' format
+      'budgets',
+      where: 'strftime("%Y-%m", created_at) = ? AND pending_deletion = 0',
+      whereArgs: [month],
     );
+  }
+
+  Future<void> replaceAllBudgets(List<Map<String, dynamic>> budgets) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      // Keep track of local budgets that were synced
+      final localBudgetIds = await txn.query(
+        'budgets',
+        columns: ['budget_id'],
+        where: "budget_id LIKE 'local_%' AND is_synced = 1",
+      );
+
+      // Delete all budgets that aren't pending local changes
+      await txn.delete(
+        'budgets',
+        where: "is_synced = 1 AND pending_deletion = 0",
+      );
+
+      // Insert all budgets from server
+      for (final budget in budgets) {
+        await txn.insert('budgets', budget);
+      }
+
+      // Clean up any local budgets that were successfully synced
+      for (final localBudget in localBudgetIds) {
+        await txn.delete(
+          'budgets',
+          where: 'budget_id = ?',
+          whereArgs: [localBudget['budget_id']],
+        );
+      }
+    });
   }
 
   Future<List<Map<String, dynamic>>> getAllBudgets() async {
     final db = await database;
-    return await db.query('budget');
+
+    // Retrieve all budgets that are not marked for deletion
+    return await db.query('budgets', where: 'pending_deletion = 0');
+  }
+
+  Future<List<Map<String, dynamic>>> getUnSyncedBudgets() async {
+    final db = await database;
+    return await db.query('budgets', where: 'is_synced = 0');
+  }
+
+  Future<List<Map<String, dynamic>>> getBudgetsPendingDeletion() async {
+    final db = await database;
+    return await db.query('budgets', where: 'pending_deletion = 1');
   }
 }
