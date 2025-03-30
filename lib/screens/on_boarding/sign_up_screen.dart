@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:montra/logic/blocs/authentication_bloc/authentication_bloc.dart';
 import 'package:montra/logic/blocs/login_bloc/login_bloc.dart';
 import 'package:montra/screens/on_boarding/login_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,9 +16,12 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   bool _isChecked = false;
   bool _obscurePassword = true;
+  bool isLoading = false;
   TextEditingController nameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+
+  late StreamSubscription<AuthenticationState> authStreamSubscription;
 
   bool get _allFieldsFilled =>
       nameController.text.isNotEmpty &&
@@ -27,12 +33,85 @@ class _SignUpScreenState extends State<SignUpScreen> {
     setState(() {});
   }
 
+  Future<void> authChangeHandler(AuthenticationState state) async {
+    state.maybeWhen(
+      orElse: () {},
+      initial: () {
+        setState(() {
+          isLoading = false;
+        });
+      },
+      loggedOut: () {
+        setState(() {
+          isLoading = false;
+        });
+      },
+      failure: (error) {
+        setState(() {
+          isLoading = false;
+          if (error == 'Error getting profile image') {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('$error , please upload it again!!'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(error), backgroundColor: Colors.red),
+            );
+          }
+        });
+      },
+      inProgress: () {
+        setState(() {
+          isLoading = true;
+        });
+      },
+      authenticated: (user, authToken) {
+        setState(() {
+          isLoading = false;
+        });
+      },
+      unAuthenticated: () {
+        setState(() {
+          isLoading = false;
+        });
+      },
+      userImageUploaded: (user) {
+        setState(() {
+          isLoading = false;
+        });
+      },
+      userLoggedIn: (user, authToken) {
+        setState(() {
+          isLoading = false;
+        });
+      },
+      userSignedUp: () {
+        setState(() {
+          isLoading = false;
+        });
+      },
+      checking: () {
+        setState(() {
+          isLoading = true;
+        });
+      },
+    );
+  }
+
   @override
   void initState() {
     // TODO: implement initState
     nameController.addListener(_updateState);
     emailController.addListener(_updateState);
     passwordController.addListener(_updateState);
+
+    authStreamSubscription = BlocProvider.of<AuthenticationBloc>(
+      context,
+    ).stream.listen(authChangeHandler);
+    authChangeHandler(BlocProvider.of<AuthenticationBloc>(context).state);
 
     super.initState();
   }
@@ -46,6 +125,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     nameController.dispose();
     emailController.dispose();
     passwordController.dispose();
+    authStreamSubscription.cancel();
     super.dispose();
   }
 
@@ -72,190 +152,201 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 30),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  hintText: "Name",
-                  filled: true,
+      body:
+          isLoading
+              ? Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 30),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextField(
+                        controller: nameController,
+                        decoration: InputDecoration(
+                          hintText: "Name",
+                          filled: true,
 
-                  fillColor: Colors.grey[100],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 15),
-              TextField(
-                controller: emailController,
-                decoration: InputDecoration(
-                  hintText: "Email",
-                  filled: true,
-                  fillColor: Colors.grey[100],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 15),
-              TextField(
-                controller: passwordController,
-                obscureText: _obscurePassword,
-                decoration: InputDecoration(
-                  hintText: "Password",
-                  filled: true,
-                  fillColor: Colors.grey[100],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(height: 15),
-              Row(
-                children: [
-                  Checkbox(
-                    value: _isChecked,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        _isChecked = value ?? false;
-                      });
-                    },
-                    activeColor: Colors.purple,
-                  ),
-                  const Expanded(
-                    child: Text.rich(
-                      TextSpan(
-                        text: "By signing up, you agree to the ",
-                        style: TextStyle(color: Colors.black54),
-                        children: [
-                          TextSpan(
-                            text: "Terms of Service",
-                            style: TextStyle(
-                              color: Colors.purple,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          fillColor: Colors.grey[100],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide.none,
                           ),
-                          TextSpan(text: " and "),
-                          TextSpan(
-                            text: "Privacy Policy",
-                            style: TextStyle(
-                              color: Colors.purple,
-                              fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      TextField(
+                        controller: emailController,
+                        decoration: InputDecoration(
+                          hintText: "Email",
+                          filled: true,
+                          fillColor: Colors.grey[100],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      TextField(
+                        controller: passwordController,
+                        obscureText: _obscurePassword,
+                        decoration: InputDecoration(
+                          hintText: "Password",
+                          filled: true,
+                          fillColor: Colors.grey[100],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide.none,
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: _isChecked,
+                            onChanged: (bool? value) {
+                              setState(() {
+                                _isChecked = value ?? false;
+                              });
+                            },
+                            activeColor: Colors.purple,
+                          ),
+                          const Expanded(
+                            child: Text.rich(
+                              TextSpan(
+                                text: "By signing up, you agree to the ",
+                                style: TextStyle(color: Colors.black54),
+                                children: [
+                                  TextSpan(
+                                    text: "Terms of Service",
+                                    style: TextStyle(
+                                      color: Colors.purple,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  TextSpan(text: " and "),
+                                  TextSpan(
+                                    text: "Privacy Policy",
+                                    style: TextStyle(
+                                      color: Colors.purple,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (nameController.text.isNotEmpty &&
-                        emailController.text.isNotEmpty &&
-                        passwordController.text.isNotEmpty) {
-                      BlocProvider.of<LoginBloc>(context).add(
-                        LoginEvent.signUp(
-                          email: emailController.text,
-                          password: passwordController.text,
-                          name: nameController.text,
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            if (nameController.text.isNotEmpty &&
+                                emailController.text.isNotEmpty &&
+                                passwordController.text.isNotEmpty) {
+                              BlocProvider.of<LoginBloc>(context).add(
+                                LoginEvent.signUp(
+                                  email: emailController.text,
+                                  password: passwordController.text,
+                                  name: nameController.text,
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  backgroundColor: Colors.red,
+                                  content: Text("Please fill all the fields"),
+                                ),
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                (_allFieldsFilled && _isChecked)
+                                    ? Colors.purple
+                                    : Colors.grey,
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text(
+                            "Sign Up",
+                            style: TextStyle(color: Colors.white, fontSize: 16),
+                          ),
                         ),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          backgroundColor: Colors.red,
-                          content: Text("Please fill all the fields"),
+                      ),
+                      const SizedBox(height: 15),
+                      const Center(
+                        child: Text(
+                          "Or with",
+                          style: TextStyle(color: Colors.grey, fontSize: 14),
                         ),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        (_allFieldsFilled && _isChecked)
-                            ? Colors.purple
-                            : Colors.grey,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Text(
-                    "Sign Up",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 15),
-              const Center(
-                child: Text(
-                  "Or with",
-                  style: TextStyle(color: Colors.grey, fontSize: 14),
-                ),
-              ),
-              const SizedBox(height: 15),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Comming Soon")),
-                    );
-                  },
-                  icon: Image.asset("assets/googleLogo.png", height: 20),
-                  label: const Text(
-                    "Sign Up with Google",
-                    style: TextStyle(color: Colors.black, fontSize: 16),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Center(
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (builder) => LoginScreen()),
-                    );
-                  },
-                  child: const Text(
-                    "Already have an account? Login",
-                    style: TextStyle(color: Colors.purple, fontSize: 16),
+                      ),
+                      const SizedBox(height: 15),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Comming Soon")),
+                            );
+                          },
+                          icon: Image.asset(
+                            "assets/googleLogo.png",
+                            height: 20,
+                          ),
+                          label: const Text(
+                            "Sign Up with Google",
+                            style: TextStyle(color: Colors.black, fontSize: 16),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Center(
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (builder) => LoginScreen(),
+                              ),
+                            );
+                          },
+                          child: const Text(
+                            "Already have an account? Login",
+                            style: TextStyle(
+                              color: Colors.purple,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
