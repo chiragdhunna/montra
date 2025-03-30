@@ -561,4 +561,21 @@ CREATE TABLE wallet_names (
     final db = await database;
     return await db.query('budgets', where: 'pending_deletion = 1');
   }
+
+  Future<Map<String, dynamic>?> getBudgetById(String budgetId) async {
+    final db = await database;
+
+    // Query the database for the specific budget by its ID
+    final result = await db.query(
+      'budgets',
+      where: 'budget_id = ?',
+      whereArgs: [budgetId],
+    );
+
+    if (result.isNotEmpty) {
+      return result.first; // Return the first matching result
+    } else {
+      return null; // Return null if no matching budget is found
+    }
+  }
 }

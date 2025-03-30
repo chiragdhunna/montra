@@ -265,34 +265,41 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
 
     emit(BudgetState.inProgress());
 
+    // Get the existing budget from the local database
+    final existingBudget = await dbHelper.getBudgetById(event.budgetId);
+
+    if (existingBudget == null) {
+      emit(BudgetState.failure());
+      return;
+    }
+
+    // Create the updated budget map
+    final updatedBudget = {
+      'budget_id': event.budgetId,
+      'name': event.budgetName,
+      'total_budget': event.totalBudget,
+      'current': event.current,
+      // Set to unsynced if offline
+      'is_synced': isConnected ? 1 : 0,
+    };
+
     try {
-      // Update local budget first
-      final budgetMap = {
-        'budget_id': event.budgetId,
-        'total_budget': event.totalBudget,
-        'name': event.budgetName,
-        'current': event.current,
-        'is_synced': isConnected ? 1 : 0, // Mark as not synced if offline
-      };
+      // Update the budget in the local database
+      await dbHelper.updateBudget(updatedBudget);
 
-      await dbHelper.updateBudget(budgetMap);
-
-      // If online, try to update on server as well
       if (isConnected) {
-        try {
-          final updateBudget = UpdateBudgetModel(
+        // If online, sync with the server
+        await _budgetApi.updateBudget(
+          UpdateBudgetModel(
+            budgetId: event.budgetId,
             name: event.budgetName,
             totalBudget: event.totalBudget,
-            budgetId: event.budgetId,
             current: event.current,
-          );
-          await _budgetApi.updateBudget(updateBudget);
-          // Mark as synced
-          await dbHelper.markBudgetAsSynced(event.budgetId);
-        } catch (e) {
-          log.e('API Error on update: $e');
-          // Keep local changes, will sync later
-        }
+          ),
+        );
+
+        // After successful sync, mark as synced in the local DB
+        await dbHelper.markBudgetAsSynced(event.budgetId);
       }
 
       emit(BudgetState.updateBudgetSuccess());
