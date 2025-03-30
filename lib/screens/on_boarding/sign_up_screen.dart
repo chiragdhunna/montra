@@ -22,6 +22,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   TextEditingController passwordController = TextEditingController();
 
   late StreamSubscription<AuthenticationState> authStreamSubscription;
+  late StreamSubscription<LoginState> loginStreamSubscription;
 
   bool get _allFieldsFilled =>
       nameController.text.isNotEmpty &&
@@ -101,6 +102,35 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
+  Future<void> loginChangeHandler(LoginState state) async {
+    state.maybeWhen(
+      orElse: () {},
+      initial: () {
+        setState(() {
+          isLoading = false;
+        });
+      },
+      inProgress: () {
+        setState(() {
+          isLoading = true;
+        });
+      },
+      loginFail: (error) {
+        setState(() {
+          isLoading = false;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error), backgroundColor: Colors.red),
+          );
+        });
+      },
+      loginSuccess: () {
+        setState(() {
+          isLoading = false;
+        });
+      },
+    );
+  }
+
   @override
   void initState() {
     // TODO: implement initState
@@ -112,6 +142,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
       context,
     ).stream.listen(authChangeHandler);
     authChangeHandler(BlocProvider.of<AuthenticationBloc>(context).state);
+
+    loginStreamSubscription = BlocProvider.of<LoginBloc>(
+      context,
+    ).stream.listen(loginChangeHandler);
+    loginChangeHandler(BlocProvider.of<LoginBloc>(context).state);
 
     super.initState();
   }
