@@ -395,7 +395,12 @@ class _TransactionScreenState extends State<TransactionScreen> {
                 SizedBox(height: 10.h),
                 _buildFinancialReportButton(),
                 SizedBox(height: 10.h),
-                Expanded(child: _buildTransactionList()),
+                Expanded(
+                  child:
+                      recentTransactions.isEmpty
+                          ? Center(child: Text('No transactions'))
+                          : _buildTransactionList(),
+                ),
               ],
             ),
           ),
