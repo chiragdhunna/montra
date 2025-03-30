@@ -204,6 +204,11 @@ CREATE TABLE wallet_names (
   }
 
   Future<void> deleteDatabaseFile() async {
+    if (_database != null && _database!.isOpen) {
+      await _database!.close();
+      _database = null;
+    }
+
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'montra.db');
     await deleteDatabase(path);
