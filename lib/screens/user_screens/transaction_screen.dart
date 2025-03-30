@@ -3,9 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:logger/logger.dart';
 import 'package:montra/logic/blocs/network_bloc/network_bloc.dart';
 import 'package:montra/logic/blocs/transactions_bloc/transactions_bloc.dart';
 import 'package:montra/screens/user_screens/financial_reports/financial_report_status_screen.dart';
+
+Logger log = Logger(printer: PrettyPrinter());
 
 class TransactionScreen extends StatefulWidget {
   const TransactionScreen({super.key});

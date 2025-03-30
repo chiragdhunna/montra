@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:logger/logger.dart';
+import 'package:montra/logic/blocs/expense/expense_bloc.dart';
+import 'package:montra/logic/blocs/income_bloc/income_bloc.dart';
 import 'dart:async';
 
 import 'package:montra/screens/user_screens/financial_reports/financial_report_screen.dart';
+
+Logger log = Logger(printer: PrettyPrinter());
 
 class FinancialReportStatusScreen extends StatefulWidget {
   const FinancialReportStatusScreen({super.key});
@@ -13,15 +19,26 @@ class FinancialReportStatusScreen extends StatefulWidget {
 
 class _FinancialReportStatusScreenState
     extends State<FinancialReportStatusScreen> {
+  late StreamSubscription<IncomeState> _incomeStreamSubscription;
+  late StreamSubscription<ExpenseState> _expenseStreamSubscription;
   int _currentIndex = 0;
   Timer? _timer;
   final List<double> _progressList = [0.0, 0.0, 0.0, 0.0];
+  bool _isIncomeLoading = true;
+  bool _isExpensesLoading = true;
+  int totalIncome = 0;
+  int totalExpense = 0;
+  int totalBalance = 0;
 
   late List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
+    BlocProvider.of<IncomeBloc>(context).add(IncomeEvent.getIncome());
+    BlocProvider.of<ExpenseBloc>(context).add(ExpenseEvent.getExpense());
+    incomeBlocChangeHandler(BlocProvider.of<IncomeBloc>(context).state);
+    expenseBlocChangeHandler(BlocProvider.of<ExpenseBloc>(context).state);
     _screens = [
       _buildSpendingScreen(),
       _buildIncomeScreen(),
@@ -35,6 +52,95 @@ class _FinancialReportStatusScreenState
   void dispose() {
     _timer?.cancel();
     super.dispose();
+  }
+
+  void incomeBlocChangeHandler(IncomeState state) {
+    state.maybeWhen(
+      orElse: () {
+        log.d('State is or else');
+      },
+      getWalletNamesSuccess: (walletNames) {
+        setState(() {
+          _isIncomeLoading = false;
+        });
+      },
+      getIncomeSuccess: (income) {
+        log.d('State is getIncomeSuccess');
+        if (!mounted) return;
+        setState(() {
+          totalIncome = income;
+          _isIncomeLoading = false;
+        });
+      },
+      failure: () {
+        log.d('State is failure');
+        if (!mounted) return;
+        setState(() {
+          _isIncomeLoading = false;
+        });
+      },
+      inProgress: () {
+        log.d('State is inProgress');
+        if (!mounted) return;
+        setState(() {
+          _isIncomeLoading = true;
+        });
+      },
+      setIncomeSuccess: () {
+        log.d('State is setIncomeSuccess');
+        if (!mounted) return;
+        setState(() {
+          _isIncomeLoading = false;
+        });
+      },
+      createIncomeSuccess: () {
+        _isIncomeLoading = false;
+        BlocProvider.of<IncomeBloc>(context).add(IncomeEvent.getIncome());
+      },
+    );
+  }
+
+  void expenseBlocChangeHandler(ExpenseState state) {
+    state.maybeWhen(
+      orElse: () {
+        log.d('State is or else');
+      },
+      getExpenseSuccess: (expense, expenseData) {
+        log.d('State is getExpenseSuccess');
+        if (!mounted) return;
+        setState(() {
+          totalExpense = expense;
+
+          _isExpensesLoading = false; // Mark expenses as loaded
+        });
+      },
+      failure: (error) {
+        log.d('State is failure');
+        if (!mounted) return;
+        setState(() {
+          _isExpensesLoading = false; // Mark expenses as loaded even on failure
+        });
+      },
+      inProgress: () {
+        log.d('State is inProgress');
+        if (!mounted) return;
+        setState(() {
+          _isExpensesLoading = true; // Mark expenses as loading
+        });
+      },
+      setExpenseSuccess: () {
+        log.d('State is setExpenseSuccess');
+        if (!mounted) return;
+        setState(() {
+          _isExpensesLoading = false; // Mark expenses as loaded even on failure
+        });
+      },
+      createExpenseSuccess: () {
+        _isExpensesLoading = false; // Mark expenses as loaded even on failure
+
+        BlocProvider.of<ExpenseBloc>(context).add(ExpenseEvent.getExpense());
+      },
+    );
   }
 
   void _startAutoTransition() {
@@ -204,8 +310,8 @@ class _FinancialReportStatusScreenState
               ),
             ),
             const SizedBox(height: 10),
-            const Text(
-              "\$332",
+            Text(
+              "\$$totalExpense",
               style: TextStyle(
                 fontSize: 40,
                 color: Colors.white,
@@ -266,8 +372,8 @@ class _FinancialReportStatusScreenState
               ),
             ),
             const SizedBox(height: 10),
-            const Text(
-              "\$6000",
+            Text(
+              "\$$totalIncome",
               style: TextStyle(
                 fontSize: 40,
                 color: Colors.white,
