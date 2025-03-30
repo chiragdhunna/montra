@@ -3,7 +3,9 @@ name: Distribute APK via Fastlane
 on:
   push:
     branches:
-      - main # or 'master' or any branch you want
+      - main
+    tags:
+      - "v*.*.*" # trigger release only for version tags
 
 permissions:
   contents: write
@@ -93,3 +95,11 @@ jobs:
         run: |
           cd android
           fastlane beta
+
+      - name: 📤 Upload APK to GitHub Releases
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/app/outputs/flutter-apk/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
