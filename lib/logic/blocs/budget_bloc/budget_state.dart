@@ -11,4 +11,6 @@ class BudgetState with _$BudgetState {
   const factory BudgetState.getBudgetByMonthSuccess({
     required BudgetsModel budgets,
   }) = _GetBudgetByMonthSuccess;
+  const factory BudgetState.getBudgetsSuccess({required BudgetsModel budgets}) =
+      _GetBudgetsSuccess;
 }
