@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
+import 'package:montra/constants/quotes.dart';
 import 'package:montra/logic/blocs/expense/expense_bloc.dart';
 import 'package:montra/logic/blocs/income_bloc/income_bloc.dart';
 import 'dart:async';
@@ -499,6 +500,9 @@ class _FinancialReportStatusScreenState
   }
 
   Widget _buildQuoteScreen() {
+    // Select a random quote from the list
+    final randomQuote = (quotes..shuffle()).first;
+
     return Container(
       key: const ValueKey('quote'),
       color: Colors.purple,
@@ -506,19 +510,19 @@ class _FinancialReportStatusScreenState
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              "Financial freedom is freedom from fear.",
+            Text(
+              randomQuote.text,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 24,
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              "- Robert Kiyosaki",
-              style: TextStyle(fontSize: 16, color: Colors.white),
+            Text(
+              "- ${randomQuote.author}",
+              style: const TextStyle(fontSize: 16, color: Colors.white),
             ),
             const SizedBox(height: 30),
             ElevatedButton(
