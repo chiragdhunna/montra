@@ -26,6 +26,8 @@ class _FinancialReportStatusScreenState
   final List<double> _progressList = [0.0, 0.0, 0.0, 0.0];
   bool _isIncomeLoading = true;
   bool _isExpensesLoading = true;
+  bool _isPaused = false;
+  bool _isLongPressing = false; // Track when long press is active
   int totalIncome = 0;
   int totalExpense = 0;
   int totalBalance = 0;
@@ -110,100 +112,109 @@ class _FinancialReportStatusScreenState
         if (!mounted) return;
         setState(() {
           totalExpense = expense;
-
-          _isExpensesLoading = false; // Mark expenses as loaded
+          _isExpensesLoading = false;
         });
       },
       failure: (error) {
         log.d('State is failure');
         if (!mounted) return;
         setState(() {
-          _isExpensesLoading = false; // Mark expenses as loaded even on failure
+          _isExpensesLoading = false;
         });
       },
       inProgress: () {
         log.d('State is inProgress');
         if (!mounted) return;
         setState(() {
-          _isExpensesLoading = true; // Mark expenses as loading
+          _isExpensesLoading = true;
         });
       },
       setExpenseSuccess: () {
         log.d('State is setExpenseSuccess');
         if (!mounted) return;
         setState(() {
-          _isExpensesLoading = false; // Mark expenses as loaded even on failure
+          _isExpensesLoading = false;
         });
       },
       createExpenseSuccess: () {
-        _isExpensesLoading = false; // Mark expenses as loaded even on failure
-
+        _isExpensesLoading = false;
         BlocProvider.of<ExpenseBloc>(context).add(ExpenseEvent.getExpense());
       },
     );
   }
 
   void _startAutoTransition() {
-    _timer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
-      if (!mounted) return;
+    _timer?.cancel();
 
-      setState(() {
-        // Increment progress for current screen
-        _progressList[_currentIndex] += 0.01;
+    if (!_isPaused) {
+      _timer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
+        if (!mounted) return;
 
-        // If current screen's progress reaches 1.0
-        if (_progressList[_currentIndex] >= 1.0) {
-          // Set current screen's progress to exactly 1.0
-          _progressList[_currentIndex] = 1.0;
+        setState(() {
+          // Increment progress for current screen
+          _progressList[_currentIndex] += 0.01;
 
-          // Move to next screen
-          if (_currentIndex < _screens.length - 1) {
-            _currentIndex++;
-            // Don't automatically advance to the next screen if we're at the last screen
-          } else {
-            // If at last screen, stop the timer
-            _timer?.cancel();
+          // If current screen's progress reaches 1.0
+          if (_progressList[_currentIndex] >= 1.0) {
+            // Set current screen's progress to exactly 1.0
+            _progressList[_currentIndex] = 1.0;
+
+            // Move to next screen
+            if (_currentIndex < _screens.length - 1) {
+              _currentIndex++;
+            } else {
+              // If at last screen, stop the timer
+              _timer?.cancel();
+            }
           }
-        }
+        });
       });
+    }
+  }
+
+  void _togglePause() {
+    setState(() {
+      _isPaused = !_isPaused;
+      if (_isPaused) {
+        _timer?.cancel();
+      } else {
+        _startAutoTransition();
+      }
     });
   }
 
   void _nextScreen() {
+    // Do nothing if we're in a long press or paused
+    if (_isLongPressing || _isPaused) return;
+
     if (_currentIndex < _screens.length - 1) {
-      _timer?.cancel(); // Cancel auto transition
+      _timer?.cancel();
 
       setState(() {
-        // Complete the current screen progress
         _progressList[_currentIndex] = 1.0;
-
-        // Move to next screen
         _currentIndex++;
       });
 
-      _startAutoTransition(); // Restart auto transition
+      _startAutoTransition();
     }
   }
 
   void _previousScreen() {
+    // Do nothing if we're in a long press or paused
+    if (_isLongPressing || _isPaused) return;
+
     if (_currentIndex > 0) {
-      _timer?.cancel(); // Cancel auto transition
+      _timer?.cancel();
 
       setState(() {
-        // Reset the current screen progress
         _progressList[_currentIndex] = 0.0;
-
-        // Move to previous screen
         _currentIndex--;
 
-        // Make sure we restart the progress for the previous screen
-        // if it's already completed
         if (_progressList[_currentIndex] >= 1.0) {
           _progressList[_currentIndex] = 0.0;
         }
       });
 
-      // Always restart auto transition for the previous screen
       _startAutoTransition();
     }
   }
@@ -211,12 +222,11 @@ class _FinancialReportStatusScreenState
   // Add a method to reset all progress bars
   void _resetAllProgress() {
     setState(() {
-      // Reset all progress bars
       for (int i = 0; i < _progressList.length; i++) {
         _progressList[i] = 0.0;
       }
-      // Set current index to 0 (first screen)
       _currentIndex = 0;
+      _isPaused = false;
     });
     _startAutoTransition();
   }
@@ -226,26 +236,60 @@ class _FinancialReportStatusScreenState
     return Scaffold(
       body: Stack(
         children: [
-          // Main content
-          GestureDetector(
-            onHorizontalDragEnd: (details) {
-              if (details.primaryVelocity! > 0) {
-                _previousScreen();
-              } else if (details.primaryVelocity! < 0) {
-                _nextScreen();
-              }
+          // Main content - Use RawGestureDetector to have more control
+          Listener(
+            onPointerDown: (PointerDownEvent event) {
+              // Start tracking potential long press
             },
-            onTapDown: (details) {
-              final screenWidth = MediaQuery.of(context).size.width;
-              if (details.localPosition.dx < screenWidth * 0.2) {
-                _previousScreen();
-              } else if (details.localPosition.dx > screenWidth * 0.2) {
-                _nextScreen();
-              }
+            onPointerUp: (PointerUpEvent event) {
+              // End tracking potential long press
             },
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: _screens[_currentIndex],
+            child: GestureDetector(
+              // This will ensure long press takes precedence over taps
+              onLongPressStart: (LongPressStartDetails details) {
+                setState(() {
+                  _isLongPressing = true;
+                  _isPaused = true;
+                  _timer?.cancel();
+                });
+              },
+              onLongPressEnd: (LongPressEndDetails details) {
+                setState(() {
+                  _isLongPressing = false;
+                  _isPaused = false;
+                  _startAutoTransition(); // Resume when long press ends
+                });
+              },
+              // Disable tap functionality while long pressing
+              onTapDown: (TapDownDetails details) {
+                if (_isLongPressing || _isPaused) return;
+
+                final screenWidth = MediaQuery.of(context).size.width;
+                if (details.localPosition.dx < screenWidth * 0.2) {
+                  _previousScreen();
+                } else if (details.localPosition.dx > screenWidth * 0.8) {
+                  _nextScreen();
+                }
+              },
+              // Disable drag functionality while long pressing
+              onHorizontalDragEnd: (DragEndDetails details) {
+                if (_isLongPressing || _isPaused) return;
+
+                if (details.primaryVelocity! > 0) {
+                  _previousScreen();
+                } else if (details.primaryVelocity! < 0) {
+                  _nextScreen();
+                }
+              },
+              child: Stack(
+                children: [
+                  // Current screen
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: _screens[_currentIndex],
+                  ),
+                ],
+              ),
             ),
           ),
 
