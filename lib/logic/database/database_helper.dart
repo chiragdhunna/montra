@@ -204,6 +204,15 @@ CREATE TABLE wallet_names (
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
       )
   ''');
+
+    await db.execute('''
+  CREATE TABLE notifications (
+    notification_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT,
+    subtitle TEXT,
+    time TEXT
+  )
+''');
   }
 
   Future<void> deleteDatabaseFile() async {
@@ -577,5 +586,27 @@ CREATE TABLE wallet_names (
     } else {
       return null; // Return null if no matching budget is found
     }
+  }
+
+  Future<void> insertNotification(Map<String, dynamic> notification) async {
+    final db = await database;
+
+    // Make sure to remove 'notification_id' from the map (SQLite will handle auto-increment)
+    final insertData = Map.of(notification)..remove('notification_id');
+
+    await db.insert('notifications', insertData);
+  }
+
+  Future<List<Map<String, dynamic>>> getNotifications() async {
+    final db = await database;
+
+    // Query notifications ordered by time
+    final result = await db.query('notifications', orderBy: 'time DESC');
+    return result;
+  }
+
+  Future<void> clearAllNotifications() async {
+    final db = await database;
+    await db.delete('notifications');
   }
 }

@@ -10,6 +10,7 @@ import 'package:montra/logic/api/budget/models/delete_budget_model.dart';
 import 'package:montra/logic/api/budget/models/update_budget_model.dart';
 import 'package:montra/logic/blocs/authentication_bloc/authentication_bloc.dart';
 import 'package:montra/logic/blocs/network_bloc/network_helper.dart';
+import 'package:montra/logic/blocs/notification_bloc/notification_bloc.dart';
 import 'package:montra/logic/database/database_helper.dart';
 import 'package:montra/logic/dio_factory.dart';
 
@@ -155,6 +156,25 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
         // Map the database results to a List<BudgetModel> before passing it to BudgetState
         final localBudgets = await dbHelper.getAllBudgets();
 
+        List<Map<String, dynamic>> exceedBudgets = [];
+
+        for (final budget in localBudgets) {
+          if (budget['current'] > budget['total_budget']) {
+            final data = {
+              "title": "${budget['name']} Budget has exceeded",
+              "subtitle":
+                  "Your ${budget['name']} budget has exceeded the limit...",
+              "time": budget['created_at'],
+            };
+            exceedBudgets.add(data);
+          }
+        }
+
+        // Insert each notification one by one
+        for (final notification in exceedBudgets) {
+          await dbHelper.insertNotification(notification);
+        }
+
         emit(
           BudgetState.getBudgetsSuccess(
             budgets: BudgetsModel(
@@ -180,6 +200,25 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
       }
     } else {
       final localBudgets = await dbHelper.getAllBudgets();
+
+      List<Map<String, dynamic>> exceedBudgets = [];
+
+      for (final budget in localBudgets) {
+        if (budget['current'] > budget['total_budget']) {
+          final data = {
+            "title": "${budget['name']} Budget has exceeded",
+            "subtitle":
+                "Your ${budget['name']} budget has exceeded the limit...",
+            "time": budget['created_at'],
+          };
+          exceedBudgets.add(data);
+        }
+      }
+
+      // Insert each notification one by one
+      for (final notification in exceedBudgets) {
+        await dbHelper.insertNotification(notification);
+      }
 
       // Map the database results to a List<BudgetModel>
       emit(
