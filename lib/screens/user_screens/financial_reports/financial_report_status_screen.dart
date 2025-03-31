@@ -249,14 +249,15 @@ class _FinancialReportStatusScreenState
               onLongPressStart: (LongPressStartDetails details) {
                 setState(() {
                   _isLongPressing = true;
+                  _isPaused = true;
+                  _timer?.cancel();
                 });
-              },
-              onLongPress: () {
-                _togglePause();
               },
               onLongPressEnd: (LongPressEndDetails details) {
                 setState(() {
                   _isLongPressing = false;
+                  _isPaused = false;
+                  _startAutoTransition(); // Resume when long press ends
                 });
               },
               // Disable tap functionality while long pressing
@@ -287,53 +288,6 @@ class _FinancialReportStatusScreenState
                     duration: const Duration(milliseconds: 300),
                     child: _screens[_currentIndex],
                   ),
-
-                  // Pause overlay
-                  if (_isPaused)
-                    Positioned.fill(
-                      child: Container(
-                        color: Colors.black54,
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.pause_circle_filled,
-                                size: 80,
-                                color: Colors.white.withOpacity(0.8),
-                              ),
-                              const SizedBox(height: 16),
-                              const Text(
-                                "Paused",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              ElevatedButton(
-                                onPressed: _togglePause,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 12,
-                                  ),
-                                ),
-                                child: const Text(
-                                  "Resume",
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
                 ],
               ),
             ),
