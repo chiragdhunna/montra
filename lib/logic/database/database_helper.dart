@@ -609,4 +609,134 @@ CREATE TABLE wallet_names (
     final db = await database;
     await db.delete('notifications');
   }
+
+  // Add these functions to your DatabaseHelper class
+
+  // Get the biggest source of income
+  Future<Map<String, dynamic>?> getBiggestIncomeSource() async {
+    final db = await database;
+
+    // Group income by source and sum the amounts
+    final result = await db.rawQuery('''
+    SELECT 
+      source, 
+      SUM(amount) as total_amount 
+    FROM income 
+    GROUP BY source 
+    ORDER BY total_amount DESC 
+    LIMIT 1
+  ''');
+
+    if (result.isNotEmpty) {
+      return {
+        'source': result.first['source'],
+        'amount': result.first['total_amount'],
+      };
+    }
+
+    return null;
+  }
+
+  // Get the biggest source of expense
+  Future<Map<String, dynamic>?> getBiggestExpenseSource() async {
+    final db = await database;
+
+    // Group expenses by source and sum the amounts
+    final result = await db.rawQuery('''
+    SELECT 
+      source, 
+      SUM(amount) as total_amount 
+    FROM expense 
+    GROUP BY source 
+    ORDER BY total_amount DESC 
+    LIMIT 1
+  ''');
+
+    if (result.isNotEmpty) {
+      return {
+        'source': result.first['source'],
+        'amount': result.first['total_amount'],
+      };
+    }
+
+    return null;
+  }
+
+  // Get detailed income breakdown by source
+  Future<List<Map<String, dynamic>>> getIncomeBreakdownBySource() async {
+    final db = await database;
+
+    return await db.rawQuery('''
+    SELECT 
+      source, 
+      SUM(amount) as total_amount 
+    FROM income 
+    GROUP BY source 
+    ORDER BY total_amount DESC
+  ''');
+  }
+
+  // Get detailed expense breakdown by source
+  Future<List<Map<String, dynamic>>> getExpenseBreakdownBySource() async {
+    final db = await database;
+
+    return await db.rawQuery('''
+    SELECT 
+      source, 
+      SUM(amount) as total_amount 
+    FROM expense 
+    GROUP BY source 
+    ORDER BY total_amount DESC
+  ''');
+  }
+
+  // Get income and expense statistics for last N months
+  Future<Map<String, dynamic>> getFinancialStatistics({int months = 3}) async {
+    final db = await database;
+
+    // Calculate date for N months ago
+    final now = DateTime.now();
+    final fromDate =
+        DateTime(now.year, now.month - months, now.day).toIso8601String();
+
+    // Get total income for period
+    final incomeResult = await db.rawQuery(
+      '''
+    SELECT SUM(amount) as total_income 
+    FROM income 
+    WHERE created_at >= ?
+  ''',
+      [fromDate],
+    );
+
+    // Get total expense for period
+    final expenseResult = await db.rawQuery(
+      '''
+    SELECT SUM(amount) as total_expense 
+    FROM expense 
+    WHERE created_at >= ?
+  ''',
+      [fromDate],
+    );
+
+    // Get top income source
+    final topIncomeSource = await getBiggestIncomeSource();
+
+    // Get top expense source
+    final topExpenseSource = await getBiggestExpenseSource();
+
+    // Calculate net savings (income - expense)
+    final totalIncome = incomeResult.first['total_income'] ?? 0;
+    final totalExpense = expenseResult.first['total_expense'] ?? 0;
+    final netSavings = (totalIncome as int) - (totalExpense as int);
+
+    return {
+      'total_income': totalIncome,
+      'total_expense': totalExpense,
+      'net_savings': netSavings,
+      'top_income_source': topIncomeSource,
+      'top_expense_source': topExpenseSource,
+      'period_months': months,
+    };
+  }
 }
