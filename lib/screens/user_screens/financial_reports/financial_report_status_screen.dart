@@ -30,6 +30,7 @@ class _FinancialReportStatusScreenState
 
   Map<String, dynamic>? biggestIncomeSource;
   Map<String, dynamic>? biggestExpenseSource;
+  int numberOfBudgetsThisMonth = 0;
   int numberOfBudgetsExceeded = 0;
   int _currentIndex = 0;
   Timer? _timer;
@@ -97,6 +98,7 @@ class _FinancialReportStatusScreenState
         biggestIncomeSource = state.biggestIncomeSource;
         biggestExpenseSource = state.biggestExpenseSource;
         numberOfBudgetsExceeded = state.numberOfBudgetsExceeded;
+        numberOfBudgetsThisMonth = state.numberOfBudgetsThisMonth;
 
         log.d(
           'biggestIncomeSource : $biggestIncomeSource , biggestExpenseSource : $biggestExpenseSource , numberOfBudgetsExceeded : $numberOfBudgetsExceeded state is $state',
@@ -552,7 +554,7 @@ class _FinancialReportStatusScreenState
             ),
             const SizedBox(height: 20),
             Text(
-              "$numberOfBudgetsExceeded of 12 Budgets exceed the limit",
+              "$numberOfBudgetsExceeded of $numberOfBudgetsThisMonth Budgets exceed the limit",
               style: TextStyle(
                 fontSize: 24,
                 color: Colors.white,

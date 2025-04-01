@@ -1,10 +1,13 @@
 import 'package:bloc/bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:logger/logger.dart';
 import 'package:montra/logic/database/database_helper.dart';
 
 part 'financial_status_event.dart';
 part 'financial_status_state.dart';
 part 'financial_status_bloc.freezed.dart';
+
+Logger log = Logger(printer: PrettyPrinter());
 
 class FinancialStatusBloc
     extends Bloc<FinancialStatusEvent, FinancialStatusState> {
@@ -32,6 +35,8 @@ class FinancialStatusBloc
       final numberOfBudgetsExceeded =
           await DatabaseHelper().getNumberOfBudgetsExceededThisMonth();
 
+      final numberOfBudgets = await DatabaseHelper().getTotalBudgetsThisMonth();
+
       // Emit updated state with fetched data
       emit(
         state.copyWith(
@@ -39,6 +44,7 @@ class FinancialStatusBloc
           biggestIncomeSource: biggestIncomeSource,
           biggestExpenseSource: biggestExpenseSource,
           numberOfBudgetsExceeded: numberOfBudgetsExceeded,
+          numberOfBudgetsThisMonth: numberOfBudgets,
         ),
       );
     } catch (e) {

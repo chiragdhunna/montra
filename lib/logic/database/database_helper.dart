@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:logger/logger.dart';
 import 'package:montra/logic/blocs/network_bloc/network_helper.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:montra/logic/api/bank/models/bank_model.dart';
 import 'package:montra/logic/api/wallet/models/wallet_model.dart';
+
+Logger log = Logger(printer: PrettyPrinter());
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -755,10 +758,35 @@ CREATE TABLE wallet_names (
     FROM budgets
     WHERE strftime('%Y-%m', created_at) = ?
       AND current > total_budget
+      AND pending_deletion = 0
   ''',
       [currentMonth],
     );
 
+    // Return the exceeded budgets count
     return result.isNotEmpty ? result.first['exceeded_count'] as int : 0;
+  }
+
+  // Get total number of budgets for this month
+  Future<int> getTotalBudgetsThisMonth() async {
+    final db = await database;
+
+    // Get the current month in YYYY-MM format
+    final now = DateTime.now();
+    final currentMonth = '${now.year}-${now.month.toString().padLeft(2, '0')}';
+
+    // Query for all budgets created in the current month
+    final result = await db.rawQuery(
+      '''
+    SELECT COUNT(*) as total_budgets
+    FROM budgets
+    WHERE strftime('%Y-%m', created_at) = ?
+      AND pending_deletion = 0
+  ''',
+      [currentMonth],
+    );
+
+    // Return the total budgets count
+    return result.isNotEmpty ? result.first['total_budgets'] as int : 0;
   }
 }

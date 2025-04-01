@@ -7,6 +7,7 @@ class FinancialStatusState with _$FinancialStatusState {
     required Map<String, dynamic>? biggestIncomeSource,
     required Map<String, dynamic>? biggestExpenseSource,
     required int numberOfBudgetsExceeded,
+    required int numberOfBudgetsThisMonth,
     String? errorMessage,
   }) = _FinancialStatusState;
 
@@ -16,6 +17,7 @@ class FinancialStatusState with _$FinancialStatusState {
     biggestExpenseSource: null,
     numberOfBudgetsExceeded: 0,
     errorMessage: null,
+    numberOfBudgetsThisMonth: 0,
   );
 }
 
