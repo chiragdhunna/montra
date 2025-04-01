@@ -206,7 +206,7 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
 
         // Fallback to local DB
         final localWalletNames = await dbHelper.getWalletNames();
-        log.w('Using cached wallet names due to API error');
+        log.d('Using cached wallet names due to API error');
         emit(ExpenseState.getWalletNamesSuccess(walletNames: localWalletNames));
       }
     } else {

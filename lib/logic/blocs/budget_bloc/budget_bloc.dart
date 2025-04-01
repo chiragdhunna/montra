@@ -49,7 +49,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     // Format the month (ensure it's two digits)
     String formattedMonth = "${year}-${event.month.toString().padLeft(2, '0')}";
 
-    log.w("Formatted month: $formattedMonth");
+    log.d("Formatted month: $formattedMonth");
 
     final localBudgets = await dbHelper.getBudgetsByMonth(formattedMonth);
 

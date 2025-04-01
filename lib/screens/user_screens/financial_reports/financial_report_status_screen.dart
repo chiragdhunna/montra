@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
 import 'package:montra/constants/quotes.dart';
 import 'package:montra/logic/blocs/expense/expense_bloc.dart';
+import 'package:montra/logic/blocs/financial_status_bloc/financial_status_bloc.dart';
 import 'package:montra/logic/blocs/income_bloc/income_bloc.dart';
 import 'dart:async';
 
@@ -20,8 +21,16 @@ class FinancialReportStatusScreen extends StatefulWidget {
 
 class _FinancialReportStatusScreenState
     extends State<FinancialReportStatusScreen> {
+  late StreamSubscription<FinancialStatusState>
+  _financialStatusStreamSubscription;
+  FinancialStatusState _financialStatusState = FinancialStatusState.initial();
+
   late StreamSubscription<IncomeState> _incomeStreamSubscription;
   late StreamSubscription<ExpenseState> _expenseStreamSubscription;
+
+  Map<String, dynamic>? biggestIncomeSource;
+  Map<String, dynamic>? biggestExpenseSource;
+  int numberOfBudgetsExceeded = 0;
   int _currentIndex = 0;
   Timer? _timer;
   final List<double> _progressList = [0.0, 0.0, 0.0, 0.0];
@@ -38,10 +47,24 @@ class _FinancialReportStatusScreenState
   @override
   void initState() {
     super.initState();
+    _financialStatusStreamSubscription = BlocProvider.of<FinancialStatusBloc>(
+      context,
+    ).stream.listen(_onFinancialStatusStateChanged);
+    _incomeStreamSubscription = BlocProvider.of<IncomeBloc>(
+      context,
+    ).stream.listen(incomeBlocChangeHandler);
+    _expenseStreamSubscription = BlocProvider.of<ExpenseBloc>(
+      context,
+    ).stream.listen(expenseBlocChangeHandler);
+
     BlocProvider.of<IncomeBloc>(context).add(IncomeEvent.getIncome());
     BlocProvider.of<ExpenseBloc>(context).add(ExpenseEvent.getExpense());
+    BlocProvider.of<FinancialStatusBloc>(context).add(LoadFinancialStatus());
     incomeBlocChangeHandler(BlocProvider.of<IncomeBloc>(context).state);
     expenseBlocChangeHandler(BlocProvider.of<ExpenseBloc>(context).state);
+    _onFinancialStatusStateChanged(
+      BlocProvider.of<FinancialStatusBloc>(context).state,
+    );
     _screens = [
       _buildSpendingScreen(),
       _buildIncomeScreen(),
@@ -53,8 +76,40 @@ class _FinancialReportStatusScreenState
 
   @override
   void dispose() {
+    _financialStatusStreamSubscription.cancel();
+    _incomeStreamSubscription.cancel();
+    _expenseStreamSubscription.cancel();
     _timer?.cancel();
     super.dispose();
+  }
+
+  void _onFinancialStatusStateChanged(FinancialStatusState state) {
+    if (!mounted) return;
+
+    setState(() {
+      _financialStatusState = state;
+      if (state.status == FinancialStatus.loaded) {
+        // Add debug print to verify values before assignment
+        print(
+          "Setting sources: income=${state.biggestIncomeSource}, expense=${state.biggestExpenseSource}",
+        );
+
+        biggestIncomeSource = state.biggestIncomeSource;
+        biggestExpenseSource = state.biggestExpenseSource;
+        numberOfBudgetsExceeded = state.numberOfBudgetsExceeded;
+
+        log.d(
+          'biggestIncomeSource : $biggestIncomeSource , biggestExpenseSource : $biggestExpenseSource , numberOfBudgetsExceeded : $numberOfBudgetsExceeded state is $state',
+        );
+
+        _screens = [
+          _buildSpendingScreen(),
+          _buildIncomeScreen(),
+          _buildBudgetScreen(),
+          _buildQuoteScreen(),
+        ];
+      }
+    });
   }
 
   void incomeBlocChangeHandler(IncomeState state) {
@@ -334,6 +389,8 @@ class _FinancialReportStatusScreenState
   }
 
   Widget _buildSpendingScreen() {
+    log.d('incomeSource right now : $biggestIncomeSource');
+
     return Container(
       key: const ValueKey('spending'),
       color: Colors.red,
@@ -373,19 +430,31 @@ class _FinancialReportStatusScreenState
               child: Column(
                 children: [
                   const Text(
-                    "and your biggest spending is from",
+                    "and your biggest income is from",
                     style: TextStyle(fontSize: 16),
                   ),
                   const SizedBox(height: 10),
-                  Chip(
-                    label: const Text("Shopping"),
-                    backgroundColor: Colors.orange.withOpacity(0.2),
-                  ),
+                  // Check if biggestIncomeSource is available, else show a loading state or placeholder
+                  biggestIncomeSource != null
+                      ? Chip(
+                        label: Text(
+                          biggestIncomeSource!['source'], // Dynamically display the source name
+                        ),
+                        backgroundColor: Colors.green.withOpacity(
+                          0.2,
+                        ), // You can change the color based on the source
+                      )
+                      : const CircularProgressIndicator(), // Show a loading spinner while data is being fetched
                   const SizedBox(height: 5),
-                  const Text(
-                    "\$120",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
+                  biggestIncomeSource != null
+                      ? Text(
+                        "\$${biggestIncomeSource!['amount']}", // Dynamically display the amount
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                      : const SizedBox.shrink(), // Show nothing until the data is fetched
                 ],
               ),
             ),
@@ -435,19 +504,31 @@ class _FinancialReportStatusScreenState
               child: Column(
                 children: [
                   const Text(
-                    "Your biggest income is from",
+                    "Your biggest expense is from",
                     style: TextStyle(fontSize: 16),
                   ),
                   const SizedBox(height: 10),
-                  Chip(
-                    label: const Text("Salary"),
-                    backgroundColor: Colors.green.withOpacity(0.2),
-                  ),
+                  // Check if biggestExpenseSource is available, else show a loading state or placeholder
+                  biggestExpenseSource != null
+                      ? Chip(
+                        label: Text(
+                          biggestExpenseSource!['source'], // Dynamically display the source name
+                        ),
+                        backgroundColor: Colors.red.withOpacity(
+                          0.2,
+                        ), // You can change the color based on the source
+                      )
+                      : const CircularProgressIndicator(), // Show a loading spinner while data is being fetched
                   const SizedBox(height: 5),
-                  const Text(
-                    "\$5000",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
+                  biggestExpenseSource != null
+                      ? Text(
+                        "\$${biggestExpenseSource!['amount']}", // Dynamically display the amount
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                      : const SizedBox.shrink(), // Show nothing until the data is fetched
                 ],
               ),
             ),
@@ -470,8 +551,8 @@ class _FinancialReportStatusScreenState
               style: TextStyle(fontSize: 18, color: Colors.white),
             ),
             const SizedBox(height: 20),
-            const Text(
-              "2 of 12 Budgets exceed the limit",
+            Text(
+              "$numberOfBudgetsExceeded of 12 Budgets exceed the limit",
               style: TextStyle(
                 fontSize: 24,
                 color: Colors.white,

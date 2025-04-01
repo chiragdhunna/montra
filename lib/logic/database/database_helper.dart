@@ -739,4 +739,26 @@ CREATE TABLE wallet_names (
       'period_months': months,
     };
   }
+
+  // Get number of budgets exceeded this month
+  Future<int> getNumberOfBudgetsExceededThisMonth() async {
+    final db = await database;
+
+    // Get the current month in YYYY-MM format
+    final now = DateTime.now();
+    final currentMonth = '${now.year}-${now.month.toString().padLeft(2, '0')}';
+
+    // Query for budgets that have exceeded the total budget in the current month
+    final result = await db.rawQuery(
+      '''
+    SELECT COUNT(*) as exceeded_count
+    FROM budgets
+    WHERE strftime('%Y-%m', created_at) = ?
+      AND current > total_budget
+  ''',
+      [currentMonth],
+    );
+
+    return result.isNotEmpty ? result.first['exceeded_count'] as int : 0;
+  }
 }
