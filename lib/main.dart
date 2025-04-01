@@ -8,6 +8,7 @@ import 'package:montra/logic/blocs/budget_bloc/budget_bloc.dart';
 import 'package:montra/logic/blocs/expense/expense_bloc.dart';
 import 'package:montra/logic/blocs/export_data/export_data_bloc.dart';
 import 'package:montra/logic/blocs/financial_report_bloc/financial_report_bloc.dart';
+import 'package:montra/logic/blocs/financial_status_bloc/financial_status_bloc.dart';
 import 'package:montra/logic/blocs/income_bloc/income_bloc.dart';
 import 'package:montra/logic/blocs/login_bloc/login_bloc.dart';
 import 'package:montra/logic/blocs/network_bloc/network_bloc.dart';
@@ -57,6 +58,9 @@ class _MyAppState extends State<MyApp> {
         BlocProvider<NotificationBloc>(create: (context) => NotificationBloc()),
         BlocProvider<FinancialReportBloc>(
           create: (context) => FinancialReportBloc(),
+        ),
+        BlocProvider<FinancialStatusBloc>(
+          create: (context) => FinancialStatusBloc(),
         ),
         BlocProvider<AuthenticationBloc>(
           create: (context) {
@@ -179,7 +183,7 @@ class _MyAppState extends State<MyApp> {
                   log.e('Error in main.dart : $error');
 
                   if (error == 'Error getting profile image') {
-                    log.w('Checking Existing');
+                    log.d('Checking Existing');
                     BlocProvider.of<AuthenticationBloc>(
                       context,
                     ).add(AuthenticationEvent.checkExisting());

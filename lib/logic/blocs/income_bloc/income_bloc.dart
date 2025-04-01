@@ -87,7 +87,7 @@ class IncomeBloc extends Bloc<IncomeEvent, IncomeState> {
           (sum, e) => sum + (e['amount'] as int),
         );
 
-        log.w(
+        log.d(
           'localIncome : $localIncome + offline : $offline + offlineTotal : $offlineTotal',
         );
 
@@ -128,7 +128,7 @@ class IncomeBloc extends Bloc<IncomeEvent, IncomeState> {
           // Fallback to local DB
           final localWalletNames = await dbHelper.getWalletNames();
           if (localWalletNames.isNotEmpty) {
-            log.w('Using cached wallet names due to API error');
+            log.d('Using cached wallet names due to API error');
             emit(
               IncomeState.getWalletNamesSuccess(walletNames: localWalletNames),
             );

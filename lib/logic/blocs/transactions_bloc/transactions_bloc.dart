@@ -142,7 +142,7 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
       final dbHelper = DatabaseHelper();
       final isConnected = await NetworkHelper.checkNow();
 
-      log.w('Connectivity in TransactionsBloc : $isConnected');
+      log.d('Connectivity in TransactionsBloc : $isConnected');
 
       if (isConnected) {
         try {

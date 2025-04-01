@@ -65,7 +65,7 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
           final localBalance = await dbHelper.getAccountBalance();
 
           if (localBalance != null) {
-            log.w('Falling back to local DB due to API error');
+            log.d('Falling back to local DB due to API error');
             emit(
               AccountState.getAccountBalanceSuccess(
                 balance: localBalance.toInt(),

@@ -105,7 +105,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
         });
       },
       createBudgetSuccess: () {
-        log.w('Current Month is : $currentMonthIndex');
+        log.d('Current Month is : $currentMonthIndex');
         BlocProvider.of<BudgetBloc>(
           context,
         ).add(BudgetEvent.getBudgetByMonth(month: currentMonthIndex + 1));
