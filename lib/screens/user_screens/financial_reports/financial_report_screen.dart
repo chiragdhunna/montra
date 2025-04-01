@@ -5,8 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:logger/logger.dart';
-import 'package:montra/logic/blocs/expense/expense_bloc.dart';
-import 'package:montra/logic/blocs/income_bloc/income_bloc.dart';
+import 'package:montra/logic/blocs/financial_report_bloc/financial_report_bloc.dart'; // Import the new FinancialReportBloc
 
 Logger log = Logger(printer: PrettyPrinter());
 
@@ -18,8 +17,8 @@ class FinancialReportScreen extends StatefulWidget {
 }
 
 class _FinancialReportScreenState extends State<FinancialReportScreen> {
-  late StreamSubscription<IncomeState> _incomeStreamSubscription;
-  late StreamSubscription<ExpenseState> _expenseStreamSubscription;
+  late StreamSubscription<FinancialReportState>
+  _financialReportStreamSubscription;
   bool isExpenseSelected = true;
   bool isGraphSelected = true;
   String selectedTransactionType = "Category";
@@ -31,103 +30,69 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
   int totalExpense = 0;
   int totalBalance = 0;
 
+  // Add these properties for storing statistics
+  List<Map<String, dynamic>> _incomeBreakdown = [];
+  List<Map<String, dynamic>> _expenseBreakdown = [];
+  Map<String, dynamic>? _financeStats;
+
   @override
   void initState() {
-    // TODO: implement initState
-    BlocProvider.of<IncomeBloc>(context).add(IncomeEvent.getIncome());
-    BlocProvider.of<ExpenseBloc>(context).add(ExpenseEvent.getExpense());
-    incomeBlocChangeHandler(BlocProvider.of<IncomeBloc>(context).state);
-    expenseBlocChangeHandler(BlocProvider.of<ExpenseBloc>(context).state);
     super.initState();
+    // Subscribe to the FinancialReportBloc stream
+    _financialReportStreamSubscription = BlocProvider.of<FinancialReportBloc>(
+      context,
+    ).stream.listen(_financialReportBlocStateHandler);
+
+    // Dispatch the event to load data
+    BlocProvider.of<FinancialReportBloc>(
+      context,
+    ).add(FinancialReportEvent.loadFinancialReport());
   }
 
-  void incomeBlocChangeHandler(IncomeState state) {
+  // Stream handler for the FinancialReportBloc
+  void _financialReportBlocStateHandler(FinancialReportState state) {
     state.maybeWhen(
-      orElse: () {
-        log.d('State is or else');
-      },
-      getWalletNamesSuccess: (walletNames) {
-        setState(() {
-          _isIncomeLoading = false;
-        });
-      },
-      getIncomeSuccess: (income) {
-        log.d('State is getIncomeSuccess');
-        if (!mounted) return;
-        setState(() {
-          totalIncome = income;
-          _isIncomeLoading = false;
-        });
-      },
-      failure: () {
-        log.d('State is failure');
-        if (!mounted) return;
-        setState(() {
-          _isIncomeLoading = false;
-        });
-      },
-      inProgress: () {
-        log.d('State is inProgress');
-        if (!mounted) return;
+      loading: () {
         setState(() {
           _isIncomeLoading = true;
+          _isExpensesLoading = true;
         });
       },
-      setIncomeSuccess: () {
-        log.d('State is setIncomeSuccess');
-        if (!mounted) return;
+      loaded: (
+        totalIncome,
+        totalExpense,
+        totalBalance,
+        incomeBreakdown,
+        expenseBreakdown,
+        financeStats,
+      ) {
         setState(() {
+          this.totalIncome = totalIncome;
+          this.totalExpense = totalExpense;
+          this.totalBalance = totalBalance;
+          _incomeBreakdown = incomeBreakdown;
+          _expenseBreakdown = expenseBreakdown;
+          _financeStats = financeStats;
           _isIncomeLoading = false;
-        });
-      },
-      createIncomeSuccess: () {
-        _isIncomeLoading = false;
-        BlocProvider.of<IncomeBloc>(context).add(IncomeEvent.getIncome());
-      },
-    );
-  }
-
-  void expenseBlocChangeHandler(ExpenseState state) {
-    state.maybeWhen(
-      orElse: () {
-        log.d('State is or else');
-      },
-      getExpenseSuccess: (expense, expenseData) {
-        log.d('State is getExpenseSuccess');
-        if (!mounted) return;
-        setState(() {
-          totalExpense = expense;
-
-          _isExpensesLoading = false; // Mark expenses as loaded
+          _isExpensesLoading = false;
         });
       },
       failure: (error) {
-        log.d('State is failure');
-        if (!mounted) return;
         setState(() {
-          _isExpensesLoading = false; // Mark expenses as loaded even on failure
+          _isIncomeLoading = false;
+          _isExpensesLoading = false;
         });
+        log.e('Error loading financial data: $error');
       },
-      inProgress: () {
-        log.d('State is inProgress');
-        if (!mounted) return;
-        setState(() {
-          _isExpensesLoading = true; // Mark expenses as loading
-        });
-      },
-      setExpenseSuccess: () {
-        log.d('State is setExpenseSuccess');
-        if (!mounted) return;
-        setState(() {
-          _isExpensesLoading = false; // Mark expenses as loaded even on failure
-        });
-      },
-      createExpenseSuccess: () {
-        _isExpensesLoading = false; // Mark expenses as loaded even on failure
-
-        BlocProvider.of<ExpenseBloc>(context).add(ExpenseEvent.getExpense());
-      },
+      orElse: () {},
     );
+  }
+
+  @override
+  void dispose() {
+    _financialReportStreamSubscription
+        .cancel(); // Cancel the subscription when the screen is disposed
+    super.dispose();
   }
 
   @override
@@ -141,25 +106,28 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.all(16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildFilterSection(),
-              SizedBox(height: 10.h),
-              _buildGraph(),
-              SizedBox(height: 20.h),
-              _buildToggleButtons(),
-              SizedBox(height: 10.h),
-              _buildTransactionFilters(),
-              SizedBox(height: 10.h),
-              _buildTransactionList(),
-            ],
-          ),
-        ),
-      ),
+      body:
+          _isIncomeLoading || _isExpensesLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                child: Padding(
+                  padding: EdgeInsets.all(16.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildFilterSection(),
+                      SizedBox(height: 10.h),
+                      _buildGraph(),
+                      SizedBox(height: 20.h),
+                      _buildToggleButtons(),
+                      SizedBox(height: 10.h),
+                      _buildTransactionFilters(),
+                      SizedBox(height: 10.h),
+                      _buildTransactionList(),
+                    ],
+                  ),
+                ),
+              ),
     );
   }
 
@@ -180,6 +148,10 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
           onChanged: (value) {
             setState(() {
               selectedTimeFilter = value!;
+              // Dispatch the event to update the financial report with the new time filter
+              BlocProvider.of<FinancialReportBloc>(
+                context,
+              ).add(FinancialReportEvent.loadFinancialReport());
             });
           },
           underline: Container(),
@@ -225,37 +197,11 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
           SizedBox(height: 10.h),
           SizedBox(
             height: 180.h,
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(show: false),
-                titlesData: FlTitlesData(show: false),
-                borderData: FlBorderData(show: false),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: [
-                      FlSpot(0, 1),
-                      FlSpot(1, 3),
-                      FlSpot(2, 2),
-                      FlSpot(3, 4),
-                      FlSpot(4, 3),
-                      FlSpot(5, 5),
-                    ],
-                    isCurved: true,
-                    color: Colors.purple,
-                    dotData: FlDotData(show: false),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      color: Colors.purple.withOpacity(0.3),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+            child: _buildLineChart(),
+          ), // Fixed: _buildLineChart now defined
         ],
       );
     } else {
-      // Pie chart implementation matching the design
       return Center(
         child: Stack(
           alignment: Alignment.center,
@@ -290,47 +236,102 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
   }
 
   List<PieChartSectionData> _getPieSections() {
-    // Define expenses with their proportions
-    final expenses =
-        isExpenseSelected
-            ? [
-              {
-                "amount": 120.0, // Convert to double
-                "color": Colors.orange,
-                "percentage": 120.0 / 332.0 * 100,
-              },
-              {
-                "amount": 80.0, // Convert to double
-                "color": Colors.purple,
-                "percentage": 80.0 / 332.0 * 100,
-              },
-              {
-                "amount": 32.0, // Convert to double
-                "color": Colors.red,
-                "percentage": 32.0 / 332.0 * 100,
-              },
-            ]
-            : [
-              {
-                "amount": 5000.0, // Convert to double
-                "color": Colors.green,
-                "percentage": 5000.0 / 6000.0 * 100,
-              },
-              {
-                "amount": 1000.0, // Convert to double
-                "color": Colors.black,
-                "percentage": 1000.0 / 6000.0 * 100,
-              },
-            ];
+    List<Map<String, dynamic>> data =
+        isExpenseSelected ? _expenseBreakdown : _incomeBreakdown;
 
-    return expenses.map((expense) {
+    if (data.isEmpty) {
+      return [
+        PieChartSectionData(
+          value: 1,
+          color: Colors.grey.withOpacity(0.2),
+          radius: 30,
+          showTitle: false,
+        ),
+      ];
+    }
+
+    final totalAmount = data.fold<double>(
+      0,
+      (sum, item) => sum + (item['total_amount'] as int).toDouble(),
+    );
+
+    final colorMap = {
+      'wallet': Colors.orange,
+      'bank': Colors.purple,
+      'cash': Colors.red,
+      'creditCard': Colors.blue,
+    };
+
+    return data.map((item) {
+      final sourceType = item['source'] as String;
+      final amount = (item['total_amount'] as int).toDouble();
+      final percentage = totalAmount > 0 ? (amount / totalAmount * 100) : 0;
+
       return PieChartSectionData(
-        value: expense["amount"] as double,
-        color: expense["color"] as Color,
+        value: amount,
+        color: colorMap[sourceType] ?? Colors.grey,
         radius: 30,
         showTitle: false,
       );
     }).toList();
+  }
+
+  // New method to build line chart from real data
+  Widget _buildLineChart() {
+    // Simulated line chart data (replace with actual database values)
+    List<FlSpot> spots = [];
+    double maxY = 0;
+
+    if (isExpenseSelected && _expenseBreakdown.isNotEmpty) {
+      // Example data generation
+      for (int i = 0; i < 6; i++) {
+        double value = totalExpense * (0.5 + 0.5 * (i / 5.0)) / 6;
+        spots.add(FlSpot(i.toDouble(), value));
+        if (value > maxY) maxY = value;
+      }
+    } else if (!isExpenseSelected && _incomeBreakdown.isNotEmpty) {
+      // Similar approach for income
+      for (int i = 0; i < 6; i++) {
+        double value = totalIncome * (0.5 + 0.5 * (i / 5.0)) / 6;
+        spots.add(FlSpot(i.toDouble(), value));
+        if (value > maxY) maxY = value;
+      }
+    } else {
+      // Fallback data if no breakdown is available
+      spots = [
+        const FlSpot(0, 0),
+        const FlSpot(1, 0),
+        const FlSpot(2, 0),
+        const FlSpot(3, 0),
+        const FlSpot(4, 0),
+        const FlSpot(5, 0),
+      ];
+    }
+
+    return LineChart(
+      LineChartData(
+        gridData: FlGridData(show: false),
+        titlesData: FlTitlesData(show: false),
+        borderData: FlBorderData(show: false),
+        minY: 0,
+        maxY:
+            maxY > 0
+                ? maxY * 1.2
+                : 10, // Ensure enough headroom above the max value
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            color: Colors.purple,
+            dotData: FlDotData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              color: Colors.purple.withOpacity(0.3),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildToggleButtons() {
@@ -416,49 +417,49 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
   }
 
   Widget _buildCategoryList() {
-    List<Map<String, dynamic>> categories =
-        isExpenseSelected
-            ? [
-              {
-                "name": "Shopping",
-                "amount": 120,
-                "color": Colors.orange,
-                "percentage": 36,
-              },
-              {
-                "name": "Subcription",
-                "amount": 80,
-                "color": Colors.purple,
-                "percentage": 24,
-              },
-              {
-                "name": "Food",
-                "amount": 32,
-                "color": Colors.red,
-                "percentage": 10,
-              },
-            ]
-            : [
-              {
-                "name": "Salary",
-                "amount": 5000,
-                "color": Colors.green,
-                "percentage": 83,
-              },
-              {
-                "name": "Passive Income",
-                "amount": 1000,
-                "color": Colors.black,
-                "percentage": 17,
-              },
-            ];
+    List<Map<String, dynamic>> data =
+        isExpenseSelected ? _expenseBreakdown : _incomeBreakdown;
+
+    if (data.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 30.h),
+          child: Text(
+            "No ${isExpenseSelected ? 'expense' : 'income'} data available",
+            style: TextStyle(fontSize: 16.sp, color: Colors.grey),
+          ),
+        ),
+      );
+    }
+
+    final totalAmount = data.fold<double>(
+      0,
+      (sum, item) => sum + (item['total_amount'] as int).toDouble(),
+    );
+    final colorMap = {
+      'wallet': Colors.orange,
+      'bank': Colors.purple,
+      'cash': Colors.red,
+      'creditCard': Colors.blue,
+    };
+
+    final displayNames = {
+      'wallet': 'Wallet',
+      'bank': 'Bank',
+      'cash': 'Cash',
+      'creditCard': 'Credit Card',
+    };
 
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: categories.length,
+      itemCount: data.length,
       itemBuilder: (context, index) {
-        final category = categories[index];
+        final item = data[index];
+        final sourceType = item['source'] as String;
+        final amount = item['total_amount'] as int;
+        final percentage = totalAmount > 0 ? (amount / totalAmount * 100) : 0;
+
         return Container(
           margin: EdgeInsets.only(bottom: 12.h),
           child: Column(
@@ -473,13 +474,13 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
                         width: 12.w,
                         height: 12.h,
                         decoration: BoxDecoration(
-                          color: category["color"],
+                          color: colorMap[sourceType] ?? Colors.grey,
                           shape: BoxShape.circle,
                         ),
                       ),
                       SizedBox(width: 8.w),
                       Text(
-                        category["name"],
+                        displayNames[sourceType] ?? sourceType,
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w500,
@@ -488,7 +489,7 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
                     ],
                   ),
                   Text(
-                    "- \$${category["amount"]}",
+                    "${isExpenseSelected ? '-' : '+'} \$${amount}",
                     style: TextStyle(
                       fontSize: 16.sp,
                       color: isExpenseSelected ? Colors.red : Colors.green,
@@ -508,11 +509,11 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
                     ),
                   ),
                   FractionallySizedBox(
-                    widthFactor: category["percentage"] / 100,
+                    widthFactor: percentage / 100,
                     child: Container(
                       height: 8.h,
                       decoration: BoxDecoration(
-                        color: category["color"],
+                        color: colorMap[sourceType] ?? Colors.grey,
                         borderRadius: BorderRadius.circular(4.r),
                       ),
                     ),
@@ -527,47 +528,48 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
   }
 
   Widget _buildTransactionCardList() {
+    List<Map<String, dynamic>> data =
+        isExpenseSelected ? _expenseBreakdown : _incomeBreakdown;
+
+    if (data.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 30.h),
+          child: Text(
+            "No ${isExpenseSelected ? 'expense' : 'income'} transactions available",
+            style: TextStyle(fontSize: 16.sp, color: Colors.grey),
+          ),
+        ),
+      );
+    }
+
+    final colorMap = {
+      'wallet': Colors.orange,
+      'bank': Colors.purple,
+      'cash': Colors.red,
+      'creditCard': Colors.blue,
+    };
+    final displayNames = {
+      'wallet': 'Wallet',
+      'bank': 'Bank',
+      'cash': 'Cash',
+      'creditCard': 'Credit Card',
+    };
+
     List<Map<String, dynamic>> transactions =
-        isExpenseSelected
-            ? [
-              {
-                "category": "Shopping",
-                "amount": -120,
-                "color": Colors.orange,
-                "description": "Buy some grocery",
-                "time": "10:00 AM",
-              },
-              {
-                "category": "Subscription",
-                "amount": -80,
-                "color": Colors.purple,
-                "description": "Disney+ Annual..",
-                "time": "03:30 PM",
-              },
-              {
-                "category": "Food",
-                "amount": -32,
-                "color": Colors.red,
-                "description": "Buy a ramen",
-                "time": "07:30 PM",
-              },
-            ]
-            : [
-              {
-                "category": "Salary",
-                "amount": 5000,
-                "color": Colors.green,
-                "description": "Salary for July",
-                "time": "04:30 PM",
-              },
-              {
-                "category": "Passive Income",
-                "amount": 1000,
-                "color": Colors.black,
-                "description": "UI8 Sales",
-                "time": "08:30 PM",
-              },
-            ];
+        data.map((item) {
+          final sourceType = item['source'] as String;
+          final amount = item['total_amount'] as int;
+
+          return {
+            "category": displayNames[sourceType] ?? sourceType,
+            "amount": isExpenseSelected ? -amount : amount,
+            "color": colorMap[sourceType] ?? Colors.grey,
+            "description":
+                "${isExpenseSelected ? 'Expense from' : 'Income to'} ${displayNames[sourceType] ?? sourceType}",
+            "time": "Today",
+          };
+        }).toList();
 
     return ListView.builder(
       shrinkWrap: true,

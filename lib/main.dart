@@ -7,6 +7,7 @@ import 'package:montra/logic/blocs/authentication_bloc/authentication_bloc.dart'
 import 'package:montra/logic/blocs/budget_bloc/budget_bloc.dart';
 import 'package:montra/logic/blocs/expense/expense_bloc.dart';
 import 'package:montra/logic/blocs/export_data/export_data_bloc.dart';
+import 'package:montra/logic/blocs/financial_report_bloc/financial_report_bloc.dart';
 import 'package:montra/logic/blocs/income_bloc/income_bloc.dart';
 import 'package:montra/logic/blocs/login_bloc/login_bloc.dart';
 import 'package:montra/logic/blocs/network_bloc/network_bloc.dart';
@@ -54,6 +55,9 @@ class _MyAppState extends State<MyApp> {
         BlocProvider<AccountBloc>(create: (context) => AccountBloc()),
         BlocProvider<LoginBloc>(create: (context) => LoginBloc()),
         BlocProvider<NotificationBloc>(create: (context) => NotificationBloc()),
+        BlocProvider<FinancialReportBloc>(
+          create: (context) => FinancialReportBloc(),
+        ),
         BlocProvider<AuthenticationBloc>(
           create: (context) {
             final authBloc = AuthenticationBloc();
