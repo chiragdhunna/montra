@@ -83,6 +83,9 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
           _isExpensesLoading = false;
         });
         log.e('Error loading financial data: $error');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error), backgroundColor: Colors.red),
+        );
       },
       orElse: () {},
     );
