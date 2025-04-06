@@ -18,6 +18,7 @@ import 'package:montra/logic/api/wallet/wallet_api.dart';
 import 'package:montra/logic/blocs/network_bloc/network_helper.dart';
 import 'package:montra/logic/database/database_helper.dart';
 import 'package:montra/logic/dio_factory.dart';
+import 'package:sqflite/sqflite.dart';
 
 part 'account_event.dart';
 part 'account_state.dart';
@@ -39,6 +40,59 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
   final _walletApi = WalletApi(DioFactory().create());
   bool isConnected = false;
 
+  Future<void> syncData() async {
+    try {
+      final dbHelper = DatabaseHelper();
+
+      // Fetch balance from the APIs
+      final bankBalance = await _bankApi.getBalance();
+      final walletBalance = await _walletApi.getBalance();
+      final totalBalance = bankBalance.balance + walletBalance.balance;
+
+      // Update the local DB with the new balance
+      await dbHelper.upsertAccountBalance(totalBalance.toDouble());
+
+      // Fetch additional data from the APIs (bank accounts and wallets)
+      final banks = await _bankApi.getAllBankAccounts();
+      final wallets = await _walletApi.getAllWalletAccounts();
+
+      // Insert or update the bank and wallet data into local DB
+      final db = await dbHelper.database;
+
+      for (final bank in banks.banks ?? []) {
+        await db.insert(
+          'banks',
+          {
+            'name': bank.name,
+            'balance': bank.amount,
+            'userId': bank.userId,
+            'accountNumber': bank.accountNumber,
+            'createdAt': bank.createdAt.toIso8601String(),
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        ); // Ensure no duplicates
+      }
+
+      for (final wallet in wallets.wallets ?? []) {
+        await db.insert(
+          'wallets',
+          {
+            'name': wallet.name,
+            'balance': wallet.amount,
+            'userId': wallet.userId,
+            'walletNumber': wallet.walletNumber,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        ); // Ensure no duplicates
+      }
+
+      log.d('Data synced successfully from APIs.');
+    } catch (e) {
+      log.e('Error while syncing data: $e');
+      throw Exception('Failed to sync data: $e');
+    }
+  }
+
   Future<void> _getAccountBalance(
     _GetAccountBalance event,
     Emitter<AccountState> emit,
@@ -47,9 +101,17 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
       emit(AccountState.inProgress());
 
       final dbHelper = DatabaseHelper();
-      final isConnected = await NetworkHelper.checkNow();
 
-      if (isConnected) {
+      // Attempt to get balance from the local database
+      final localBalance = await dbHelper.getAccountBalance();
+
+      if (localBalance != null) {
+        // If there's a local balance, show it
+        emit(
+          AccountState.getAccountBalanceSuccess(balance: localBalance.toInt()),
+        );
+      } else {
+        // If no data in local DB, fallback to fetching from API
         try {
           final bankBalance = await _bankApi.getBalance();
           final walletBalance = await _walletApi.getBalance();
@@ -57,41 +119,15 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
 
           await dbHelper.upsertAccountBalance(totalBalance.toDouble());
 
+          // Emit the fetched balance
           emit(AccountState.getAccountBalanceSuccess(balance: totalBalance));
         } catch (apiError) {
           log.e('API Error: $apiError');
 
-          // Try fallback to local DB even if API fails
-          final localBalance = await dbHelper.getAccountBalance();
-
-          if (localBalance != null) {
-            log.d('Falling back to local DB due to API error');
-            emit(
-              AccountState.getAccountBalanceSuccess(
-                balance: localBalance.toInt(),
-              ),
-            );
-          } else {
-            emit(
-              AccountState.failure(
-                error: 'API failed and no local data available.',
-              ),
-            );
-          }
-        }
-      } else {
-        final localBalance = await dbHelper.getAccountBalance();
-
-        if (localBalance != null) {
-          emit(
-            AccountState.getAccountBalanceSuccess(
-              balance: localBalance.toInt(),
-            ),
-          );
-        } else {
+          // Handle case when API call fails and no data is in local DB
           emit(
             AccountState.failure(
-              error: 'No internet and no cached data available.',
+              error: 'API failed and no local data available.',
             ),
           );
         }
@@ -106,75 +142,18 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
     _GetAccountDetails event,
     Emitter<AccountState> emit,
   ) async {
-    emit(AccountState.inProgress());
-    final dbHelper = DatabaseHelper();
-    final isConnected = await NetworkHelper.checkNow();
+    try {
+      emit(AccountState.inProgress());
 
-    if (isConnected) {
-      try {
-        // 1. Get from API
-        final bankBalance = await _bankApi.getBalance();
-        final walletBalance = await _walletApi.getBalance();
-        final totalBalance = bankBalance.balance + walletBalance.balance;
+      final dbHelper = DatabaseHelper();
 
-        final banks = await _bankApi.getAllBankAccounts();
-        final wallets = await _walletApi.getAllWalletAccounts();
-
-        // 2. Store into local DB
-        final db = await dbHelper.database;
-
-        for (final bank in banks.banks ?? []) {
-          await db.insert('banks', {
-            'name': bank.name,
-            'balance': bank.amount, // mapping amount → balance
-            'userId': bank.userId,
-            'accountNumber': bank.accountNumber,
-            'createdAt': bank.createdAt.toIso8601String(),
-          });
-        }
-
-        for (final wallet in wallets.wallets ?? []) {
-          await db.insert('wallets', {
-            'name': wallet.name,
-            'balance': wallet.amount,
-            'userId': wallet.userId,
-            'walletNumber': wallet.walletNumber,
-          });
-        }
-
-        await dbHelper.upsertAccountBalance(totalBalance.toDouble());
-
-        emit(
-          AccountState.getAccountDetailsSuccess(
-            balance: totalBalance,
-            wallets: wallets,
-            banks: banks,
-          ),
-        );
-      } catch (e) {
-        log.e('API Error: $e');
-        // fallback to local DB if API fails
-        final localWallets = await dbHelper.getWallets();
-        final localBanks = await dbHelper.getBanks();
-        final localBalance = await dbHelper.getAccountBalance();
-
-        emit(
-          AccountState.getAccountDetailsSuccess(
-            balance: (localBalance ?? 0).toInt(),
-            wallets: WalletsModel(wallets: localWallets),
-            banks: BanksModel(banks: localBanks),
-          ),
-        );
-      }
-    } else {
-      // Offline Mode
+      // First, try to get data from the local database
       final localWallets = await dbHelper.getWallets();
       final localBanks = await dbHelper.getBanks();
       final localBalance = await dbHelper.getAccountBalance();
 
-      if (localWallets.isEmpty && localBanks.isEmpty) {
-        emit(AccountState.failure(error: 'No offline data available.'));
-      } else {
+      if (localWallets.isNotEmpty || localBanks.isNotEmpty) {
+        // If we have any local data (either wallets or banks), show it
         emit(
           AccountState.getAccountDetailsSuccess(
             balance: (localBalance ?? 0).toInt(),
@@ -182,7 +161,72 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
             banks: BanksModel(banks: localBanks),
           ),
         );
+      } else {
+        // If the local DB is empty, fetch data from the API
+        try {
+          final bankBalance = await _bankApi.getBalance();
+          final walletBalance = await _walletApi.getBalance();
+          final totalBalance = bankBalance.balance + walletBalance.balance;
+
+          final banks = await _bankApi.getAllBankAccounts();
+          final wallets = await _walletApi.getAllWalletAccounts();
+
+          // Store the data into the local database
+          final db = await dbHelper.database;
+
+          // Insert or update the banks and wallets data
+          for (final bank in banks.banks ?? []) {
+            await db.insert(
+              'banks',
+              {
+                'name': bank.name,
+                'balance': bank.amount,
+                'userId': bank.userId,
+                'accountNumber': bank.accountNumber,
+                'createdAt': bank.createdAt.toIso8601String(),
+              },
+              conflictAlgorithm: ConflictAlgorithm.replace,
+            ); // Use replace to avoid duplicates
+          }
+
+          for (final wallet in wallets.wallets ?? []) {
+            await db.insert(
+              'wallets',
+              {
+                'name': wallet.name,
+                'balance': wallet.amount,
+                'userId': wallet.userId,
+                'walletNumber': wallet.walletNumber,
+              },
+              conflictAlgorithm: ConflictAlgorithm.replace,
+            ); // Use replace to avoid duplicates
+          }
+
+          await dbHelper.upsertAccountBalance(totalBalance.toDouble());
+
+          // Emit the fetched data
+          emit(
+            AccountState.getAccountDetailsSuccess(
+              balance: totalBalance,
+              wallets: wallets,
+              banks: banks,
+            ),
+          );
+        } catch (e) {
+          log.e('API Error: $e');
+          // Fallback to local DB if API fails
+          emit(
+            AccountState.getAccountDetailsSuccess(
+              balance: (localBalance ?? 0).toInt(),
+              wallets: WalletsModel(wallets: localWallets),
+              banks: BanksModel(banks: localBanks),
+            ),
+          );
+        }
       }
+    } catch (e) {
+      log.e('General Error: $e');
+      emit(AccountState.failure(error: e.toString()));
     }
   }
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:montra/constants/montra_colors.dart';
+import 'package:montra/logic/services/initialization_service.dart';
 import 'package:montra/screens/on_boarding/on_boarding_screen.dart';
-import 'dart:async';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -16,23 +16,21 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _startLoading();
+    _startInitialization();
   }
 
-  void _startLoading() {
-    Timer.periodic(const Duration(milliseconds: 300), (timer) {
-      if (_progress >= 1.0) {
-        timer.cancel();
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const OnBoardingScreen()),
-        );
-      } else {
-        setState(() {
-          _progress = (_progress + 0.1).clamp(0.0, 1.0);
-        });
-      }
+  void _startInitialization() async {
+    final initializationService = InitializationService();
+
+    // Listen to progress updates
+    initializationService.progressStream.listen((progress) {
+      setState(() {
+        _progress = progress;
+      });
     });
+
+    // Await the actual initialization to complete
+    await initializationService.initialise();
   }
 
   @override
