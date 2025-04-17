@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="montra API docs, for the Dart programming language.">
+  <title>montra - Dart API docs</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="static-assets/github.css?v1">
+  <link rel="stylesheet" href="static-assets/styles.css?v1">
+  <link rel="icon" href="static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="https://chiragdhunna.com/montra/">montra package</a></li>
+  </ol>
+  <div class="self-name">montra</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <div class="toggle" id="theme-button" title="Toggle brightness">
+    <label for="theme">
+      <input type="checkbox" id="theme" value="light-theme">
+      <span id="dark-theme-button" class="material-symbols-outlined">
+        dark_mode
+      </span>
+      <span id="light-theme-button" class="material-symbols-outlined">
+        light_mode
+      </span>
+    </label>
+  </div>
+</header>
+<main>
+  <div id="dartdoc-main-content" class="main-content">
+      
+<section class="desc markdown">
+  <h1 id="-montra">📊 Montra</h1>
+<h2 id="-overview">🚀 Overview</h2>
+<p>The <strong>Financial Manager App</strong> is a <strong>Flutter</strong> application that helps users track their <strong>expenses, income, transactions, budgets, and financial goals</strong>. It provides an intuitive and modern UI for managing personal finances effectively.</p>
+<h2 id="key-features">Key Features</h2>
+<h3 id="core-functionality">Core Functionality</h3>
+<ul>
+<li>
+<p>💰 <strong>Transaction Management</strong></p>
+<ul>
+<li>Income &amp; expense tracking</li>
+<li>Receipt attachments</li>
+<li>Transaction categories</li>
+<li>Recurring transactions</li>
+</ul>
+</li>
+<li>
+<p>🏦 <strong>Account Management</strong></p>
+<ul>
+<li>Multiple account types</li>
+<li>Inter-account transfers</li>
+<li>Balance tracking</li>
+<li>Bank integration</li>
+</ul>
+</li>
+<li>
+<p>📊 <strong>Analytics &amp; Reports</strong></p>
+<ul>
+<li>Visual spending analysis</li>
+<li>Custom date range reports</li>
+<li>Category-wise breakdown</li>
+<li>Export functionality</li>
+</ul>
+</li>
+</ul>
+<h3 id="technical-features">Technical Features</h3>
+<ul>
+<li>🔐 Secure local storage with SQLite</li>
+<li>🌐 REST API integration</li>
+<li>🎨 Responsive UI with ScreenUtil</li>
+<li>🔄 State management with BLoC pattern</li>
+<li>⚡ Code generation with Freezed</li>
+</ul>
+<h2 id="technical-architecture">Technical Architecture</h2>
+<h3 id="state-management">State Management</h3>
+<pre class="language-dart"><code class="language-dart">// Example BLoC Pattern Implementation
+@freezed
+class IncomeState with _$IncomeState {
+  const factory IncomeState.initial() = _Initial;
+  const factory IncomeState.loading() = _Loading;
+  const factory IncomeState.success(List&lt;Transaction&gt; transactions) = _Success;
+  const factory IncomeState.error(String message) = _Error;
+}
+</code></pre>
+<h3 id="model-layer-freezed">Model Layer (Freezed)</h3>
+<pre class="language-dart"><code class="language-dart">@freezed
+class Transaction with _$Transaction {
+  const factory Transaction({
+    required String id,
+    required double amount,
+    required TransactionType type,
+    required DateTime createdAt,
+    String? description,
+    String? attachment,
+  }) = _Transaction;
+
+  factory Transaction.fromJson(Map&lt;String, dynamic&gt; json) =&gt;
+      _$TransactionFromJson(json);
+}
+</code></pre>
+<h3 id="local-database-sqlite">Local Database (SQLite)</h3>
+<pre class="language-dart"><code class="language-dart">// Database Schema
+final String createTransactionTable = '''
+  CREATE TABLE transactions (
+    id TEXT PRIMARY KEY,
+    amount REAL NOT NULL,
+    type TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    description TEXT,
+    attachment_path TEXT
+  )
+''';
+</code></pre>
+<h2 id="project-setup">Project Setup</h2>
+<h3 id="prerequisites">Prerequisites</h3>
+<ul>
+<li>Flutter SDK (3.0.0 or higher)</li>
+<li>Dart SDK (3.0.0 or higher)</li>
+<li>VS Code or Android Studio</li>
+<li>Git</li>
+</ul>
+<h3 id="installation-steps">Installation Steps</h3>
+<ol>
+<li><strong>Clone &amp; Setup</strong></li>
+</ol>
+<pre class="language-bash"><code class="language-bash"># Clone repository
+git clone https://github.com/yourusername/montra.git
+
+# Navigate to project
+cd montra
+
+# Install dependencies
+flutter pub get
+
+# Generate code
+dart run build_runner build --delete-conflicting-outputs
+</code></pre>
+<ol start="2">
+<li><strong>Configure Environment</strong></li>
+</ol>
+<pre class="language-dart"><code class="language-dart">// filepath: lib/config/env.dart
+const API_BASE_URL = 'YOUR_API_URL';
+const DB_NAME = 'montra.db';
+</code></pre>
+<ol start="3">
+<li><strong>Run Application</strong></li>
+</ol>
+<pre class="language-bash"><code class="language-bash"># Debug mode
+flutter run
+
+# Release mode
+flutter run --release
+</code></pre>
+<h2 id="development-guide">Development Guide</h2>
+<h3 id="adding-new-features">Adding New Features</h3>
+<ol>
+<li><strong>Create Model</strong></li>
+</ol>
+<pre class="language-dart"><code class="language-dart">// filepath: lib/models/feature_model.dart
+@freezed
+class FeatureModel with _$FeatureModel {
+  const factory FeatureModel({
+    required String id,
+    required String name,
+  }) = _FeatureModel;
+}
+</code></pre>
+<ol start="2">
+<li><strong>Implement BLoC</strong></li>
+</ol>
+<pre class="language-dart"><code class="language-dart">// filepath: lib/blocs/feature_bloc.dart
+class FeatureBloc extends Bloc&lt;FeatureEvent, FeatureState&gt; {
+  FeatureBloc() : super(const FeatureState.initial()) {
+    on&lt;FeatureRequested&gt;(_onFeatureRequested);
+  }
+}
+</code></pre>
+<h2 id="-screenshots">📸 Screenshots</h2>
+<table>
+<thead>
+<tr>
+<th>Home Screen</th>
+<th>Expense Tracking</th>
+<th>Financial Report</th>
+<th>Budgeting</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img src="./readme_data/image.png" alt="Home Screen"></td>
+<td><img src="./readme_data/image-3.png" alt="Expense Tracking"></td>
+<td><img src="./readme_data/image-1.png" alt="Financial Report "></td>
+<td><img src="./readme_data/image-2.png" alt="Budgeting"></td>
+</tr>
+</tbody>
+</table>
+<h2 id="-tech-stack">🛠 Tech Stack</h2>
+<ul>
+<li><strong>Flutter</strong> (Dart)</li>
+<li><strong>State Management</strong>: Bloc</li>
+<li><strong>Local Database</strong>: SQLite</li>
+<li><strong>Networking</strong>: HTTP, REST APIs</li>
+<li><strong>Charts &amp; Graphs</strong>: fl_chart</li>
+<li><strong>UI Components</strong>: Flutter ScreenUtil, Google Fonts</li>
+</ul>
+<h2 id="api-integration">API Integration</h2>
+<h3 id="rest-api-endpoints">REST API Endpoints</h3>
+<ul>
+<li><code>POST /api/v1/transactions</code> - Create transaction</li>
+<li><code>GET /api/v1/transactions</code> - Fetch transactions</li>
+<li><code>PUT /api/v1/transactions/:id</code> - Update transaction</li>
+<li><code>DELETE /api/v1/transactions/:id</code> - Delete transaction</li>
+</ul>
+<h3 id="example-api-call">Example API Call</h3>
+<pre class="language-dart"><code class="language-dart">// filepath: lib/services/api_service.dart
+class ApiService {
+  Future&lt;List&lt;Transaction&gt;&gt; getTransactions() async {
+    final response = await dio.get('/api/v1/transactions');
+    return (response.data as List)
+        .map((json) =&gt; Transaction.fromJson(json))
+        .toList();
+  }
+}
+</code></pre>
+<h2 id="database-schema">Database Schema</h2>
+<h3 id="tables">Tables</h3>
+<ul>
+<li>transactions</li>
+<li>accounts</li>
+<li>categories</li>
+<li>budget_plans</li>
+<li>attachments</li>
+</ul>
+<h2 id="-installation">🔧 Installation</h2>
+<pre class="language-sh"><code class="language-sh"># Clone the repository
+git clone https://github.com/chiragdhunna/montra
+
+# Navigate to the project directory
+cd montra
+
+# Install dependencies
+flutter pub get
+
+# Run the app
+flutter run
+</code></pre>
+<h3 id="fastlane-integration">Fastlane Integration</h3>
+<p>Fastlane is integrated into the project to streamline app distribution and automate deployment tasks. It supports the following:</p>
+<ul>
+<li>📦 <strong>App Distribution</strong>: Automate builds and distribute the app to testers or app stores.</li>
+<li>🔑 <strong>Code Signing</strong>: Manage certificates and provisioning profiles.</li>
+<li>📋 <strong>Changelog Management</strong>: Automatically generate changelogs for releases.</li>
+<li>🚀 <strong>CI/CD Integration</strong>: Seamlessly integrate with CI/CD pipelines.</li>
+</ul>
+<h4 id="fastlane-commands">Fastlane Commands</h4>
+<ol>
+<li>
+<p><strong>Setup Fastlane</strong>:</p>
+<pre class="language-bash"><code class="language-bash">cd android
+fastlane init
+</code></pre>
+</li>
+<li>
+<p><strong>Build and Distribute</strong>:</p>
+<pre class="language-bash"><code class="language-bash"># Build APK
+fastlane build
+
+# Distribute to Testers
+fastlane distribute
+</code></pre>
+</li>
+<li>
+<p><strong>Release to Play Store</strong>:</p>
+<pre class="language-bash"><code class="language-bash">fastlane release
+</code></pre>
+</li>
+</ol>
+<h2 id="-project-structure">📂 Project Structure</h2>
+<pre class="language-dart"><code>📦 montra
+├── 📂 lib
+│   ├── 📂 constants                    # Constants and global variables
+│   ├── 📂 screens
+│   │   ├── 📂 notification             # Notification settings screen
+│   │   ├── 📂 on_boarding              # Onboarding flow
+│   │   ├── 📂 splash                   # Splash screen
+│   │   ├── 📂 user_screens
+│   │   │   ├── 📂 budget_screens       # Budget-related screens
+│   │   │   ├── 📂 financial_reports    # Expense &amp; income reports
+│   │   │   ├── 📂 income_or_expense    # Income &amp; expense tracking
+│   │   │   ├── 📂 profile_section
+│   │   │   │   ├── 📂 account_screens  # Account management
+│   │   │   │   ├── 📂 export_screens   # Export data &amp; backup
+│   │   │   │   ├── 📂 settings_screens # App settings (theme, currency, security)
+│   ├── 📂 widgets                      # Reusable UI components
+│   │   ├── transaction_card.dart        # Transaction list card
+│   │   ├── budget_card.dart             # Budget list card
+│   ├── 📂 models                       # Data models
+│   ├── 📂 services                     # API and database services
+│   ├── 📂 utils                        # Helper utilities
+│   ├── main.dart                       # Entry point of the application
+└── pubspec.yaml                        # Flutter dependencies &amp; configurations
+
+</code></pre>
+<h2 id="-how-to-use">🚀 How to Use</h2>
+<ol>
+<li><strong>Add Transactions</strong>: Log your daily expenses and income.</li>
+<li><strong>Analyze Reports</strong>: Use charts and graphs to monitor spending trends.</li>
+<li><strong>Set Budgets</strong>: Control your finances by setting up budgets.</li>
+<li><strong>Customize Settings</strong>: Change currency, theme, and security preferences.</li>
+</ol>
+<h2 id="-contribution">🙌 Contribution</h2>
+<p>Feel free to contribute by <strong>creating pull requests</strong> or <strong>reporting issues</strong>.</p>
+<hr>
+<p>Made with ❤️ by <a href="https://github.com/chiragdhunna">Chirag Dhunna</a> 🚀</p>
+</section>
+
+
+      <section class="summary">
+          <h2>Libraries</h2>
+        <dl>
+          <dt id="error_message">
+  <span class="name"><a href="constants_error_message/">constants/error_message</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="expense_type">
+  <span class="name"><a href="constants_expense_type/">constants/expense_type</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="income_source">
+  <span class="name"><a href="constants_income_source/">constants/income_source</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="transaction_data_model">
+  <span class="name"><a href="constants_models_transaction_data_model/">constants/models/transaction_data_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="transactions_model">
+  <span class="name"><a href="constants_models_transactions_model/">constants/models/transactions_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="montra_colors">
+  <span class="name"><a href="constants_montra_colors/">constants/montra_colors</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="quotes">
+  <span class="name"><a href="constants_quotes/">constants/quotes</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="firebase_options">
+  <span class="name"><a href="firebase_options/">firebase_options</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="bank_api">
+  <span class="name"><a href="logic_api_bank_bank_api/">logic/api/bank/bank_api</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="bank_model">
+  <span class="name"><a href="logic_api_bank_models_bank_model/">logic/api/bank/models/bank_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="bank_name_model">
+  <span class="name"><a href="logic_api_bank_models_bank_name_model/">logic/api/bank/models/bank_name_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="bank_transaction_model">
+  <span class="name"><a href="logic_api_bank_models_bank_transaction_model/">logic/api/bank/models/bank_transaction_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="banks_model">
+  <span class="name"><a href="logic_api_bank_models_banks_model/">logic/api/bank/models/banks_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="create_bank_account_model">
+  <span class="name"><a href="logic_api_bank_models_create_bank_account_model/">logic/api/bank/models/create_bank_account_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="total_bank_balance_model">
+  <span class="name"><a href="logic_api_bank_models_total_bank_balance_model/">logic/api/bank/models/total_bank_balance_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="update_bank_model">
+  <span class="name"><a href="logic_api_bank_models_update_bank_model/">logic/api/bank/models/update_bank_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="budget_api">
+  <span class="name"><a href="logic_api_budget_budget_api/">logic/api/budget/budget_api</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="budget_model">
+  <span class="name"><a href="logic_api_budget_models_budget_model/">logic/api/budget/models/budget_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="budget_month_model">
+  <span class="name"><a href="logic_api_budget_models_budget_month_model/">logic/api/budget/models/budget_month_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="budgets_model">
+  <span class="name"><a href="logic_api_budget_models_budgets_model/">logic/api/budget/models/budgets_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="create_budget_model">
+  <span class="name"><a href="logic_api_budget_models_create_budget_model/">logic/api/budget/models/create_budget_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="delete_budget_model">
+  <span class="name"><a href="logic_api_budget_models_delete_budget_model/">logic/api/budget/models/delete_budget_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="update_budget_model">
+  <span class="name"><a href="logic_api_budget_models_update_budget_model/">logic/api/budget/models/update_budget_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="expense_api">
+  <span class="name"><a href="logic_api_expense_expense_api/">logic/api/expense/expense_api</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="expense_frequency_data_set_model">
+  <span class="name"><a href="logic_api_expense_models_expense_frequency_data_set_model/">logic/api/expense/models/expense_frequency_data_set_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="expense_model">
+  <span class="name"><a href="logic_api_expense_models_expense_model/">logic/api/expense/models/expense_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="expense_stats_frequency_model">
+  <span class="name"><a href="logic_api_expense_models_expense_stats_frequency_model/">logic/api/expense/models/expense_stats_frequency_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="expense_stats_model">
+  <span class="name"><a href="logic_api_expense_models_expense_stats_model/">logic/api/expense/models/expense_stats_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="expense_stats_summary_model">
+  <span class="name"><a href="logic_api_expense_models_expense_stats_summary_model/">logic/api/expense/models/expense_stats_summary_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="expenses_model">
+  <span class="name"><a href="logic_api_expense_models_expenses_model/">logic/api/expense/models/expenses_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="total_expense_model">
+  <span class="name"><a href="logic_api_expense_models_total_expense_model/">logic/api/expense/models/total_expense_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="income_api">
+  <span class="name"><a href="logic_api_income_income_api/">logic/api/income/income_api</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="create_income_model">
+  <span class="name"><a href="logic_api_income_models_create_income_model/">logic/api/income/models/create_income_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="income_model">
+  <span class="name"><a href="logic_api_income_models_income_model/">logic/api/income/models/income_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="incomes_model">
+  <span class="name"><a href="logic_api_income_models_incomes_model/">logic/api/income/models/incomes_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="total_income_model">
+  <span class="name"><a href="logic_api_income_models_total_income_model/">logic/api/income/models/total_income_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="create_transfer_model">
+  <span class="name"><a href="logic_api_transfer_models_create_transfer_model/">logic/api/transfer/models/create_transfer_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="transfer_model">
+  <span class="name"><a href="logic_api_transfer_models_transfer_model/">logic/api/transfer/models/transfer_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="transfers_model">
+  <span class="name"><a href="logic_api_transfer_models_transfers_model/">logic/api/transfer/models/transfers_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="transfer_api">
+  <span class="name"><a href="logic_api_transfer_transfer_api/">logic/api/transfer/transfer_api</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="export_data_user_model">
+  <span class="name"><a href="logic_api_users_models_export_data_user_model/">logic/api/users/models/export_data_user_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="login_user_model">
+  <span class="name"><a href="logic_api_users_models_login_user_model/">logic/api/users/models/login_user_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="login_user_response_model">
+  <span class="name"><a href="logic_api_users_models_login_user_response_model/">logic/api/users/models/login_user_response_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="user_image_model">
+  <span class="name"><a href="logic_api_users_models_user_image_model/">logic/api/users/models/user_image_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="user_model">
+  <span class="name"><a href="logic_api_users_models_user_model/">logic/api/users/models/user_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="user_api">
+  <span class="name"><a href="logic_api_users_user_api/">logic/api/users/user_api</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="create_wallet_model">
+  <span class="name"><a href="logic_api_wallet_models_create_wallet_model/">logic/api/wallet/models/create_wallet_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="total_wallet_balance_model">
+  <span class="name"><a href="logic_api_wallet_models_total_wallet_balance_model/">logic/api/wallet/models/total_wallet_balance_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="update_wallet_model">
+  <span class="name"><a href="logic_api_wallet_models_update_wallet_model/">logic/api/wallet/models/update_wallet_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="wallet_model">
+  <span class="name"><a href="logic_api_wallet_models_wallet_model/">logic/api/wallet/models/wallet_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="wallet_name_model">
+  <span class="name"><a href="logic_api_wallet_models_wallet_name_model/">logic/api/wallet/models/wallet_name_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="wallet_names_model">
+  <span class="name"><a href="logic_api_wallet_models_wallet_names_model/">logic/api/wallet/models/wallet_names_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="wallets_model">
+  <span class="name"><a href="logic_api_wallet_models_wallets_model/">logic/api/wallet/models/wallets_model</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="wallet_api">
+  <span class="name"><a href="logic_api_wallet_wallet_api/">logic/api/wallet/wallet_api</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="api_base">
+  <span class="name"><a href="logic_api_base/">logic/api_base</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="account_bloc">
+  <span class="name"><a href="logic_blocs_account_bloc_account_bloc/">logic/blocs/account_bloc/account_bloc</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="auth_repository">
+  <span class="name"><a href="logic_blocs_authentication_bloc_auth_repository/">logic/blocs/authentication_bloc/auth_repository</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="authentication_bloc">
+  <span class="name"><a href="logic_blocs_authentication_bloc_authentication_bloc/">logic/blocs/authentication_bloc/authentication_bloc</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="budget_bloc">
+  <span class="name"><a href="logic_blocs_budget_bloc_budget_bloc/">logic/blocs/budget_bloc/budget_bloc</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="expense_bloc">
+  <span class="name"><a href="logic_blocs_expense_expense_bloc/">logic/blocs/expense/expense_bloc</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="export_data_bloc">
+  <span class="name"><a href="logic_blocs_export_data_export_data_bloc/">logic/blocs/export_data/export_data_bloc</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="financial_report_bloc">
+  <span class="name"><a href="logic_blocs_financial_report_bloc_financial_report_bloc/">logic/blocs/financial_report_bloc/financial_report_bloc</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="financial_status_bloc">
+  <span class="name"><a href="logic_blocs_financial_status_bloc_financial_status_bloc/">logic/blocs/financial_status_bloc/financial_status_bloc</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="income_bloc">
+  <span class="name"><a href="logic_blocs_income_bloc_income_bloc/">logic/blocs/income_bloc/income_bloc</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="login_bloc">
+  <span class="name"><a href="logic_blocs_login_bloc_login_bloc/">logic/blocs/login_bloc/login_bloc</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="network_bloc">
+  <span class="name"><a href="logic_blocs_network_bloc_network_bloc/">logic/blocs/network_bloc/network_bloc</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="network_helper">
+  <span class="name"><a href="logic_blocs_network_bloc_network_helper/">logic/blocs/network_bloc/network_helper</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="notification_bloc">
+  <span class="name"><a href="logic_blocs_notification_bloc_notification_bloc/">logic/blocs/notification_bloc/notification_bloc</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="transactions_bloc">
+  <span class="name"><a href="logic_blocs_transactions_bloc_transactions_bloc/">logic/blocs/transactions_bloc/transactions_bloc</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="transfer_bloc">
+  <span class="name"><a href="logic_blocs_transfer_bloc_transfer_bloc/">logic/blocs/transfer_bloc/transfer_bloc</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="database_helper">
+  <span class="name"><a href="logic_database_database_helper/">logic/database/database_helper</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="dio_factory">
+  <span class="name"><a href="logic_dio_factory/">logic/dio_factory</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="montra_bloc_observer">
+  <span class="name"><a href="logic_montra_bloc_observer/">logic/montra_bloc_observer</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="initialization_service">
+  <span class="name"><a href="logic_services_initialization_service/">logic/services/initialization_service</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="main">
+  <span class="name"><a href="main/">main</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="notification_screen">
+  <span class="name"><a href="screens_notification_notification_screen/">screens/notification/notification_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="add_new_account_screen">
+  <span class="name"><a href="screens_on_boarding_add_new_account_screen/">screens/on_boarding/add_new_account_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="forgot_password_email_sent_screen">
+  <span class="name"><a href="screens_on_boarding_forgot_password_email_sent_screen/">screens/on_boarding/forgot_password_email_sent_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="forgot_password_screen">
+  <span class="name"><a href="screens_on_boarding_forgot_password_screen/">screens/on_boarding/forgot_password_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="login_screen">
+  <span class="name"><a href="screens_on_boarding_login_screen/">screens/on_boarding/login_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="on_boarding_screen">
+  <span class="name"><a href="screens_on_boarding_on_boarding_screen/">screens/on_boarding/on_boarding_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="reset_password_screen">
+  <span class="name"><a href="screens_on_boarding_reset_password_screen/">screens/on_boarding/reset_password_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="set_up_account_screen">
+  <span class="name"><a href="screens_on_boarding_set_up_account_screen/">screens/on_boarding/set_up_account_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="set_up_pin_screen">
+  <span class="name"><a href="screens_on_boarding_set_up_pin_screen/">screens/on_boarding/set_up_pin_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="set_up_success">
+  <span class="name"><a href="screens_on_boarding_set_up_success/">screens/on_boarding/set_up_success</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="sign_up_screen">
+  <span class="name"><a href="screens_on_boarding_sign_up_screen/">screens/on_boarding/sign_up_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="sign_up_verification_screen">
+  <span class="name"><a href="screens_on_boarding_sign_up_verification_screen/">screens/on_boarding/sign_up_verification_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="upload_profile_screen">
+  <span class="name"><a href="screens_on_boarding_upload_profile_screen/">screens/on_boarding/upload_profile_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="splash_screen">
+  <span class="name"><a href="screens_splash_splash_screen/">screens/splash/splash_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="budget_screen">
+  <span class="name"><a href="screens_user_screens_budget_screen/">screens/user_screens/budget_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="create_budget_screen">
+  <span class="name"><a href="screens_user_screens_budget_screens_create_budget_screen/">screens/user_screens/budget_screens/create_budget_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="detail_budget_screen">
+  <span class="name"><a href="screens_user_screens_budget_screens_detail_budget_screen/">screens/user_screens/budget_screens/detail_budget_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="edit_budget_screen">
+  <span class="name"><a href="screens_user_screens_budget_screens_edit_budget_screen/">screens/user_screens/budget_screens/edit_budget_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="financial_report_screen">
+  <span class="name"><a href="screens_user_screens_financial_reports_financial_report_screen/">screens/user_screens/financial_reports/financial_report_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="financial_report_status_screen">
+  <span class="name"><a href="screens_user_screens_financial_reports_financial_report_status_screen/">screens/user_screens/financial_reports/financial_report_status_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="home">
+  <span class="name"><a href="screens_user_screens_home/">screens/user_screens/home</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="home_screen">
+  <span class="name"><a href="screens_user_screens_home_screen/">screens/user_screens/home_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="new_expense_screen">
+  <span class="name"><a href="screens_user_screens_income_or_expense_new_expense_screen/">screens/user_screens/income_or_expense/new_expense_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="new_income_screen">
+  <span class="name"><a href="screens_user_screens_income_or_expense_new_income_screen/">screens/user_screens/income_or_expense/new_income_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="new_transfer_screen">
+  <span class="name"><a href="screens_user_screens_income_or_expense_new_transfer_screen/">screens/user_screens/income_or_expense/new_transfer_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="profile_screen">
+  <span class="name"><a href="screens_user_screens_profile_screen/">screens/user_screens/profile_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="account_management_screen">
+  <span class="name"><a href="screens_user_screens_profile_section_account%20screens_account_management_screen/">screens/user_screens/profile_section/account screens/account_management_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="detail_account_screen">
+  <span class="name"><a href="screens_user_screens_profile_section_account%20screens_detail_account_screen/">screens/user_screens/profile_section/account screens/detail_account_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="edit_account_screen">
+  <span class="name"><a href="screens_user_screens_profile_section_account%20screens_edit_account_screen/">screens/user_screens/profile_section/account screens/edit_account_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="account_screen">
+  <span class="name"><a href="screens_user_screens_profile_section_account_screen/">screens/user_screens/profile_section/account_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="export_data_screen">
+  <span class="name"><a href="screens_user_screens_profile_section_export%20screens_export_data_screen/">screens/user_screens/profile_section/export screens/export_data_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="export_data_success_screen">
+  <span class="name"><a href="screens_user_screens_profile_section_export%20screens_export_data_success_screen/">screens/user_screens/profile_section/export screens/export_data_success_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="currency_screen">
+  <span class="name"><a href="screens_user_screens_profile_section_settings%20screens_currency_screen/">screens/user_screens/profile_section/settings screens/currency_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="language_screen">
+  <span class="name"><a href="screens_user_screens_profile_section_settings%20screens_language_screen/">screens/user_screens/profile_section/settings screens/language_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="notification_screen">
+  <span class="name"><a href="screens_user_screens_profile_section_settings%20screens_notification_screen/">screens/user_screens/profile_section/settings screens/notification_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="security_screen">
+  <span class="name"><a href="screens_user_screens_profile_section_settings%20screens_security_screen/">screens/user_screens/profile_section/settings screens/security_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="theme_screen">
+  <span class="name"><a href="screens_user_screens_profile_section_settings%20screens_theme_screen/">screens/user_screens/profile_section/settings screens/theme_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="settings_screen">
+  <span class="name"><a href="screens_user_screens_profile_section_settings_screen/">screens/user_screens/profile_section/settings_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="transaction_screen">
+  <span class="name"><a href="screens_user_screens_transaction_screen/">screens/user_screens/transaction_screen</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+        </dl>
+      </section>
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="https://chiragdhunna.com/montra/">montra package</a></li>
+</ol>
+
+    <h5 class="hidden-xs"><span class="package-name">montra</span> <span class="package-kind">package</span></h5>
+    <ol>
+      <li class="section-title">Libraries</li>
+      <li><a href="constants_error_message/">constants/error_message</a></li>
+      <li><a href="constants_expense_type/">constants/expense_type</a></li>
+      <li><a href="constants_income_source/">constants/income_source</a></li>
+      <li><a href="constants_models_transaction_data_model/">constants/models/transaction_data_model</a></li>
+      <li><a href="constants_models_transactions_model/">constants/models/transactions_model</a></li>
+      <li><a href="constants_montra_colors/">constants/montra_colors</a></li>
+      <li><a href="constants_quotes/">constants/quotes</a></li>
+      <li><a href="firebase_options/">firebase_options</a></li>
+      <li><a href="logic_api_bank_bank_api/">logic/api/bank/bank_api</a></li>
+      <li><a href="logic_api_bank_models_bank_model/">logic/api/bank/models/bank_model</a></li>
+      <li><a href="logic_api_bank_models_bank_name_model/">logic/api/bank/models/bank_name_model</a></li>
+      <li><a href="logic_api_bank_models_bank_transaction_model/">logic/api/bank/models/bank_transaction_model</a></li>
+      <li><a href="logic_api_bank_models_banks_model/">logic/api/bank/models/banks_model</a></li>
+      <li><a href="logic_api_bank_models_create_bank_account_model/">logic/api/bank/models/create_bank_account_model</a></li>
+      <li><a href="logic_api_bank_models_total_bank_balance_model/">logic/api/bank/models/total_bank_balance_model</a></li>
+      <li><a href="logic_api_bank_models_update_bank_model/">logic/api/bank/models/update_bank_model</a></li>
+      <li><a href="logic_api_budget_budget_api/">logic/api/budget/budget_api</a></li>
+      <li><a href="logic_api_budget_models_budget_model/">logic/api/budget/models/budget_model</a></li>
+      <li><a href="logic_api_budget_models_budget_month_model/">logic/api/budget/models/budget_month_model</a></li>
+      <li><a href="logic_api_budget_models_budgets_model/">logic/api/budget/models/budgets_model</a></li>
+      <li><a href="logic_api_budget_models_create_budget_model/">logic/api/budget/models/create_budget_model</a></li>
+      <li><a href="logic_api_budget_models_delete_budget_model/">logic/api/budget/models/delete_budget_model</a></li>
+      <li><a href="logic_api_budget_models_update_budget_model/">logic/api/budget/models/update_budget_model</a></li>
+      <li><a href="logic_api_expense_expense_api/">logic/api/expense/expense_api</a></li>
+      <li><a href="logic_api_expense_models_expense_frequency_data_set_model/">logic/api/expense/models/expense_frequency_data_set_model</a></li>
+      <li><a href="logic_api_expense_models_expense_model/">logic/api/expense/models/expense_model</a></li>
+      <li><a href="logic_api_expense_models_expense_stats_frequency_model/">logic/api/expense/models/expense_stats_frequency_model</a></li>
+      <li><a href="logic_api_expense_models_expense_stats_model/">logic/api/expense/models/expense_stats_model</a></li>
+      <li><a href="logic_api_expense_models_expense_stats_summary_model/">logic/api/expense/models/expense_stats_summary_model</a></li>
+      <li><a href="logic_api_expense_models_expenses_model/">logic/api/expense/models/expenses_model</a></li>
+      <li><a href="logic_api_expense_models_total_expense_model/">logic/api/expense/models/total_expense_model</a></li>
+      <li><a href="logic_api_income_income_api/">logic/api/income/income_api</a></li>
+      <li><a href="logic_api_income_models_create_income_model/">logic/api/income/models/create_income_model</a></li>
+      <li><a href="logic_api_income_models_income_model/">logic/api/income/models/income_model</a></li>
+      <li><a href="logic_api_income_models_incomes_model/">logic/api/income/models/incomes_model</a></li>
+      <li><a href="logic_api_income_models_total_income_model/">logic/api/income/models/total_income_model</a></li>
+      <li><a href="logic_api_transfer_models_create_transfer_model/">logic/api/transfer/models/create_transfer_model</a></li>
+      <li><a href="logic_api_transfer_models_transfer_model/">logic/api/transfer/models/transfer_model</a></li>
+      <li><a href="logic_api_transfer_models_transfers_model/">logic/api/transfer/models/transfers_model</a></li>
+      <li><a href="logic_api_transfer_transfer_api/">logic/api/transfer/transfer_api</a></li>
+      <li><a href="logic_api_users_models_export_data_user_model/">logic/api/users/models/export_data_user_model</a></li>
+      <li><a href="logic_api_users_models_login_user_model/">logic/api/users/models/login_user_model</a></li>
+      <li><a href="logic_api_users_models_login_user_response_model/">logic/api/users/models/login_user_response_model</a></li>
+      <li><a href="logic_api_users_models_user_image_model/">logic/api/users/models/user_image_model</a></li>
+      <li><a href="logic_api_users_models_user_model/">logic/api/users/models/user_model</a></li>
+      <li><a href="logic_api_users_user_api/">logic/api/users/user_api</a></li>
+      <li><a href="logic_api_wallet_models_create_wallet_model/">logic/api/wallet/models/create_wallet_model</a></li>
+      <li><a href="logic_api_wallet_models_total_wallet_balance_model/">logic/api/wallet/models/total_wallet_balance_model</a></li>
+      <li><a href="logic_api_wallet_models_update_wallet_model/">logic/api/wallet/models/update_wallet_model</a></li>
+      <li><a href="logic_api_wallet_models_wallet_model/">logic/api/wallet/models/wallet_model</a></li>
+      <li><a href="logic_api_wallet_models_wallet_name_model/">logic/api/wallet/models/wallet_name_model</a></li>
+      <li><a href="logic_api_wallet_models_wallet_names_model/">logic/api/wallet/models/wallet_names_model</a></li>
+      <li><a href="logic_api_wallet_models_wallets_model/">logic/api/wallet/models/wallets_model</a></li>
+      <li><a href="logic_api_wallet_wallet_api/">logic/api/wallet/wallet_api</a></li>
+      <li><a href="logic_api_base/">logic/api_base</a></li>
+      <li><a href="logic_blocs_account_bloc_account_bloc/">logic/blocs/account_bloc/account_bloc</a></li>
+      <li><a href="logic_blocs_authentication_bloc_auth_repository/">logic/blocs/authentication_bloc/auth_repository</a></li>
+      <li><a href="logic_blocs_authentication_bloc_authentication_bloc/">logic/blocs/authentication_bloc/authentication_bloc</a></li>
+      <li><a href="logic_blocs_budget_bloc_budget_bloc/">logic/blocs/budget_bloc/budget_bloc</a></li>
+      <li><a href="logic_blocs_expense_expense_bloc/">logic/blocs/expense/expense_bloc</a></li>
+      <li><a href="logic_blocs_export_data_export_data_bloc/">logic/blocs/export_data/export_data_bloc</a></li>
+      <li><a href="logic_blocs_financial_report_bloc_financial_report_bloc/">logic/blocs/financial_report_bloc/financial_report_bloc</a></li>
+      <li><a href="logic_blocs_financial_status_bloc_financial_status_bloc/">logic/blocs/financial_status_bloc/financial_status_bloc</a></li>
+      <li><a href="logic_blocs_income_bloc_income_bloc/">logic/blocs/income_bloc/income_bloc</a></li>
+      <li><a href="logic_blocs_login_bloc_login_bloc/">logic/blocs/login_bloc/login_bloc</a></li>
+      <li><a href="logic_blocs_network_bloc_network_bloc/">logic/blocs/network_bloc/network_bloc</a></li>
+      <li><a href="logic_blocs_network_bloc_network_helper/">logic/blocs/network_bloc/network_helper</a></li>
+      <li><a href="logic_blocs_notification_bloc_notification_bloc/">logic/blocs/notification_bloc/notification_bloc</a></li>
+      <li><a href="logic_blocs_transactions_bloc_transactions_bloc/">logic/blocs/transactions_bloc/transactions_bloc</a></li>
+      <li><a href="logic_blocs_transfer_bloc_transfer_bloc/">logic/blocs/transfer_bloc/transfer_bloc</a></li>
+      <li><a href="logic_database_database_helper/">logic/database/database_helper</a></li>
+      <li><a href="logic_dio_factory/">logic/dio_factory</a></li>
+      <li><a href="logic_montra_bloc_observer/">logic/montra_bloc_observer</a></li>
+      <li><a href="logic_services_initialization_service/">logic/services/initialization_service</a></li>
+      <li><a href="main/">main</a></li>
+      <li><a href="screens_notification_notification_screen/">screens/notification/notification_screen</a></li>
+      <li><a href="screens_on_boarding_add_new_account_screen/">screens/on_boarding/add_new_account_screen</a></li>
+      <li><a href="screens_on_boarding_forgot_password_email_sent_screen/">screens/on_boarding/forgot_password_email_sent_screen</a></li>
+      <li><a href="screens_on_boarding_forgot_password_screen/">screens/on_boarding/forgot_password_screen</a></li>
+      <li><a href="screens_on_boarding_login_screen/">screens/on_boarding/login_screen</a></li>
+      <li><a href="screens_on_boarding_on_boarding_screen/">screens/on_boarding/on_boarding_screen</a></li>
+      <li><a href="screens_on_boarding_reset_password_screen/">screens/on_boarding/reset_password_screen</a></li>
+      <li><a href="screens_on_boarding_set_up_account_screen/">screens/on_boarding/set_up_account_screen</a></li>
+      <li><a href="screens_on_boarding_set_up_pin_screen/">screens/on_boarding/set_up_pin_screen</a></li>
+      <li><a href="screens_on_boarding_set_up_success/">screens/on_boarding/set_up_success</a></li>
+      <li><a href="screens_on_boarding_sign_up_screen/">screens/on_boarding/sign_up_screen</a></li>
+      <li><a href="screens_on_boarding_sign_up_verification_screen/">screens/on_boarding/sign_up_verification_screen</a></li>
+      <li><a href="screens_on_boarding_upload_profile_screen/">screens/on_boarding/upload_profile_screen</a></li>
+      <li><a href="screens_splash_splash_screen/">screens/splash/splash_screen</a></li>
+      <li><a href="screens_user_screens_budget_screen/">screens/user_screens/budget_screen</a></li>
+      <li><a href="screens_user_screens_budget_screens_create_budget_screen/">screens/user_screens/budget_screens/create_budget_screen</a></li>
+      <li><a href="screens_user_screens_budget_screens_detail_budget_screen/">screens/user_screens/budget_screens/detail_budget_screen</a></li>
+      <li><a href="screens_user_screens_budget_screens_edit_budget_screen/">screens/user_screens/budget_screens/edit_budget_screen</a></li>
+      <li><a href="screens_user_screens_financial_reports_financial_report_screen/">screens/user_screens/financial_reports/financial_report_screen</a></li>
+      <li><a href="screens_user_screens_financial_reports_financial_report_status_screen/">screens/user_screens/financial_reports/financial_report_status_screen</a></li>
+      <li><a href="screens_user_screens_home/">screens/user_screens/home</a></li>
+      <li><a href="screens_user_screens_home_screen/">screens/user_screens/home_screen</a></li>
+      <li><a href="screens_user_screens_income_or_expense_new_expense_screen/">screens/user_screens/income_or_expense/new_expense_screen</a></li>
+      <li><a href="screens_user_screens_income_or_expense_new_income_screen/">screens/user_screens/income_or_expense/new_income_screen</a></li>
+      <li><a href="screens_user_screens_income_or_expense_new_transfer_screen/">screens/user_screens/income_or_expense/new_transfer_screen</a></li>
+      <li><a href="screens_user_screens_profile_screen/">screens/user_screens/profile_screen</a></li>
+      <li><a href="screens_user_screens_profile_section_account%20screens_account_management_screen/">screens/user_screens/profile_section/account screens/account_management_screen</a></li>
+      <li><a href="screens_user_screens_profile_section_account%20screens_detail_account_screen/">screens/user_screens/profile_section/account screens/detail_account_screen</a></li>
+      <li><a href="screens_user_screens_profile_section_account%20screens_edit_account_screen/">screens/user_screens/profile_section/account screens/edit_account_screen</a></li>
+      <li><a href="screens_user_screens_profile_section_account_screen/">screens/user_screens/profile_section/account_screen</a></li>
+      <li><a href="screens_user_screens_profile_section_export%20screens_export_data_screen/">screens/user_screens/profile_section/export screens/export_data_screen</a></li>
+      <li><a href="screens_user_screens_profile_section_export%20screens_export_data_success_screen/">screens/user_screens/profile_section/export screens/export_data_success_screen</a></li>
+      <li><a href="screens_user_screens_profile_section_settings%20screens_currency_screen/">screens/user_screens/profile_section/settings screens/currency_screen</a></li>
+      <li><a href="screens_user_screens_profile_section_settings%20screens_language_screen/">screens/user_screens/profile_section/settings screens/language_screen</a></li>
+      <li><a href="screens_user_screens_profile_section_settings%20screens_notification_screen/">screens/user_screens/profile_section/settings screens/notification_screen</a></li>
+      <li><a href="screens_user_screens_profile_section_settings%20screens_security_screen/">screens/user_screens/profile_section/settings screens/security_screen</a></li>
+      <li><a href="screens_user_screens_profile_section_settings%20screens_theme_screen/">screens/user_screens/profile_section/settings screens/theme_screen</a></li>
+      <li><a href="screens_user_screens_profile_section_settings_screen/">screens/user_screens/profile_section/settings_screen</a></li>
+      <li><a href="screens_user_screens_transaction_screen/">screens/user_screens/transaction_screen</a></li>
+</ol>
+
+  </div>
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+  </div>
+</main>
+<footer>
+  <span class="no-break">
+    montra
+      1.1.1+7
+  </span>
+  
+</footer>
+
+
+<script src="static-assets/highlight.pack.js?v1"></script>
+<script src="static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+
