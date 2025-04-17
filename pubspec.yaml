@@ -128,3 +128,6 @@ global_options:
   json_serializable:
     runs_before:
       - retrofit_generator
+
+dependency_overrides:
+  analyzer: ^6.2.0
