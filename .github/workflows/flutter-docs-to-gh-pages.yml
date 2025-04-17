@@ -33,6 +33,11 @@ jobs:
       - name: ➕ Add .nojekyll
         run: touch doc/api/.nojekyll
 
+      - name: "🧪 Debug: Show contents of doc/api"
+        run: |
+          echo "Listing doc/api contents:"
+          ls -R doc/api
+
       - name: 🚀 Deploy to GitHub Pages (gh-pages/montra/docs)
         uses: peaceiris/actions-gh-pages@v4
         with:
