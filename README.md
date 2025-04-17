@@ -6,8 +6,7 @@ The **Financial Manager App** is a **Flutter** application that helps users trac
 
 ## 🌐 Documentation
 
-👉 **View full Montra technical documentation:**  
-[https://montra-docs.chiragdhunna.com](https://montra-docs.chiragdhunna.com)
+👉 **View full Montra technical documentation:** [https://montra-docs.chiragdhunna.com](https://montra-docs.chiragdhunna.com)
 
 ## Key Features
 
