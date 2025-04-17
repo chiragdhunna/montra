@@ -1,4 +1,4 @@
-name: 📚 Build and Deploy Flutter Docs to chiragdhunna.com
+name: 📚 Build and Deploy Montra Docs to montra-docs.chiragdhunna.com
 
 on:
   push:
@@ -9,14 +9,14 @@ permissions:
   contents: write
 
 jobs:
-  build-docs:
+  deploy-docs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🔄 Checkout Repository
+      - name: 🔄 Checkout code
         uses: actions/checkout@v4
 
-      - name: 🚀 Set up Flutter 3.29.1
+      - name: 🚀 Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.29.1"
@@ -25,15 +25,15 @@ jobs:
       - name: 📦 Install dependencies
         run: flutter pub get
 
-      - name: 📝 Generate Documentation with base href
+      - name: 📝 Generate Dartdoc with correct base
         run: |
           flutter pub global activate dartdoc
           echo '<base href="/">' > html-base.html
           flutter pub global run dartdoc --output doc/api --header html-base.html
 
-      - name: ➕ Add CNAME
+      - name: ➕ Add CNAME and .nojekyll
         run: |
-          echo "chiragdhunna.com" > doc/api/CNAME
+          echo "montra-docs.chiragdhunna.com" > doc/api/CNAME
           touch doc/api/.nojekyll
 
       - name: 🚀 Deploy to GitHub Pages
