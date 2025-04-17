@@ -54,7 +54,7 @@ jobs:
 
       - name: 🧪 Show gh-pages contents after deploy
         run: |
-          git clone --depth=1 --branch=gh-pages https://github.com/<your-username>/<repo-name>.git gh-pages-check
+          git clone --depth=1 --branch=gh-pages https://github.com/chiragdhunna/montra.git gh-pages-check
           cd gh-pages-check
           echo "Contents of gh-pages/montra/docs:"
           ls -R montra/docs || echo "❌ montra/docs does NOT exist"
