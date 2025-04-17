@@ -1,4 +1,4 @@
-name: 📚 Build and Deploy Flutter Docs to chiragdhunna.com/montra/docs
+name: 📚 Build and Deploy Flutter Docs to chiragdhunna.com
 
 on:
   push:
@@ -25,44 +25,21 @@ jobs:
       - name: 📦 Install dependencies
         run: flutter pub get
 
-      - name: 📝 Generate Documentation with correct base path
+      - name: 📝 Generate Documentation with base href
         run: |
           flutter pub global activate dartdoc
+          echo '<base href="/">' > html-base.html
           flutter pub global run dartdoc --output doc/api --header html-base.html
 
-      - name: ➕ Add .nojekyll
-        run: touch doc/api/.nojekyll
-
-      - name: 🧪 Check if docs were generated correctly
+      - name: ➕ Add CNAME
         run: |
-          echo "Checking for generated docs..."
-          if [ -f doc/api/index.html ]; then
-            echo "✅ Docs generated: doc/api/index.html exists"
-          else
-            echo "❌ Docs NOT generated: doc/api/index.html missing"
-            exit 1
-          fi
-
-      - name: 🚀 Prepare full deploy with redirect
-        run: |
-          mkdir -p temp/montra/docs
-          echo '<html><head><meta http-equiv="refresh" content="0; url=/montra/docs/" /></head></html>' > temp/montra/index.html
-          cp -r doc/api/* temp/montra/docs
-
-      - name: ➕ Add CNAME for custom domain
-        run: echo "chiragdhunna.com" > temp/CNAME
+          echo "chiragdhunna.com" > doc/api/CNAME
+          touch doc/api/.nojekyll
 
       - name: 🚀 Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: temp
+          publish_dir: doc/api
           publish_branch: gh-pages
           force_orphan: true
-
-      - name: 🧪 Show gh-pages contents after deploy
-        run: |
-          git clone --depth=1 --branch=gh-pages https://github.com/chiragdhunna/montra.git gh-pages-check
-          cd gh-pages-check
-          echo "Contents of gh-pages/montra/docs:"
-          ls -R montra/docs || echo "❌ montra/docs does NOT exist"
