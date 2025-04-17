@@ -25,10 +25,10 @@ jobs:
       - name: 📦 Install dependencies
         run: flutter pub get
 
-      - name: 📝 Generate Documentation
+      - name: 📝 Generate Documentation with correct base path
         run: |
           flutter pub global activate dartdoc
-          flutter pub global run dartdoc
+          flutter pub global run dartdoc --output doc/api --header html-base.html
 
       - name: ➕ Add .nojekyll
         run: touch doc/api/.nojekyll
