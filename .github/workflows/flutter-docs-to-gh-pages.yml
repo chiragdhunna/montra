@@ -43,7 +43,7 @@ jobs:
             exit 1
           fi
 
-      - name: 🚀 Prepare docs with redirect
+      - name: 🚀 Prepare full deploy with redirect
         run: |
           mkdir -p temp/montra/docs
           echo '<html><head><meta http-equiv="refresh" content="0; url=/montra/docs/" /></head></html>' > temp/montra/index.html
