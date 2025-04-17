@@ -1,0 +1,42 @@
+name: 📚 Build and Deploy Flutter Docs to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write # Required to push to gh-pages
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🔄 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🚀 Set up Flutter 3.29.1
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.29.1"
+          channel: "stable"
+
+      - name: 📦 Install dependencies
+        run: flutter pub get
+
+      - name: 📝 Generate Documentation
+        run: |
+          flutter pub global activate dartdoc
+          flutter pub global run dartdoc
+
+      - name: ➕ Add .nojekyll file
+        run: touch doc/api/.nojekyll
+
+      - name: 🚀 Deploy to GitHub Pages (gh-pages branch)
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: doc/api
+          publish_branch: gh-pages
+          force_orphan: true # Fully overwrite previous content
