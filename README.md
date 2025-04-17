@@ -4,6 +4,11 @@
 
 The **Financial Manager App** is a **Flutter** application that helps users track their **expenses, income, transactions, budgets, and financial goals**. It provides an intuitive and modern UI for managing personal finances effectively.
 
+## 🌐 Documentation
+
+👉 **View full Montra technical documentation:**  
+[https://montra-docs.chiragdhunna.com](https://montra-docs.chiragdhunna.com)
+
 ## Key Features
 
 ### Core Functionality
