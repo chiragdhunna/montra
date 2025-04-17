@@ -1,0 +1,37 @@
+name: Build and Deploy Flutter Docs
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.19.6"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate documentation
+        run: |
+          flutter pub global activate dartdoc
+          flutter pub global run dartdoc
+
+      - name: Add .nojekyll to prevent Jekyll processing
+        run: touch ./doc/api/.nojekyll
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./doc/api
+          publish_branch: gh-pages
