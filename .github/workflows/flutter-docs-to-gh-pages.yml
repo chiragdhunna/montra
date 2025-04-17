@@ -1,4 +1,4 @@
-name: 📚 Build and Deploy Flutter Docs to GitHub Pages
+name: 📚 Build and Deploy Flutter Docs to chiragdhunna.com/montra/docs
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 permissions:
-  contents: write # Required to push to gh-pages
+  contents: write
 
 jobs:
   build-docs:
@@ -30,13 +30,14 @@ jobs:
           flutter pub global activate dartdoc
           flutter pub global run dartdoc
 
-      - name: ➕ Add .nojekyll file
+      - name: ➕ Add .nojekyll
         run: touch doc/api/.nojekyll
 
-      - name: 🚀 Deploy to GitHub Pages (gh-pages branch)
+      - name: 🚀 Deploy to GitHub Pages (gh-pages/montra/docs)
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: doc/api
           publish_branch: gh-pages
-          force_orphan: true # Fully overwrite previous content
+          destination_dir: montra/docs
+          force_orphan: false # Don't delete portfolio files!
