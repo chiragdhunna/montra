@@ -1,4 +1,4 @@
-name: Build and Deploy Flutter Docs
+name: Build and Deploy Montra Docs to Portfolio Site
 
 on:
   push:
@@ -13,10 +13,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: ⬇️ Checkout repository
+      - name: 🔄 Checkout Montra repo
         uses: actions/checkout@v4
 
-      - name: Set up Flutter 3.29.1 (to match your project)
+      - name: 🚀 Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.29.1"
@@ -25,18 +25,26 @@ jobs:
       - name: 📦 Install dependencies
         run: flutter pub get
 
-      - name: 📝 Generate documentation
+      - name: 📝 Generate docs
         run: |
           flutter pub global activate dartdoc
           flutter pub global run dartdoc
 
-      - name: 🚫 Add .nojekyll
+      - name: ➕ Add .nojekyll
         run: touch doc/api/.nojekyll
 
-      - name: 🚀 Push Docs to montra-docs branch
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./doc/api
-          publish_branch: montra-docs
-          force_orphan: true
+      - name: 🔁 Clone chiragdhunna.github.io
+        run: |
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/chiragdhunna/chiragdhunna.github.io.git portfolio-docs
+          rm -rf portfolio-docs/montra-docs
+          mkdir -p portfolio-docs/montra-docs
+          cp -r doc/api/* portfolio-docs/montra-docs/
+
+      - name: 🚀 Commit & Push to chiragdhunna.github.io
+        run: |
+          cd portfolio-docs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "📝 Auto-update Montra Docs"
+          git push origin main
