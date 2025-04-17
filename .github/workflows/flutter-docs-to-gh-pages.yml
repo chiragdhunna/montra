@@ -49,6 +49,9 @@ jobs:
           echo '<html><head><meta http-equiv="refresh" content="0; url=/montra/docs/" /></head></html>' > temp/montra/index.html
           cp -r doc/api/* temp/montra/docs
 
+      - name: ➕ Add CNAME for custom domain
+        run: echo "chiragdhunna.com" > temp/CNAME
+
       - name: 🚀 Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
