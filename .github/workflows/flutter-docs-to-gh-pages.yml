@@ -43,6 +43,9 @@ jobs:
             exit 1
           fi
 
+      - name: Add CNAME file
+        run: echo "chiragdhunna.com" > doc/api/CNAME
+
       - name: 🚀 Deploy to GitHub Pages (gh-pages/montra/docs)
         uses: peaceiris/actions-gh-pages@v4
         with:
