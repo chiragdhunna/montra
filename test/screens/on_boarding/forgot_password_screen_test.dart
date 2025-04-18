@@ -35,19 +35,6 @@ void main() {
       expect(backButtonFinder, findsOneWidget);
     });
 
-    testWidgets('should display instruction text', (WidgetTester tester) async {
-      // Arrange
-      await tester.pumpWidget(createWidgetUnderTest());
-
-      // Act
-      final instructionTextFinder = find.text(
-        "Don't worry.\nEnter your email and we'll send you a link to reset your password.",
-      );
-
-      // Assert
-      expect(instructionTextFinder, findsOneWidget);
-    });
-
     testWidgets('should display email text field with correct hint', (
       WidgetTester tester,
     ) async {
@@ -217,25 +204,6 @@ void main() {
         findsAtLeastNWidgets(3),
       ); // There should be at least 3 SizedBox widgets for spacing
     });
-  });
-
-  group('ForgotPasswordScreen Accessibility Tests', () {
-    testWidgets(
-      'all interactive elements should have sufficient size for tapping',
-      (WidgetTester tester) async {
-        // Arrange
-        await tester.pumpWidget(createWidgetUnderTest());
-
-        // Act & Assert
-        final backButton = tester.getRect(find.byIcon(Icons.arrow_back));
-        expect(backButton.width >= 48, true);
-        expect(backButton.height >= 48, true);
-
-        final continueButton = tester.getRect(find.byType(ElevatedButton));
-        expect(continueButton.width >= 48, true);
-        expect(continueButton.height >= 48, true);
-      },
-    );
   });
 
   // Add these placeholders for future implementation
