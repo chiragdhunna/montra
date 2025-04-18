@@ -33,7 +33,7 @@ jobs:
         run: |
           flutter analyze > analyze.log || true
           cat analyze.log
-          if grep -E "^error •" analyze.log; then
+          if grep -q "error •" analyze.log; then
             echo "❌ flutter analyze found real errors. Failing CI."
             exit 1
           else
