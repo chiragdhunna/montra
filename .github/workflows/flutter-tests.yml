@@ -31,11 +31,16 @@ jobs:
       - name: 🛠️ Run code generation
         run: flutter pub run build_runner build --delete-conflicting-outputs
 
-      - name: 🔍 Analyze project (fail only on errors)
+      - name: 🔍 Analyze project (fail only on real errors)
         run: |
           flutter analyze > analyze.log
           cat analyze.log
-          ! grep -q "error •" analyze.log
+          if grep -E "^ *error" analyze.log; then
+            echo "❌ flutter analyze found errors. Failing CI."
+            exit 1
+          else
+            echo "✅ No analyzer errors found. Continuing."
+          fi
 
       - name: 🧪 Run Flutter tests
         run: flutter test --coverage
