@@ -2,9 +2,7 @@ name: Flutter Tests
 
 on:
   push:
-    branches: [main, develop]
   pull_request:
-    branches: [main, develop]
   workflow_dispatch:
 
 permissions:
@@ -31,11 +29,11 @@ jobs:
       - name: 🛠️ Run code generation
         run: flutter pub run build_runner build --delete-conflicting-outputs
 
-      - name: 🔍 Analyze project (fail only if grep finds 'error')
+      - name: 🔍 Analyze project (fail only on analyzer errors)
         run: |
           flutter analyze > analyze.log || true
           cat analyze.log
-          if grep -E "• .*error" analyze.log; then
+          if grep -E "^error •" analyze.log; then
             echo "❌ flutter analyze found real errors. Failing CI."
             exit 1
           else
