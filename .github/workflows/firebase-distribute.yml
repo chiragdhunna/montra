@@ -6,6 +6,7 @@ on:
       - main
     tags:
       - "v*.*.*" # trigger release only for version tags
+  workflow_dispatch:
 
 permissions:
   contents: write
