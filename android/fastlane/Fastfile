@@ -23,9 +23,9 @@ platform :android do
 
   desc "Build and distribute APK to Firebase App Distribution"
   lane :beta do
-    # Step 1: Build the APK using Flutter
-    sh("flutter clean")
-    sh("flutter build apk --release")
+    # Step 1: Build the APK using Flutter from the repository root
+    sh("cd .. && flutter clean")
+    sh("cd .. && flutter build apk --release")
 
     distribution_options = {
       app: "1:727081287744:android:ae16828e55f1b97d311fa5",
