@@ -23,17 +23,30 @@ platform :android do
 
   desc "Build and distribute APK to Firebase App Distribution"
   lane :beta do
-    # Step 1: Build the APK using Flutter
-    sh("flutter clean")
-    sh("flutter build apk --release")
-  
-    # Step 2: Upload to Firebase App Distribution
-    firebase_app_distribution(
-      app: "1:727081287744:android:ae16828e55f1b97d311fa5", 
-      groups: "internal-testers", 
+    # Step 1: Build the APK using Flutter from the repository root
+    sh("cd .. && flutter clean")
+    sh("cd .. && flutter build apk --release")
+
+    distribution_options = {
+      app: "1:727081287744:android:ae16828e55f1b97d311fa5",
+      groups: "internal-testers",
       release_notes: "New test build 🚀",
       apk_path: "../build/app/outputs/flutter-apk/app-release.apk"
-    )
+    }
+
+    service_credentials_file = ENV["FIREBASE_SERVICE_ACCOUNT_FILE"]
+    firebase_cli_token = ENV["FIREBASE_TOKEN"]
+
+    if service_credentials_file && !service_credentials_file.empty?
+      distribution_options[:service_credentials_file] = service_credentials_file
+    elsif firebase_cli_token && !firebase_cli_token.empty?
+      distribution_options[:firebase_cli_token] = firebase_cli_token
+    else
+      UI.user_error!("Missing Firebase authentication. Set FIREBASE_SERVICE_ACCOUNT_FILE or FIREBASE_TOKEN before running the beta lane.")
+    end
+
+    # Step 2: Upload to Firebase App Distribution
+    firebase_app_distribution(distribution_options)
   end
   
 
