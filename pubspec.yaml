@@ -133,4 +133,4 @@ global_options:
 
 dependency_overrides:
   analyzer: ^6.2.0
-  dart_style: ">=2.3.6 <3.0.0"
+  dart_style: ^3.0.0
