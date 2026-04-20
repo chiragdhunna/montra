@@ -41,6 +41,8 @@ platform :android do
       distribution_options[:service_credentials_file] = service_credentials_file
     elsif firebase_cli_token && !firebase_cli_token.empty?
       distribution_options[:firebase_cli_token] = firebase_cli_token
+    else
+      UI.user_error!("Missing Firebase App Distribution credentials. Set FIREBASE_SERVICE_ACCOUNT_FILE or FIREBASE_TOKEN before running the beta lane.")
     end
 
     # Step 2: Upload to Firebase App Distribution
